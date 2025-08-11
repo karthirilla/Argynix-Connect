@@ -38,7 +38,7 @@ function LoginFormBody() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${data.instanceUrl}/api/auth/login`, {
+      const loginResponse = await fetch(`${data.instanceUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,27 +49,40 @@ function LoginFormBody() {
         }),
       });
 
-      if (response.ok) {
-        const { token, refreshToken } = await response.json();
+      if (loginResponse.ok) {
+        const { token, refreshToken } = await loginResponse.json();
+        
+        // Now get user info to get customerId
+        const userResponse = await fetch(`${data.instanceUrl}/api/auth/user`, {
+            headers: {
+                'X-Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!userResponse.ok) {
+            throw new Error('Failed to fetch user details');
+        }
+        
+        const userData = await userResponse.json();
         
         localStorage.setItem('tb_instance_url', data.instanceUrl);
         localStorage.setItem('tb_auth_token', token);
         localStorage.setItem('tb_refresh_token', refreshToken);
         localStorage.setItem('tb_user', data.username);
-        
+        localStorage.setItem('tb_customer_id', userData.customerId.id);
+
         toast({
           title: "Login Successful",
           description: "Redirecting to your dashboard...",
         });
         router.push('/dashboard');
       } else {
-        const errorData = await response.json();
+        const errorData = await loginResponse.json();
         toast({
           variant: "destructive",
           title: "Login Failed",
           description: errorData.message || "Invalid username or password. Please try again.",
         });
-        setIsLoading(false);
       }
     } catch (error) {
         toast({
@@ -77,6 +90,7 @@ function LoginFormBody() {
             title: "Connection Error",
             description: "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
         });
+    } finally {
         setIsLoading(false);
     }
   };

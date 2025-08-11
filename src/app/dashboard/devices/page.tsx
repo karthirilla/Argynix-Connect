@@ -25,15 +25,16 @@ export default function DevicesPage() {
     const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
+      const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl) {
+      if (!token || !instanceUrl || !customerId) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
       }
 
       try {
-        const tbDevices: ThingsboardDevice[] = await getDevices(token, instanceUrl);
+        const tbDevices: ThingsboardDevice[] = await getDevices(token, instanceUrl, customerId);
         const formattedDevices: AppDevice[] = tbDevices.map(d => ({
           id: d.id.id,
           name: d.name,
@@ -125,4 +126,3 @@ export default function DevicesPage() {
     </div>
   );
 }
-

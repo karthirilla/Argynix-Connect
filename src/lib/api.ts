@@ -25,10 +25,11 @@ async function fetchThingsboard<T>(
 
 export async function getDashboards(
   token: string,
-  instanceUrl: string
+  instanceUrl: string,
+  customerId: string
 ): Promise<ThingsboardDashboard[]> {
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    '/api/customer/dashboards?limit=100',
+    `/api/customer/${customerId}/dashboards?limit=100`,
     token,
     instanceUrl
   );
@@ -37,10 +38,11 @@ export async function getDashboards(
 
 export async function getDevices(
   token: string,
-  instanceUrl: string
+  instanceUrl: string,
+  customerId: string
 ): Promise<ThingsboardDevice[]> {
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        '/api/customer/devices?limit=100',
+        `/api/customer/${customerId}/devices?limit=100`,
         token,
         instanceUrl
     );

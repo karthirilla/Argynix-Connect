@@ -17,15 +17,16 @@ export default function DashboardsPage() {
     const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
+      const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl) {
+      if (!token || !instanceUrl || !customerId) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
       }
 
       try {
-        const tbDashboards: ThingsboardDashboard[] = await getDashboards(token, instanceUrl);
+        const tbDashboards: ThingsboardDashboard[] = await getDashboards(token, instanceUrl, customerId);
         const formattedDashboards: AppDashboard[] = tbDashboards.map(d => ({
           id: d.id.id,
           name: d.title,
@@ -73,4 +74,3 @@ export default function DashboardsPage() {
     </div>
   );
 }
-

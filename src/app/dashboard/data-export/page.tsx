@@ -22,8 +22,9 @@ export default function DataExportPage() {
     const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
+      const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl) {
+      if (!token || !instanceUrl || !customerId) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
@@ -31,8 +32,8 @@ export default function DataExportPage() {
 
       try {
         const [devices, dashboards] = await Promise.all([
-          getDevices(token, instanceUrl),
-          getDashboards(token, instanceUrl)
+          getDevices(token, instanceUrl, customerId),
+          getDashboards(token, instanceUrl, customerId)
         ]);
         setEntities([...devices, ...dashboards]);
       } catch (e) {

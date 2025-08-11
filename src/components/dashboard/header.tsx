@@ -31,6 +31,7 @@ export function AppHeader() {
     localStorage.removeItem('tb_refresh_token');
     localStorage.removeItem('tb_instance_url');
     localStorage.removeItem('tb_user');
+    localStorage.removeItem('tb_customer_id');
     router.push('/login');
   };
 
