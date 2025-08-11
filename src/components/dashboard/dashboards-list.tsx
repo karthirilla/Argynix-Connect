@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
 import { BarChart, ExternalLink, HardDrive, LayoutDashboard, Info } from 'lucide-react';
+import { useState } from 'react';
+import { SmartExportModal } from './smart-export-modal';
+
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
   
@@ -31,11 +34,6 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                     </CardTitle>
                     <CardDescription className="capitalize">{dashboard.type}</CardDescription>
                 </div>
-                 <Button variant="ghost" size="icon" asChild>
-                    <a href="#" target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                    </a>
-                </Button>
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
