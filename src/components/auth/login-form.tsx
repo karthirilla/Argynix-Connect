@@ -65,25 +65,13 @@ function LoginFormBody() {
         }
         
         const userData = await userResponse.json();
-        
-        const customerId = userData.customerId;
-        
-        // The placeholder UUID for a null customer in ThingsBoard is '13814000-1dd2-11b2-8080-808080808080'
-        if (!customerId || !customerId.id || customerId.id === '13814000-1dd2-11b2-8080-808080808080') {
-            toast({
-                variant: "destructive",
-                title: "Login Error",
-                description: "This user account is not associated with a customer. Please log in as a customer user.",
-            });
-            setIsLoading(false);
-            return;
-        }
+        const customerId = userData.customerId.id;
 
         localStorage.setItem('tb_instance_url', data.instanceUrl);
         localStorage.setItem('tb_auth_token', token);
         localStorage.setItem('tb_refresh_token', refreshToken);
         localStorage.setItem('tb_user', data.username);
-        localStorage.setItem('tb_customer_id', customerId.id);
+        localStorage.setItem('tb_customer_id', customerId);
 
         toast({
           title: "Login Successful",
