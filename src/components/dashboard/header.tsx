@@ -38,12 +38,12 @@ export function AppHeader() {
   };
 
   const getTitle = () => {
-    if (pathname.startsWith('/dashboard/dashboards')) return 'Dashboards';
-    if (pathname.startsWith('/dashboard/devices')) return 'Devices';
-    if (pathname.startsWith('/dashboard/assets')) return 'Assets';
-    if (pathname.startsWith('/dashboard/alarms')) return 'Alarms';
-    if (pathname.startsWith('/dashboard/data-export')) return 'Data Export';
-    if (pathname.startsWith('/dashboard/profile')) return 'User Profile';
+    if (pathname.startsWith('/argynix/dashboards')) return 'Dashboards';
+    if (pathname.startsWith('/argynix/devices')) return 'Devices';
+    if (pathname.startsWith('/argynix/assets')) return 'Assets';
+    if (pathname.startsWith('/argynix/alarms')) return 'Alarms';
+    if (pathname.startsWith('/argynix/data-export')) return 'Data Export';
+    if (pathname.startsWith('/argynix/profile')) return 'User Profile';
     return 'Home';
   }
 
@@ -76,7 +76,7 @@ export function AppHeader() {
           <DropdownMenuLabel>{username || 'My Account'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
            <DropdownMenuItem asChild>
-             <Link href="/dashboard/profile">Profile</Link>
+             <Link href="/argynix/profile">Profile</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />

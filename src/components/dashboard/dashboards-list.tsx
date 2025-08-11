@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
 import { BarChart, LayoutDashboard, Info, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
   const [instanceUrl, setInstanceUrl] = useState('');
@@ -51,12 +52,12 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
                <Button asChild variant="outline" className="w-full">
-                <Link href={`/dashboard/dashboards/${dashboard.id}`}>
+                <Link href={`/argynix/dashboards/${dashboard.id}`}>
                     <Info className="mr-2 h-4 w-4" />
                     Details
                 </Link>
               </Button>
-              <Button asChild className="w-full">
+               <Button asChild className="w-full">
                 <a href={`${instanceUrl}/dashboards/${dashboard.id}`} target="_blank" rel="noopener noreferrer">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard

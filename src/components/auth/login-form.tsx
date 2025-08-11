@@ -92,7 +92,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
-      router.push('/dashboard');
+      router.push('/argynix');
 
     } catch (error: any) {
         toast({

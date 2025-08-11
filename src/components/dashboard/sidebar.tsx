@@ -8,12 +8,12 @@ import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard', label: 'Home', icon: Home, exact: true },
-  { href: '/dashboard/dashboards', label: 'Dashboards', icon: BarChart },
-  { href: '/dashboard/devices', label: 'Devices', icon: HardDrive },
-  { href: '/dashboard/assets', label: 'Assets', icon: Package },
-  { href: '/dashboard/alarms', label: 'Alarms', icon: Siren },
-  { href: '/dashboard/data-export', label: 'Data Export', icon: Download },
+  { href: '/argynix', label: 'Home', icon: Home, exact: true },
+  { href: '/argynix/dashboards', label: 'Dashboards', icon: BarChart },
+  { href: '/argynix/devices', label: 'Devices', icon: HardDrive },
+  { href: '/argynix/assets', label: 'Assets', icon: Package },
+  { href: '/argynix/alarms', label: 'Alarms', icon: Siren },
+  { href: '/argynix/data-export', label: 'Data Export', icon: Download },
 ];
 
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
@@ -44,7 +44,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
     return (
         <div className="flex h-full flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                <Link href="/argynix" className="flex items-center gap-2 font-semibold">
                     <Logo className="h-6 w-6 text-primary" />
                     <span className="">TBConnect</span>
                 </Link>
@@ -60,7 +60,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
     <div className="hidden border-r bg-card md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <Link href="/argynix" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6 text-primary" />
             <span className="">TBConnect</span>
           </Link>
