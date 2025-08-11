@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
-import { BarChart, LayoutDashboard, Info } from 'lucide-react';
+import { BarChart, LayoutDashboard, Info, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
