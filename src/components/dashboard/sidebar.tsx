@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -42,7 +43,7 @@ export function AppSidebar() {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo className="h-6 w-6 text-primary" />
-              <span className="">TBConnect</span>
+              <span className="">Argynix IOT</span>
             </Link>
           </div>
           <div className="flex-1">

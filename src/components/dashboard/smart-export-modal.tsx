@@ -43,7 +43,7 @@ export function SmartExportModal({ dashboard, isOpen, onClose }: SmartExportModa
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'ThingsBoard instance URL not found.',
+        description: 'Argynix instance URL not found.',
       });
       return;
     }

@@ -7,9 +7,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center gap-4 mb-8">
             <Logo className="h-16 w-16 text-primary" />
-            <h1 className="text-3xl font-bold text-center tracking-tight text-foreground">TBConnect</h1>
+            <h1 className="text-3xl font-bold text-center tracking-tight text-foreground">Argynix IOT</h1>
             <p className="text-center text-muted-foreground">
-                Your custom interface for ThingsBoard
+                Your custom interface for Argynix
             </p>
         </div>
         <LoginForm />

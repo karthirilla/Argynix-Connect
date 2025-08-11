@@ -11,7 +11,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SmartExportInputSchema = z.object({
-  thingsBoardInstance: z.string().describe('The URL of the ThingsBoard instance.'),
+  thingsBoardInstance: z.string().describe('The URL of the Argynix instance.'),
   dashboardType: z.string().describe('The type of dashboard (e.g., sensor data, energy consumption).'),
 });
 export type SmartExportInput = z.infer<typeof SmartExportInputSchema>;
@@ -31,9 +31,9 @@ const smartExportPrompt = ai.definePrompt({
   name: 'smartExportPrompt',
   input: {schema: SmartExportInputSchema},
   output: {schema: SmartExportOutputSchema},
-  prompt: `You are an expert data analyst specializing in ThingsBoard data.
+  prompt: `You are an expert data analyst specializing in Argynix data.
 
-  Based on the connected ThingsBoard instance ({{{thingsBoardInstance}}}) and the type of dashboard ({{{dashboardType}}}), suggest the most relevant fields for data export and the optimal export format (CSV or JSON).
+  Based on the connected Argynix instance ({{{thingsBoardInstance}}}) and the type of dashboard ({{{dashboardType}}}), suggest the most relevant fields for data export and the optimal export format (CSV or JSON).
 
   Return your answer as JSON that follows the schema.
 
