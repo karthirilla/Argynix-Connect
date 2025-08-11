@@ -8,6 +8,7 @@ import type { Dashboard } from '@/lib/types';
 import { BarChart, LayoutDashboard, Info } from 'lucide-react';
 import Link from 'next/link';
 import { SmartExportModal } from './smart-export-modal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
@@ -30,6 +31,7 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
 
   return (
     <>
+    <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {dashboards.map((dashboard) => (
           <Card key={dashboard.id} className="flex flex-col">
@@ -58,14 +60,22 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                     Details
                 </Link>
               </Button>
-              <Button className="w-full" disabled>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
+               <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button className="w-full" disabled>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Dashboard view is not yet implemented.</p>
+                </TooltipContent>
+              </Tooltip>
             </CardFooter>
           </Card>
         ))}
       </div>
+      </TooltipProvider>
        {selectedDashboard && (
         <SmartExportModal 
           dashboard={selectedDashboard}
