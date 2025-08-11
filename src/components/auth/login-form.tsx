@@ -67,6 +67,7 @@ function LoginFormBody() {
         const userData = await userResponse.json();
         
         const customerId = userData.customerId;
+        
         // The placeholder UUID for a null customer seems to be '13814000-1dd2-11b2-8080-808080808080'
         if (!customerId || customerId.id === '13814000-1dd2-11b2-8080-808080808080') {
             toast({
@@ -74,8 +75,6 @@ function LoginFormBody() {
                 title: "Login Error",
                 description: "This user account is not associated with a customer. Please log in as a customer user.",
             });
-            // No need to throw an error here as the toast is enough.
-            // We just stop the process.
             setIsLoading(false);
             return;
         }
