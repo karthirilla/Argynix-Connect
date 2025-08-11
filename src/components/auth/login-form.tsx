@@ -68,8 +68,8 @@ function LoginFormBody() {
         
         const customerId = userData.customerId;
         
-        // The placeholder UUID for a null customer seems to be '13814000-1dd2-11b2-8080-808080808080'
-        if (!customerId || customerId.id === '13814000-1dd2-11b2-8080-808080808080') {
+        // The placeholder UUID for a null customer in ThingsBoard is '13814000-1dd2-11b2-8080-808080808080'
+        if (!customerId || !customerId.id || customerId.id === '13814000-1dd2-11b2-8080-808080808080') {
             toast({
                 variant: "destructive",
                 title: "Login Error",
