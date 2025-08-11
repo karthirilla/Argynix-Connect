@@ -1,4 +1,3 @@
-
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice } from './types';
