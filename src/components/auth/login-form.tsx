@@ -82,7 +82,7 @@ function LoginFormBody() {
       
       // A customerId is required for most data fetching operations.
       // The API returns a "generic" customerId for tenant admins.
-      if (userData.customerId && userData.customerId.id) {
+      if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
         localStorage.removeItem('tb_customer_id');
@@ -136,17 +136,13 @@ function LoginFormBody() {
         <Form {...form}>
             <form 
                 onSubmit={form.handleSubmit(onSubmit)} 
-                className={cn(
-                    "grid gap-4 transition-opacity duration-500",
-                    isMounted ? "opacity-100" : "opacity-0"
-                )}
-                style={{ transitionDelay: isMounted ? '100ms' : '0ms' }}
+                className="grid gap-4"
             >
             <FormField
                 control={form.control}
                 name="instanceUrl"
                 render={({ field }) => (
-                    <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
+                    <FormItem>
                         <FormLabel>Instance URL</FormLabel>
                         <FormControl>
                             <Input placeholder="https://argynix.example.com" {...field} />
@@ -159,7 +155,7 @@ function LoginFormBody() {
                 control={form.control}
                 name="username"
                 render={({ field }) => (
-                    <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '300ms', animationFillMode: 'forwards'}}>
+                    <FormItem>
                         <FormLabel>Username</FormLabel>
                         <FormControl>
                             <Input placeholder="your-email@example.com" {...field} />
@@ -172,7 +168,7 @@ function LoginFormBody() {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                     <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
+                     <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
                             <Input type="password" placeholder="••••••••" {...field} />
@@ -181,7 +177,7 @@ function LoginFormBody() {
                     </FormItem>
                 )}
             />
-            <div className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '500ms', animationFillMode: 'forwards'}}>
+            <div>
                 <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Connect
