@@ -128,10 +128,7 @@ function LoginFormBody() {
   return (
      <div className="grid gap-6">
         <div className="grid gap-2 text-center hidden lg:block">
-            <h1 className="text-3xl font-bold">Login</h1>
-            <p className="text-balance text-muted-foreground">
-              Enter your Argynix instance details to connect
-            </p>
+            <h1 className="text-3xl font-bold">Argynix IOT</h1>
         </div>
         <Form {...form}>
             <form 
