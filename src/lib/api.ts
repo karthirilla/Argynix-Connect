@@ -15,7 +15,10 @@ async function fetchThingsboard<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API call failed with status ${response.status}`);
+    // Attempt to get more detailed error message from ThingsBoard
+    const errorBody = await response.text();
+    console.error("ThingsBoard API Error:", errorBody);
+    throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
   return response.json();
@@ -26,7 +29,7 @@ export async function getDashboards(
   instanceUrl: string
 ): Promise<ThingsboardDashboard[]> {
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    '/api/tenant/dashboards?limit=100',
+    '/api/customer/dashboards?limit=100',
     token,
     instanceUrl
   );
@@ -38,10 +41,9 @@ export async function getDevices(
   instanceUrl: string
 ): Promise<ThingsboardDevice[]> {
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        '/api/tenant/devices?limit=100',
+        '/api/customer/devices?limit=100',
         token,
         instanceUrl
     );
     return result.data;
 }
-
