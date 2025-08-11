@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PanelLeft, Settings, BarChart, HardDrive } from 'lucide-react';
+import { Home, PanelLeft, Settings, BarChart, HardDrive, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '../icons/logo';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard/dashboards', label: 'Dashboards', icon: BarChart },
   { href: '/dashboard/devices', label: 'Devices', icon: HardDrive },
+  { href: '/dashboard/data-export', label: 'Data Export', icon: Download },
 ];
 
 export function AppSidebar() {

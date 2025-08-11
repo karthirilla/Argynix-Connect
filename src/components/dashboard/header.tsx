@@ -37,6 +37,7 @@ export function AppHeader() {
   const getTitle = () => {
     if (pathname.includes('/dashboard/dashboards')) return 'Dashboards';
     if (pathname.includes('/dashboard/devices')) return 'Devices';
+    if (pathname.includes('/dashboard/data-export')) return 'Data Export';
     return 'Dashboard';
   }
 
