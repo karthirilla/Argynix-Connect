@@ -66,7 +66,12 @@ function LoginFormBody() {
         
         const userData = await userResponse.json();
         
-        if (!userData.customerId || !userData.customerId.id) {
+        if (!userData.customerId || userData.customerId.isNull) {
+            toast({
+                variant: "destructive",
+                title: "Login Error",
+                description: "This user does not have an associated customer. Please log in as a customer user.",
+            });
             throw new Error('Customer ID not found for this user.');
         }
 
@@ -90,11 +95,15 @@ function LoginFormBody() {
         });
       }
     } catch (error: any) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
-        });
+        // Only show a generic error if a specific toast hasn't been shown already
+        const toasts = document.querySelectorAll('[data-sonner-toast]');
+        if (toasts.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
+            });
+        }
     } finally {
         setIsLoading(false);
     }
