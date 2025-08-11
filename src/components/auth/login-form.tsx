@@ -50,51 +50,57 @@ function LoginFormBody() {
         }),
       });
 
-      if (loginResponse.ok) {
-        const { token, refreshToken } = await loginResponse.json();
-        
-        // Now get user info to get customerId
-        const userResponse = await fetch(`${data.instanceUrl}/api/auth/user`, {
-            headers: {
-                'X-Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!userResponse.ok) {
-            throw new Error('Failed to fetch user details');
-        }
-        
-        const userData = await userResponse.json();
-        const customerId = userData.customerId.id;
-
-        localStorage.setItem('tb_instance_url', data.instanceUrl);
-        localStorage.setItem('tb_auth_token', token);
-        localStorage.setItem('tb_refresh_token', refreshToken);
-        localStorage.setItem('tb_user', data.username);
-        localStorage.setItem('tb_customer_id', customerId);
-
-        toast({
-          title: "Login Successful",
-          description: "Redirecting to your dashboard...",
-        });
-        router.push('/dashboard');
-      } else {
+      if (!loginResponse.ok) {
         const errorData = await loginResponse.json();
+        throw new Error(errorData.message || "Invalid username or password. Please try again.");
+      }
+      
+      const { token, refreshToken } = await loginResponse.json();
+      
+      // Now get user info to get customerId
+      const userResponse = await fetch(`${data.instanceUrl}/api/auth/user`, {
+          headers: {
+              'X-Authorization': `Bearer ${token}`
+          }
+      });
+
+      if (!userResponse.ok) {
+          throw new Error('Failed to fetch user details');
+      }
+      
+      const userData = await userResponse.json();
+      
+      // This is the definitive check. Only allow CUSTOMER_USER to log in.
+      if (userData.authority !== 'CUSTOMER_USER') {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: errorData.message || "Invalid username or password. Please try again.",
+          description: "This user account is not a 'Customer User'. Please log in as a customer user to continue.",
         });
+        setIsLoading(false);
+        return;
       }
+
+      const customerId = userData.customerId.id;
+
+      localStorage.setItem('tb_instance_url', data.instanceUrl);
+      localStorage.setItem('tb_auth_token', token);
+      localStorage.setItem('tb_refresh_token', refreshToken);
+      localStorage.setItem('tb_user', data.username);
+      localStorage.setItem('tb_customer_id', customerId);
+
+      toast({
+        title: "Login Successful",
+        description: "Redirecting to your dashboard...",
+      });
+      router.push('/dashboard');
+
     } catch (error: any) {
-        // Only show a generic error if a specific toast hasn't been shown already
-        if (!document.querySelector('[data-sonner-toast]')) {
-             toast({
-                variant: "destructive",
-                title: "Error",
-                description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
-            });
-        }
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
+        });
     } finally {
         setIsLoading(false);
     }
