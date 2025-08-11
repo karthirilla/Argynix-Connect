@@ -1,6 +1,6 @@
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -33,9 +33,9 @@ async function fetchThingsboard<T>(
   }
 }
 
-export async function getUser(token: string, instanceUrl: string) {
+export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
-  return await fetchThingsboard<any>(url, token, instanceUrl);
+  return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
 }
 
 
@@ -53,6 +53,15 @@ export async function getDashboards(
     instanceUrl
   );
   return result?.data || [];
+}
+
+export async function getDashboardById(
+  token: string,
+  instanceUrl: string,
+  dashboardId: string
+): Promise<ThingsboardDashboard> {
+  const url = `/api/dashboard/${dashboardId}`;
+  return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl);
 }
 
 

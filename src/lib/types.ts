@@ -34,6 +34,7 @@ export type ThingsboardDashboard = {
     createdTime: number;
     title: string;
     name: string; // For consistency, though API uses title
+    configuration?: any; // To hold dashboard widget configuration
 };
   
 export type ThingsboardDevice = {
@@ -52,4 +53,17 @@ export type ThingsboardAsset = {
     type: string;
     label: string | null;
     customerId?: ThingsboardId;
+};
+
+export type ThingsboardUser = {
+    id: { id: string, entityType: string };
+    createdTime: number;
+    name: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    authority: string;
+    customerId: { id: string, entityType: string };
+    tenantId: { id: string, entityType: string };
+    additionalInfo: any;
 };

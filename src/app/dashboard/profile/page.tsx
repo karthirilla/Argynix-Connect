@@ -8,24 +8,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, User, Building, Clock, KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-// Define a more specific type for the user data
-interface UserDetails {
-    id: { id: string, entityType: string };
-    createdTime: number;
-    name: string;
-    firstName: string | null;
-    lastName: string | null;
-    email: string;
-    authority: string;
-    customerId: { id: string, entityType: string };
-    tenantId: { id: string, entityType: string };
-    additionalInfo: any;
-}
+import type { ThingsboardUser } from '@/lib/types';
 
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserDetails | null>(null);
+  const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

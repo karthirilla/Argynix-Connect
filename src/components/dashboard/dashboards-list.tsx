@@ -1,14 +1,23 @@
 
 "use client";
 
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
 import { BarChart, LayoutDashboard, Info } from 'lucide-react';
 import Link from 'next/link';
+import { SmartExportModal } from './smart-export-modal';
 
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
+
+  const handleSmartExportClick = (dashboard: Dashboard) => {
+    setSelectedDashboard(dashboard);
+    setIsModalOpen(true);
+  };
   
   if (dashboards.length === 0) {
     return (
@@ -43,7 +52,7 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                 )}
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
-               <Button asChild variant="outline" className="w-full" disabled>
+               <Button asChild variant="outline" className="w-full">
                 <Link href={`/dashboard/dashboards/${dashboard.id}`}>
                     <Info className="mr-2 h-4 w-4" />
                     Details
@@ -57,6 +66,13 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
           </Card>
         ))}
       </div>
+       {selectedDashboard && (
+        <SmartExportModal 
+          dashboard={selectedDashboard}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </>
   );
 }
