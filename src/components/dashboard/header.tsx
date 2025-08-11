@@ -28,6 +28,7 @@ export function AppHeader() {
 
   const handleLogout = () => {
     localStorage.removeItem('tb_auth_token');
+    localStorage.removeItem('tb_refresh_token');
     localStorage.removeItem('tb_instance_url');
     localStorage.removeItem('tb_user');
     router.push('/login');

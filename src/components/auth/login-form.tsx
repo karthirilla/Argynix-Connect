@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -36,17 +35,26 @@ function LoginFormBody() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    try {
+      const response = await fetch(`${data.instanceUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password,
+        }),
+      });
 
-    // Simulate API call to ThingsBoard
-    setTimeout(() => {
-      if (data.username === 'admin' && data.password === 'admin') {
-        // In a real app, you'd get a token from the API response
-        const mockToken = `token_${Date.now()}`;
+      if (response.ok) {
+        const { token, refreshToken } = await response.json();
         
         localStorage.setItem('tb_instance_url', data.instanceUrl);
-        localStorage.setItem('tb_auth_token', mockToken);
+        localStorage.setItem('tb_auth_token', token);
+        localStorage.setItem('tb_refresh_token', refreshToken);
         localStorage.setItem('tb_user', data.username);
         
         toast({
@@ -55,14 +63,22 @@ function LoginFormBody() {
         });
         router.push('/dashboard');
       } else {
+        const errorData = await response.json();
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: "Invalid username or password. Please try again.",
+          description: errorData.message || "Invalid username or password. Please try again.",
         });
         setIsLoading(false);
       }
-    }, 1500);
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Connection Error",
+            description: "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
+        });
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -88,7 +104,7 @@ function LoginFormBody() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="admin" {...field} />
+                <Input placeholder="your-email@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
