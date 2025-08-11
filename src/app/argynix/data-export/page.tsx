@@ -2,9 +2,10 @@
 // /app/argynix/data-export/page.tsx
 "use client";
 
-import { useEffect, useState } from 'react';
+import { createRef, useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,8 +23,10 @@ import { format, subDays, setHours, setMinutes, setSeconds } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line, ResponsiveContainer } from 'recharts';
 
 type ExportFormat = 'JSON' | 'CSV' | 'PDF';
+type PdfExportType = 'raw' | 'graph';
 
 export default function DataExportPage() {
   const [devices, setDevices] = useState<ThingsboardDevice[]>([]);
@@ -34,7 +37,6 @@ export default function DataExportPage() {
   const [isKeysLoading, setIsKeysLoading] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
 
-
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 7),
     to: new Date(),
@@ -43,10 +45,14 @@ export default function DataExportPage() {
   const [endTime, setEndTime] = useState(format(new Date(), 'HH:mm'));
 
   const [exportFormat, setExportFormat] = useState<ExportFormat>('JSON');
+  const [pdfExportType, setPdfExportType] = useState<PdfExportType>('raw');
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const [chartData, setChartData] = useState<any[]>([]);
+  const chartRef = createRef<HTMLDivElement>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +135,31 @@ export default function DataExportPage() {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const formatDataForChart = (data: any) => {
+    const timestamps = new Set<number>();
+    const seriesData: { [key: string]: { [ts: number]: any } } = {};
+
+    Object.keys(data).forEach(key => {
+        seriesData[key] = {};
+        data[key].forEach((point: { ts: number, value: any }) => {
+            timestamps.add(point.ts);
+            seriesData[key][point.ts] = point.value;
+        });
+    });
+
+    const sortedTimestamps = Array.from(timestamps).sort((a,b) => a - b);
+    
+    return sortedTimestamps.map(ts => {
+        const entry: {[key: string]: any} = {
+            timestamp: new Date(ts).toLocaleString()
+        };
+        Object.keys(seriesData).forEach(key => {
+            entry[key] = seriesData[key][ts] !== undefined ? seriesData[key][ts] : null;
+        });
+        return entry;
+    });
+  };
 
   const handleExport = async () => {
     if (!selectedEntity || selectedKeys.length === 0 || !dateRange?.from || !dateRange?.to) {
@@ -197,26 +228,57 @@ export default function DataExportPage() {
         const csvData = convertToCsv(data);
         downloadFile(csvData, `${deviceName}_${startTs}_${endTs}.csv`, 'text/csv');
       } else if (exportFormat === 'PDF') {
-        const doc = new jsPDF();
-        doc.text(`Telemetry Data for ${deviceName}`, 14, 15);
-        
-        const tableData: (string | number)[][] = [];
-        for (const key in data) {
-          if (Object.prototype.hasOwnProperty.call(data, key)) {
-            const series = data[key];
-            series.forEach((point: { ts: number; value: any; }) => {
-              tableData.push([new Date(point.ts).toLocaleString(), key, point.value]);
-            });
+          if (pdfExportType === 'raw') {
+              const doc = new jsPDF();
+              doc.text(`Telemetry Data for ${deviceName}`, 14, 15);
+              
+              const tableData: (string | number)[][] = [];
+              for (const key in data) {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                  const series = data[key];
+                  series.forEach((point: { ts: number; value: any; }) => {
+                    tableData.push([new Date(point.ts).toLocaleString(), key, point.value]);
+                  });
+                }
+              }
+              
+              (doc as any).autoTable({
+                head: [['Timestamp', 'Key', 'Value']],
+                body: tableData,
+                startY: 20,
+              });
+              
+              doc.save(`${deviceName}_${startTs}_${endTs}.pdf`);
+          } else { // 'graph'
+            setChartData(formatDataForChart(data));
+            
+            // Allow chart to render before capturing
+            setTimeout(async () => {
+                if (chartRef.current) {
+                    const canvas = await html2canvas(chartRef.current, { scale: 2 });
+                    const imgData = canvas.toDataURL('image/png');
+                    const doc = new jsPDF('landscape', 'px', 'a4');
+                    const pdfWidth = doc.internal.pageSize.getWidth();
+                    const pdfHeight = doc.internal.pageSize.getHeight();
+                    
+                    const imgProps= doc.getImageProperties(imgData);
+                    const imgWidth = imgProps.width;
+                    const imgHeight = imgProps.height;
+                    
+                    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+                    const finalWidth = imgWidth * ratio * 0.9;
+                    const finalHeight = imgHeight * ratio * 0.9;
+
+                    const x = (pdfWidth - finalWidth) / 2;
+                    const y = (pdfHeight - finalHeight) / 2;
+
+                    doc.text(`Telemetry Graph for ${deviceName}`, x, y - 10);
+                    doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+                    doc.save(`${deviceName}_graph_${startTs}_${endTs}.pdf`);
+                }
+                 setChartData([]); // Clear chart data after export
+            }, 500);
           }
-        }
-        
-        (doc as any).autoTable({
-          head: [['Timestamp', 'Key', 'Value']],
-          body: tableData,
-          startY: 20,
-        });
-        
-        doc.save(`${deviceName}_${startTs}_${endTs}.pdf`);
       }
       
       toast({
@@ -247,9 +309,28 @@ export default function DataExportPage() {
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
   }
+  
+  // Hidden container for rendering the chart for PDF export
+  const renderChartForExport = () => (
+     <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '1000px', height: '600px', background: 'white' }} ref={chartRef}>
+        <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} interval="preserveStartEnd" />
+                <YAxis tick={{fontSize: 10}} />
+                <Tooltip />
+                <Legend />
+                {selectedKeys.map(key => (
+                     <Line key={key} type="monotone" dataKey={key} stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`} dot={false} />
+                ))}
+            </LineChart>
+        </ResponsiveContainer>
+    </div>
+  );
 
   return (
     <div className="container mx-auto">
+      {chartData.length > 0 && renderChartForExport()}
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Data Export</CardTitle>
@@ -405,6 +486,28 @@ export default function DataExportPage() {
               </div>
             </RadioGroup>
           </div>
+          
+           {exportFormat === 'PDF' && (
+              <div className="space-y-2 pl-4 border-l-2 ml-2">
+                <Label>PDF Content</Label>
+                <RadioGroup 
+                    defaultValue="raw"
+                    className="flex items-center space-x-4" 
+                    value={pdfExportType}
+                    onValueChange={(value: string) => setPdfExportType(value as PdfExportType)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="raw" id="r-pdf-raw" />
+                    <Label htmlFor="r-pdf-raw">Raw Data</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="graph" id="r-pdf-graph" />
+                    <Label htmlFor="r-pdf-graph">Graph</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
 
           <Button onClick={handleExport} disabled={isExporting || !selectedEntity || selectedKeys.length === 0} className="w-full">
             {isExporting ? (
