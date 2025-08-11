@@ -66,6 +66,10 @@ function LoginFormBody() {
         
         const userData = await userResponse.json();
         
+        if (!userData.customerId || !userData.customerId.id) {
+            throw new Error('Customer ID not found for this user.');
+        }
+
         localStorage.setItem('tb_instance_url', data.instanceUrl);
         localStorage.setItem('tb_auth_token', token);
         localStorage.setItem('tb_refresh_token', refreshToken);
@@ -85,11 +89,11 @@ function LoginFormBody() {
           description: errorData.message || "Invalid username or password. Please try again.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
         toast({
             variant: "destructive",
-            title: "Connection Error",
-            description: "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
+            title: "Error",
+            description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
         });
     } finally {
         setIsLoading(false);
