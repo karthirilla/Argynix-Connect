@@ -1,6 +1,7 @@
+
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -135,3 +136,16 @@ export async function getAssets(
     );
     return result?.data || [];
   }
+
+export async function getAlarms(
+  token: string,
+  instanceUrl: string
+): Promise<ThingsboardAlarm[]> {
+  const url = '/api/alarms?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC';
+  const result = await fetchThingsboard<{ data: ThingsboardAlarm[] }>(
+    url,
+    token,
+    instanceUrl
+  );
+  return result?.data || [];
+}

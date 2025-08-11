@@ -1,3 +1,4 @@
+
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -22,6 +23,16 @@ export type Asset = {
     type: string;
     label: string;
 };
+
+export type Alarm = {
+    id: string;
+    name: string;
+    severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING' | 'INDETERMINATE';
+    status: string;
+    originatorName: string;
+    originatorType: string;
+    createdTime: number;
+}
 
 // Raw types from ThingsBoard API
 export type ThingsboardId = {
@@ -66,4 +77,16 @@ export type ThingsboardUser = {
     customerId: { id: string, entityType: string };
     tenantId: { id: string, entityType: string };
     additionalInfo: any;
+};
+
+export type ThingsboardAlarm = {
+    id: ThingsboardId;
+    name: string; // This is the alarm type
+    severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING' | 'INDETERMINATE';
+    status: 'ACTIVE_UNACK' | 'ACTIVE_ACK' | 'CLEARED_UNACK' | 'CLEARED_ACK';
+    originator: ThingsboardId;
+    originatorName: string;
+    createdTime: number;
+    ackTs?: number;
+    clearTs?: number;
 };
