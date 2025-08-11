@@ -17,7 +17,7 @@ import { getDevices } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
 import { Download, Loader2, CalendarIcon, File as FileIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, subDays } from 'date-fns';
+import { format, subDays, setHours, setMinutes, setSeconds } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,9 @@ export default function DataExportPage() {
     from: subDays(new Date(), 7),
     to: new Date(),
   });
+  const [startTime, setStartTime] = useState('00:00');
+  const [endTime, setEndTime] = useState(format(new Date(), 'HH:mm'));
+
   const [exportFormat, setExportFormat] = useState<ExportFormat>('JSON');
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -116,8 +119,14 @@ export default function DataExportPage() {
         throw new Error('Authentication details not found.');
       }
       
-      const startTs = dateRange.from.getTime();
-      const endTs = dateRange.to.getTime();
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+      let fromWithTime = setSeconds(setMinutes(setHours(dateRange.from, startHours), startMinutes), 0);
+      let toWithTime = setSeconds(setMinutes(setHours(dateRange.to, endHours), endMinutes), 59);
+
+      const startTs = fromWithTime.getTime();
+      const endTs = toWithTime.getTime();
       const encodedKeys = encodeURIComponent(keys);
       
       const apiUrl = `${instanceUrl}/api/plugins/telemetry/DEVICE/${selectedEntity}/values/timeseries?keys=${encodedKeys}&startTs=${startTs}&endTs=${endTs}&limit=50000&agg=NONE`;
@@ -135,6 +144,17 @@ export default function DataExportPage() {
       
       const selectedDevice = devices.find(d => d.id.id === selectedEntity);
       const deviceName = selectedDevice ? selectedDevice.name : 'export';
+
+      if (Object.keys(data).length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'No Data',
+            description: 'No telemetry data found for the selected keys and time range.',
+        });
+        setIsExporting(false);
+        return;
+      }
+
 
       if (exportFormat === 'JSON') {
         downloadFile(JSON.stringify(data, null, 2), `${deviceName}_${startTs}_${endTs}.json`, 'application/json');
@@ -223,43 +243,53 @@ export default function DataExportPage() {
           </div>
           
           <div className="space-y-2">
-            <Label>Date Range</Label>
-             <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dateRange && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, "LLL dd, y")} -{" "}
-                          {format(dateRange.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(dateRange.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={setDateRange}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
+            <Label>Date and Time Range</Label>
+            <div className="grid grid-cols-2 gap-4">
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal col-span-2",
+                        !dateRange && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                        dateRange.to ? (
+                            <>
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {format(dateRange.to, "LLL dd, y")}
+                            </>
+                        ) : (
+                            format(dateRange.from, "LLL dd, y")
+                        )
+                        ) : (
+                        <span>Pick a date</span>
+                        )}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                    />
+                    </PopoverContent>
+                </Popover>
+                <div className="space-y-1">
+                    <Label htmlFor="start-time" className="text-xs">Start Time</Label>
+                    <Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                </div>
+                 <div className="space-y-1">
+                    <Label htmlFor="end-time" className="text-xs">End Time</Label>
+                    <Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -298,3 +328,5 @@ export default function DataExportPage() {
     </div>
   );
 }
+
+    
