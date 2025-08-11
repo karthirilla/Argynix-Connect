@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import type { Dashboard } from '@/lib/data';
+import type { Dashboard } from '@/lib/types';
 import type { SmartExportOutput } from '@/ai/flows/smart-export';
 import { getSmartExportSuggestion } from '@/lib/actions';
 import { Loader2, FileJson, FileText, Lightbulb, Download } from 'lucide-react';

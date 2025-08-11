@@ -1,19 +1,12 @@
 
 "use client";
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
-import { SmartExportModal } from './smart-export-modal';
-import { BarChart, ExternalLink, HardDrive } from 'lucide-react';
+import { BarChart, ExternalLink, HardDrive, LayoutDashboard, Info } from 'lucide-react';
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
-  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
-
-  const handleExportClick = (dashboard: Dashboard) => {
-    setSelectedDashboard(dashboard);
-  };
   
   if (dashboards.length === 0) {
     return (
@@ -53,21 +46,19 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                   </div>
                 )}
             </CardContent>
-            <CardFooter>
-              <Button className="w-full bg-accent hover:bg-accent/90" onClick={() => handleExportClick(dashboard)}>
-                Smart Export
+            <CardFooter className="flex justify-between gap-2">
+               <Button variant="outline" className="w-full">
+                <Info className="mr-2 h-4 w-4" />
+                Details
+              </Button>
+              <Button className="w-full">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Dashboard
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
-      {selectedDashboard && (
-        <SmartExportModal
-          dashboard={selectedDashboard}
-          isOpen={!!selectedDashboard}
-          onClose={() => setSelectedDashboard(null)}
-        />
-      )}
     </>
   );
 }
