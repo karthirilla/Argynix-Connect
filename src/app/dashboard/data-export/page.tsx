@@ -13,20 +13,28 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getDevices } from '@/lib/api';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { getDevices, getDeviceTelemetryKeys } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
-import { Download, Loader2, CalendarIcon, File as FileIcon } from 'lucide-react';
+import { Download, Loader2, CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays, setHours, setMinutes, setSeconds } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 type ExportFormat = 'JSON' | 'CSV' | 'PDF';
 
 export default function DataExportPage() {
   const [devices, setDevices] = useState<ThingsboardDevice[]>([]);
   const [selectedEntity, setSelectedEntity] = useState<string>('');
-  const [keys, setKeys] = useState('');
+  
+  const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [isKeysLoading, setIsKeysLoading] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
+
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 7),
     to: new Date(),
@@ -66,6 +74,34 @@ export default function DataExportPage() {
     fetchData();
   }, []);
 
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedEntity(deviceId);
+    setSelectedKeys([]); // Reset selected keys
+    if (!deviceId) {
+        setTelemetryKeys([]);
+        return;
+    }
+
+    setIsKeysLoading(true);
+    try {
+        const token = localStorage.getItem('tb_auth_token');
+        const instanceUrl = localStorage.getItem('tb_instance_url');
+        if (!token || !instanceUrl) throw new Error("Auth details missing");
+
+        const keys = await getDeviceTelemetryKeys(token, instanceUrl, deviceId);
+        setTelemetryKeys(keys);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching keys',
+            description: 'Could not fetch telemetry keys for the selected device.'
+        });
+        setTelemetryKeys([]);
+    } finally {
+        setIsKeysLoading(false);
+    }
+  }
+
   const convertToCsv = (data: any) => {
     const rows = [];
     const headers = 'timestamp,key,value';
@@ -76,7 +112,6 @@ export default function DataExportPage() {
         const series = data[key];
         series.forEach((point: { ts: number; value: any; }) => {
           const formattedTimestamp = new Date(point.ts).toISOString();
-          // Escape commas in value
           const value = typeof point.value === 'string' && point.value.includes(',') ? `"${point.value}"` : point.value;
           rows.push(`${formattedTimestamp},${key},${value}`);
         });
@@ -96,11 +131,11 @@ export default function DataExportPage() {
   };
 
   const handleExport = async () => {
-    if (!selectedEntity || !keys || !dateRange?.from || !dateRange?.to) {
+    if (!selectedEntity || selectedKeys.length === 0 || !dateRange?.from || !dateRange?.to) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please select a device, enter timeseries keys, and select a date range.',
+        description: 'Please select a device, choose timeseries keys, and select a date range.',
       });
       return;
     }
@@ -127,7 +162,7 @@ export default function DataExportPage() {
 
       const startTs = fromWithTime.getTime();
       const endTs = toWithTime.getTime();
-      const encodedKeys = encodeURIComponent(keys);
+      const encodedKeys = encodeURIComponent(selectedKeys.join(','));
       
       const apiUrl = `${instanceUrl}/api/plugins/telemetry/DEVICE/${selectedEntity}/values/timeseries?keys=${encodedKeys}&startTs=${startTs}&endTs=${endTs}&limit=50000&agg=NONE`;
 
@@ -223,7 +258,7 @@ export default function DataExportPage() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor='device-select'>Device</Label>
-            <Select onValueChange={setSelectedEntity} value={selectedEntity}>
+            <Select onValueChange={handleDeviceChange} value={selectedEntity}>
               <SelectTrigger id="device-select">
                 <SelectValue placeholder="Select a device..." />
               </SelectTrigger>
@@ -238,8 +273,64 @@ export default function DataExportPage() {
           </div>
           
           <div className="space-y-2">
-             <Label htmlFor="keys">Timeseries Keys (comma-separated)</Label>
-            <Input id="keys" placeholder="e.g., temperature,humidity,pressure" value={keys} onChange={e => setKeys(e.target.value)} />
+             <Label htmlFor="keys">Timeseries Keys</Label>
+             <Popover open={keysOpen} onOpenChange={setKeysOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={keysOpen}
+                        className="w-full justify-between font-normal"
+                        disabled={!selectedEntity || isKeysLoading}
+                    >
+                        <div className="flex-1 text-left">
+                            {selectedKeys.length === 0 && "Select keys..."}
+                            {selectedKeys.length > 0 && selectedKeys.length <= 2 && selectedKeys.join(', ')}
+                            {selectedKeys.length > 2 && `${selectedKeys.length} keys selected`}
+                        </div>
+                        {isKeysLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin"/> : <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                    <Command>
+                        <CommandInput placeholder="Search keys..." />
+                        <CommandList>
+                            <CommandEmpty>No keys found.</CommandEmpty>
+                            <CommandGroup>
+                                {telemetryKeys.map((key) => (
+                                <CommandItem
+                                    key={key}
+                                    value={key}
+                                    onSelect={(currentValue) => {
+                                        setSelectedKeys(
+                                            selectedKeys.includes(currentValue)
+                                            ? selectedKeys.filter((k) => k !== currentValue)
+                                            : [...selectedKeys, currentValue]
+                                        );
+                                        setKeysOpen(true)
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedKeys.includes(key) ? "opacity-100" : "opacity-0"
+                                    )}
+                                    />
+                                    {key}
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+            {selectedKeys.length > 0 &&
+                <div className="pt-2 flex flex-wrap gap-1">
+                    {selectedKeys.map(key => (
+                        <Badge key={key} variant="secondary">{key}</Badge>
+                    ))}
+                </div>
+            }
           </div>
           
           <div className="space-y-2">
@@ -315,7 +406,7 @@ export default function DataExportPage() {
             </RadioGroup>
           </div>
 
-          <Button onClick={handleExport} disabled={isExporting || !selectedEntity || !keys} className="w-full">
+          <Button onClick={handleExport} disabled={isExporting || !selectedEntity || selectedKeys.length === 0} className="w-full">
             {isExporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -328,5 +419,3 @@ export default function DataExportPage() {
     </div>
   );
 }
-
-    

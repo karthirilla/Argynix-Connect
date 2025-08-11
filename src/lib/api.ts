@@ -106,6 +106,15 @@ export async function getDeviceAttributes(
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
 
+export async function getDeviceTelemetryKeys(
+    token: string,
+    instanceUrl: string,
+    deviceId: string
+  ): Promise<string[]> {
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/keys/timeseries`;
+    return await fetchThingsboard<string[]>(url, token, instanceUrl);
+}
+
 export async function getAssets(
     token: string,
     instanceUrl: string,
