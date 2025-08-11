@@ -36,7 +36,6 @@ async function fetchThingsboard<T>(
 export async function getDashboards(
   token: string,
   instanceUrl: string,
-  customerId: string | null // Keep for future flexibility, but won't be used for the main call
 ): Promise<ThingsboardDashboard[]> {
   // Use the endpoint from the user's example
   const url = '/api/user/dashboards?pageSize=100&page=0';
@@ -52,10 +51,11 @@ export async function getDashboards(
 export async function getDevices(
   token:string,
   instanceUrl: string,
-  customerId: string | null // Keep for future flexibility, but won't be used for the main call
+  customerId: string | null // Keep for future flexibility
 ): Promise<ThingsboardDevice[]> {
-    // Use the endpoint from the user's example
-    const url = '/api/customer/devices?pageSize=100&page=0';
+    // This endpoint should work for both tenant admins and customer users.
+    // For tenant admins, it fetches all devices. For customer users, it's scoped to their customer ID.
+    const url = '/api/devices?pageSize=100&page=0';
     
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
         url,
