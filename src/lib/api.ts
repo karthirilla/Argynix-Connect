@@ -29,7 +29,7 @@ export async function getDashboards(
   customerId: string
 ): Promise<ThingsboardDashboard[]> {
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    `/api/customer/${customerId}/dashboards?limit=100`,
+    `/api/customer/${customerId}/dashboards?pageSize=100&page=0`,
     token,
     instanceUrl
   );
@@ -42,7 +42,7 @@ export async function getDevices(
   customerId: string
 ): Promise<ThingsboardDevice[]> {
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        `/api/customer/${customerId}/devices?limit=100`,
+        `/api/customer/${customerId}/devices?pageSize=100&page=0`,
         token,
         instanceUrl
     );
