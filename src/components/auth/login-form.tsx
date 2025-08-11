@@ -69,13 +69,22 @@ function LoginFormBody() {
       }
       
       const userData = await userResponse.json();
-      const customerId = userData.customerId;
+      
+      // The placeholder customerId for tenant admins
+      const NULL_UUID = '13814000-1dd2-11b2-8080-808080808080';
+      const customerId = userData.customerId?.id;
 
       localStorage.setItem('tb_instance_url', data.instanceUrl);
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
-      localStorage.setItem('tb_customer_id', customerId);
+
+      if (customerId && customerId !== NULL_UUID) {
+        localStorage.setItem('tb_customer_id', customerId);
+      } else {
+        // Ensure no old customerId is left over
+        localStorage.removeItem('tb_customer_id');
+      }
 
       toast({
         title: "Login Successful",

@@ -21,31 +21,41 @@ async function fetchThingsboard<T>(
     throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
-  return response.json();
+  // Handle cases where response might be empty
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export async function getDashboards(
   token: string,
   instanceUrl: string,
-  customerId: string
+  customerId: string | null
 ): Promise<ThingsboardDashboard[]> {
+  const url = customerId
+    ? `/api/customer/${customerId}/dashboards?pageSize=100&page=0`
+    : '/api/tenant/dashboards?pageSize=100&page=0';
+
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    `/api/customer/${customerId}/dashboards?pageSize=100&page=0`,
+    url,
     token,
     instanceUrl
   );
-  return result.data;
+  return result?.data || [];
 }
 
 export async function getDevices(
-  token: string,
+  token:string,
   instanceUrl: string,
-  customerId: string
+  customerId: string | null
 ): Promise<ThingsboardDevice[]> {
+  const url = customerId
+    ? `/api/customer/${customerId}/devices?pageSize=100&page=0`
+    : '/api/tenant/devices?pageSize=100&page=0';
+    
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        `/api/customer/${customerId}/devices?pageSize=100&page=0`,
+        url,
         token,
         instanceUrl
     );
-    return result.data;
+    return result?.data || [];
 }

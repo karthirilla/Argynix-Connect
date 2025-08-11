@@ -27,7 +27,7 @@ export default function DevicesPage() {
       const instanceUrl = localStorage.getItem('tb_instance_url');
       const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl || !customerId) {
+      if (!token || !instanceUrl) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
@@ -87,6 +87,10 @@ export default function DevicesPage() {
 
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
+  }
+  
+  if (devices.length === 0) {
+    return <div className="text-center text-muted-foreground">No devices found.</div>;
   }
 
   return (

@@ -17,9 +17,10 @@ export default function DashboardsPage() {
     const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
+      // customerId can be null for tenant admins
       const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl || !customerId) {
+      if (!token || !instanceUrl) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;

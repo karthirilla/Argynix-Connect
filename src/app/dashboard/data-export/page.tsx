@@ -24,7 +24,7 @@ export default function DataExportPage() {
       const instanceUrl = localStorage.getItem('tb_instance_url');
       const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl || !customerId) {
+      if (!token || !instanceUrl) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
