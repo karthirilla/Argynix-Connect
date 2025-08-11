@@ -64,8 +64,7 @@ export async function getDevices(
     let url: string;
     
     // Use different endpoints based on whether the user is a tenant admin or customer user.
-    // The placeholder customer ID for tenant admins is '13814000-1dd2-11b2-8080-808080808080'
-    if (customerId && customerId !== '13814000-1dd2-11b2-8080-808080808080') {
+    if (customerId) {
         url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
     } else {
         // This is the endpoint for tenant admins to get all devices.

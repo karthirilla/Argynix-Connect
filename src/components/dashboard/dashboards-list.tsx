@@ -16,44 +16,44 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
   
   if (dashboards.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <h3 className="text-xl font-semibold">No Dashboards Found</h3>
-        <p className="text-muted-foreground">This user does not have any dashboards assigned.</p>
+      <div class="flex flex-col items-center justify-center h-64">
+        <h3 class="text-xl font-semibold">No Dashboards Found</h3>
+        <p class="text-muted-foreground">This user does not have any dashboards assigned.</p>
       </div>
     )
   }
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {dashboards.map((dashboard) => (
-          <Card key={dashboard.id} className="flex flex-col">
+          <Card key={dashboard.id} class="flex flex-col">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div class="flex items-start justify-between">
                 <div>
-                    <CardTitle className="flex items-center gap-2">
-                        <BarChart className="h-5 w-5 text-primary" />
+                    <CardTitle class="flex items-center gap-2">
+                        <BarChart class="h-5 w-5 text-primary" />
                         {dashboard.name}
                     </CardTitle>
-                    <CardDescription className="capitalize">{dashboard.type}</CardDescription>
+                    <CardDescription class="capitalize">{dashboard.type}</CardDescription>
                 </div>
                  <Button variant="ghost" size="icon" asChild>
                     <a href="#" target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
+                        <ExternalLink class="h-4 w-4" />
                     </a>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-grow">
+            <CardContent class="flex-grow">
                 {dashboard.deviceCount > 0 && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                      <HardDrive className="mr-2 h-4 w-4" />
+                  <div class="flex items-center text-sm text-muted-foreground">
+                      <HardDrive class="mr-2 h-4 w-4" />
                       <span>{dashboard.deviceCount} Devices</span>
                   </div>
                 )}
             </CardContent>
             <CardFooter>
-              <Button className="w-full bg-accent hover:bg-accent/90" onClick={() => handleExportClick(dashboard)}>
+              <Button class="w-full bg-accent hover:bg-accent/90" onClick={() => handleExportClick(dashboard)}>
                 Smart Export
               </Button>
             </CardFooter>
@@ -70,4 +70,3 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
     </>
   );
 }
-
