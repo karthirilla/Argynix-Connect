@@ -1,3 +1,4 @@
+
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice } from './types';
@@ -25,7 +26,7 @@ export async function getDashboards(
   instanceUrl: string
 ): Promise<ThingsboardDashboard[]> {
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    '/api/customer/dashboards?limit=100',
+    '/api/tenant/dashboards?limit=100',
     token,
     instanceUrl
   );
@@ -37,7 +38,7 @@ export async function getDevices(
   instanceUrl: string
 ): Promise<ThingsboardDevice[]> {
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        '/api/devices?limit=100', // Note: This uses /api/devices as per common ThingsBoard setups. Adjust if your user has specific customer-level device access patterns.
+        '/api/tenant/devices?limit=100',
         token,
         instanceUrl
     );
