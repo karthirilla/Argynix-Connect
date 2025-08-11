@@ -69,17 +69,6 @@ function LoginFormBody() {
       }
       
       const userData = await userResponse.json();
-      
-      if (userData.authority !== 'CUSTOMER_USER') {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "This user account is not a 'Customer User'. Please log in as a customer user to continue.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       const customerId = userData.customerId;
 
       localStorage.setItem('tb_instance_url', data.instanceUrl);
