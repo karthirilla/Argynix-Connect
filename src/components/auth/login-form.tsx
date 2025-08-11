@@ -8,11 +8,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   instanceUrl: z.string().url({ message: "Please enter a valid URL (e.g., https://argynix.example.com)." }),
@@ -26,6 +26,12 @@ function LoginFormBody() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -73,7 +79,9 @@ function LoginFormBody() {
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
-
+      
+      // A customerId is required for most data fetching operations.
+      // The API returns a "generic" customerId for tenant admins.
       if (userData.customerId && userData.customerId.id) {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
@@ -96,93 +104,95 @@ function LoginFormBody() {
         setIsLoading(false);
     }
   };
+  
+  if (!isMounted) {
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+        </div>
+    );
+  }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="instanceUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instance URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://argynix.example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="your-email@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Connect
-        </Button>
-      </form>
-    </Form>
+     <div className="grid gap-6">
+        <div className="grid gap-2 text-center hidden lg:block">
+            <h1 className="text-3xl font-bold">Login</h1>
+            <p className="text-balance text-muted-foreground">
+              Enter your Argynix instance details to connect
+            </p>
+        </div>
+        <Form {...form}>
+            <form 
+                onSubmit={form.handleSubmit(onSubmit)} 
+                className={cn(
+                    "grid gap-4 transition-opacity duration-500",
+                    isMounted ? "opacity-100" : "opacity-0"
+                )}
+                style={{ transitionDelay: isMounted ? '100ms' : '0ms' }}
+            >
+            <FormField
+                control={form.control}
+                name="instanceUrl"
+                render={({ field }) => (
+                    <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
+                        <FormLabel>Instance URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://argynix.example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                    <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '300ms', animationFillMode: 'forwards'}}>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                            <Input placeholder="your-email@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                     <FormItem className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <div className={cn("opacity-0 animate-in fade-in slide-in-from-bottom-4", isMounted && "animate-running")} style={{animationDelay: '500ms', animationFillMode: 'forwards'}}>
+                <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Connect
+                </Button>
+            </div>
+            </form>
+        </Form>
+     </div>
   )
 }
 
 export default function LoginForm() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Connect to Argynix</CardTitle>
-        <CardDescription>Enter your instance details to get started.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!isMounted ? (
-           <div className="space-y-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-                <Skeleton className="h-10 w-full" />
-           </div>
-        ) : (
-          <LoginFormBody />
-        )}
-      </CardContent>
-    </Card>
-  );
+  return <LoginFormBody />;
 }
