@@ -192,7 +192,7 @@ export default function DashboardRootPage() {
             {renderStats()}
 
             <div className="space-y-4">
-                <h1 className="text-3xl font-bold tracking-tight">Welcome to TBConnect</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynix-TB</h1>
                 <p className="text-muted-foreground">
                     Your central hub for managing ThingsBoard instances, dashboards, and devices.
                 </p>

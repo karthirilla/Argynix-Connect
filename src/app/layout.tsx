@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'TBConnect',
+  title: 'Argynix-TB',
   description: 'Your custom interface for ThingsBoard',
 };
 
