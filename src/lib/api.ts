@@ -36,11 +36,10 @@ async function fetchThingsboard<T>(
 export async function getDashboards(
   token: string,
   instanceUrl: string,
-  customerId: string | null
+  customerId: string | null // Keep for future flexibility, but won't be used for the main call
 ): Promise<ThingsboardDashboard[]> {
-  const url = customerId
-    ? `/api/customer/${customerId}/dashboards?pageSize=100&page=0`
-    : '/api/tenant/dashboards?pageSize=100&page=0';
+  // Use the endpoint from the user's example
+  const url = '/api/user/dashboards?pageSize=100&page=0';
 
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
     url,
@@ -53,11 +52,10 @@ export async function getDashboards(
 export async function getDevices(
   token:string,
   instanceUrl: string,
-  customerId: string | null
+  customerId: string | null // Keep for future flexibility, but won't be used for the main call
 ): Promise<ThingsboardDevice[]> {
-  const url = customerId
-    ? `/api/customer/${customerId}/devices?pageSize=100&page=0`
-    : '/api/tenant/devices?pageSize=100&page=0';
+    // Use the endpoint from the user's example
+    const url = '/api/customer/devices?pageSize=100&page=0';
     
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
         url,
