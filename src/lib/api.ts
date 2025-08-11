@@ -7,7 +7,9 @@ async function fetchThingsboard<T>(
   token: string,
   instanceUrl: string
 ): Promise<T> {
-  const finalUrl = new URL(url, instanceUrl).toString();
+  // Ensure the URL is correctly formed to prevent fetch errors
+  const finalUrl = `${instanceUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+  
   const response = await fetch(finalUrl, {
     headers: {
       'X-Authorization': `Bearer ${token}`,
@@ -23,7 +25,12 @@ async function fetchThingsboard<T>(
 
   // Handle cases where response might be empty
   const text = await response.text();
-  return text ? JSON.parse(text) : null;
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch(e) {
+    console.error("Failed to parse ThingsBoard API response", text);
+    throw new Error("Invalid JSON response from server.");
+  }
 }
 
 export async function getDashboards(
