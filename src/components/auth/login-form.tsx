@@ -66,20 +66,25 @@ function LoginFormBody() {
         
         const userData = await userResponse.json();
         
-        if (!userData.customerId || userData.customerId.isNull) {
+        const customerId = userData.customerId;
+        // The placeholder UUID for a null customer seems to be '13814000-1dd2-11b2-8080-808080808080'
+        if (!customerId || customerId.id === '13814000-1dd2-11b2-8080-808080808080') {
             toast({
                 variant: "destructive",
                 title: "Login Error",
-                description: "This user does not have an associated customer. Please log in as a customer user.",
+                description: "This user account is not associated with a customer. Please log in as a customer user.",
             });
-            throw new Error('Customer ID not found for this user.');
+            // No need to throw an error here as the toast is enough.
+            // We just stop the process.
+            setIsLoading(false);
+            return;
         }
 
         localStorage.setItem('tb_instance_url', data.instanceUrl);
         localStorage.setItem('tb_auth_token', token);
         localStorage.setItem('tb_refresh_token', refreshToken);
         localStorage.setItem('tb_user', data.username);
-        localStorage.setItem('tb_customer_id', userData.customerId.id);
+        localStorage.setItem('tb_customer_id', customerId.id);
 
         toast({
           title: "Login Successful",
@@ -96,9 +101,8 @@ function LoginFormBody() {
       }
     } catch (error: any) {
         // Only show a generic error if a specific toast hasn't been shown already
-        const toasts = document.querySelectorAll('[data-sonner-toast]');
-        if (toasts.length === 0) {
-            toast({
+        if (!document.querySelector('[data-sonner-toast]')) {
+             toast({
                 variant: "destructive",
                 title: "Error",
                 description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
