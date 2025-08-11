@@ -31,3 +31,4 @@ export const mockDevices: Device[] = [
   { id: 'd6', name: 'Soil Moisture Sensor A1', type: 'Moisture Sensor', status: 'Inactive', lastActivity: '1 day ago' },
   { id: 'd7', name: 'Forklift #3', type: 'Industrial Vehicle', status: 'Active', lastActivity: '10 minutes ago' },
 ];
+

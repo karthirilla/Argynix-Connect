@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { Dashboard } from '@/lib/data';
+import type { Dashboard } from '@/lib/types';
 import { SmartExportModal } from './smart-export-modal';
 import { BarChart, ExternalLink, HardDrive } from 'lucide-react';
 
@@ -13,6 +13,15 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
   const handleExportClick = (dashboard: Dashboard) => {
     setSelectedDashboard(dashboard);
   };
+  
+  if (dashboards.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <h3 className="text-xl font-semibold">No Dashboards Found</h3>
+        <p className="text-muted-foreground">This user does not have any dashboards assigned.</p>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -36,10 +45,12 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <HardDrive className="mr-2 h-4 w-4" />
-                    <span>{dashboard.deviceCount} Devices</span>
-                </div>
+                {dashboard.deviceCount > 0 && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                      <HardDrive className="mr-2 h-4 w-4" />
+                      <span>{dashboard.deviceCount} Devices</span>
+                  </div>
+                )}
             </CardContent>
             <CardFooter>
               <Button className="w-full bg-accent hover:bg-accent/90" onClick={() => handleExportClick(dashboard)}>
@@ -59,3 +70,4 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
     </>
   );
 }
+
