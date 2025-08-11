@@ -54,10 +54,7 @@ export function AppHeader() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[250px] p-0 flex flex-col">
-                <SheetHeader className="p-4 border-b">
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                 <AppSidebar />
+                 <AppSidebar isMobile />
               </SheetContent>
             </Sheet>
         </div>
