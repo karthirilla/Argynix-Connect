@@ -31,8 +31,8 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
           <Card key={dashboard.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div>
-                    <CardTitle className="flex items-center gap-2">
+                <div className="flex-grow text-center">
+                    <CardTitle className="flex items-center justify-center gap-2">
                         <BarChart className="h-5 w-5 text-primary" />
                         {dashboard.name}
                     </CardTitle>
