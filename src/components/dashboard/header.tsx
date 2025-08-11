@@ -3,6 +3,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { CircleUser, Menu } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +41,7 @@ export function AppHeader() {
     if (pathname.includes('/dashboard/dashboards')) return 'Dashboards';
     if (pathname.includes('/dashboard/devices')) return 'Devices';
     if (pathname.includes('/dashboard/data-export')) return 'Data Export';
+    if (pathname.includes('/dashboard/profile')) return 'User Profile';
     return 'Dashboard';
   }
 
@@ -71,7 +73,9 @@ export function AppHeader() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{username || 'My Account'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+           <DropdownMenuItem asChild>
+             <Link href="/dashboard/profile">Profile</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>

@@ -33,6 +33,12 @@ async function fetchThingsboard<T>(
   }
 }
 
+export async function getUser(token: string, instanceUrl: string) {
+  const url = '/api/auth/user';
+  return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
+
 export async function getDashboards(
   token: string,
   instanceUrl: string,
