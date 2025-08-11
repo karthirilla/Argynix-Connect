@@ -120,7 +120,7 @@ export default function DataExportPage() {
                   description: `Data has been successfully downloaded.`,
                 });
                 setIsExporting(false);
-            }, 100); // 100ms delay
+            }, 500); // 500ms delay to ensure chart is rendered
         }
     };
     generatePdf();
@@ -196,7 +196,9 @@ export default function DataExportPage() {
         seriesData[key] = {};
         data[key].forEach((point: { ts: number, value: any }) => {
             timestamps.add(point.ts);
-            seriesData[key][point.ts] = point.value;
+            // Ensure value is a number for plotting
+            const numericValue = parseFloat(point.value);
+            seriesData[key][point.ts] = isNaN(numericValue) ? null : numericValue;
         });
     });
 
@@ -207,7 +209,7 @@ export default function DataExportPage() {
             timestamp: new Date(ts).toLocaleString()
         };
         Object.keys(seriesData).forEach(key => {
-            entry[key] = seriesData[key][ts] !== undefined ? seriesData[key][ts] : null;
+            entry[key] = seriesData[key][ts];
         });
         return entry;
     });
@@ -353,7 +355,7 @@ export default function DataExportPage() {
                     <Tooltip />
                     <Legend />
                     {selectedKeys.map(key => (
-                        <Line key={key} type="monotone" dataKey={key} stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`} dot={false} />
+                        <Line key={key} type="monotone" dataKey={key} stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`} dot={false} connectNulls />
                     ))}
                 </LineChart>
             </ResponsiveContainer>
