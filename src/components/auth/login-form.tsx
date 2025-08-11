@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Skeleton } from '../ui/skeleton';
 
 const loginSchema = z.object({
-  instanceUrl: z.string().url({ message: "Please enter a valid URL." }),
+  instanceUrl: z.string().url({ message: "Please enter a valid URL (e.g., https://thingsboard.example.com)." }),
   username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
@@ -57,7 +57,6 @@ function LoginFormBody() {
       
       const { token, refreshToken } = await loginResponse.json();
       
-      // Now get user info to get customerId
       const userResponse = await fetch(`${data.instanceUrl}/api/auth/user`, {
           headers: {
               'X-Authorization': `Bearer ${token}`
@@ -70,19 +69,14 @@ function LoginFormBody() {
       
       const userData = await userResponse.json();
       
-      // The placeholder customerId for tenant admins
-      const NULL_UUID = '13814000-1dd2-11b2-8080-808080808080';
-      const customerId = userData.customerId?.id;
-
       localStorage.setItem('tb_instance_url', data.instanceUrl);
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
 
-      if (customerId && customerId !== NULL_UUID) {
-        localStorage.setItem('tb_customer_id', customerId);
+      if (userData.customerId && userData.customerId.id) {
+        localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
-        // Ensure no old customerId is left over
         localStorage.removeItem('tb_customer_id');
       }
 

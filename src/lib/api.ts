@@ -8,7 +8,7 @@ async function fetchThingsboard<T>(
   instanceUrl: string
 ): Promise<T> {
   // Ensure the URL is correctly formed to prevent fetch errors
-  const finalUrl = `${instanceUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+  const finalUrl = new URL(url, instanceUrl).toString();
   
   const response = await fetch(finalUrl, {
     headers: {
