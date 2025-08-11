@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Argynix IOT',
-  description: 'Your custom interface for Argynix',
+  title: 'TBConnect',
+  description: 'Your custom interface for ThingsBoard',
 };
 
 export default function RootLayout({

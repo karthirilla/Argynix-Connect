@@ -15,7 +15,7 @@ import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
-  instanceUrl: z.string().url({ message: "Please enter a valid URL (e.g., https://argynix.example.com)." }),
+  instanceUrl: z.string().url({ message: "Please enter a valid URL (e.g., https://thingsboard.example.com)." }),
   username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
@@ -98,7 +98,7 @@ function LoginFormBody() {
         toast({
             variant: "destructive",
             title: "Error",
-            description: error.message || "Could not connect to the Argynix instance. Please check the URL and your connection.",
+            description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
         });
     } finally {
         setIsLoading(false);
@@ -139,7 +139,7 @@ function LoginFormBody() {
                     <FormItem>
                         <FormLabel>Instance URL</FormLabel>
                         <FormControl>
-                            <Input placeholder="https://argynix.example.com" {...field} />
+                            <Input placeholder="https://thingsboard.example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
