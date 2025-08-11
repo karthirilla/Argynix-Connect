@@ -55,9 +55,15 @@ export async function getDevices(
   instanceUrl: string,
   customerId: string | null
 ): Promise<ThingsboardDevice[]> {
-    // This endpoint should work for both tenant admins and customer users.
-    // For tenant admins, it fetches all devices. For customer users, it's scoped to their customer ID by the API based on the token.
-    const url = '/api/devices?pageSize=100&page=0';
+    let url: string;
+    
+    // Use different endpoints based on whether the user is a tenant admin or customer user.
+    if (customerId) {
+        url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
+    } else {
+        // This is the endpoint for tenant admins to get all devices.
+        url = `/api/tenant/devices?pageSize=100&page=0`;
+    }
     
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
         url,
