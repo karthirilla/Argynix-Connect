@@ -4,9 +4,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
-import { BarChart, ExternalLink, HardDrive, LayoutDashboard, Info } from 'lucide-react';
-import { useState } from 'react';
-import { SmartExportModal } from './smart-export-modal';
+import { BarChart, LayoutDashboard, Info } from 'lucide-react';
+import Link from 'next/link';
 
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
@@ -39,17 +38,18 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
             <CardContent className="flex-grow">
                 {dashboard.deviceCount > 0 && (
                   <div className="flex items-center text-sm text-muted-foreground">
-                      <HardDrive className="mr-2 h-4 w-4" />
-                      <span>{dashboard.deviceCount} Devices</span>
+                      {/* Using a generic icon as device icon is not available */}
                   </div>
                 )}
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
-               <Button variant="outline" className="w-full">
-                <Info className="mr-2 h-4 w-4" />
-                Details
+               <Button asChild variant="outline" className="w-full" disabled>
+                <Link href={`/dashboard/dashboards/${dashboard.id}`}>
+                    <Info className="mr-2 h-4 w-4" />
+                    Details
+                </Link>
               </Button>
-              <Button className="w-full">
+              <Button className="w-full" disabled>
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 Dashboard
               </Button>
