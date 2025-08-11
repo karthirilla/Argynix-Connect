@@ -1,6 +1,6 @@
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -96,3 +96,24 @@ export async function getDeviceAttributes(
     const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/attributes/SERVER_SCOPE`;
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
+
+export async function getAssets(
+    token: string,
+    instanceUrl: string,
+    customerId: string | null
+  ): Promise<ThingsboardAsset[]> {
+    let url: string;
+      
+    if (customerId) {
+        url = `/api/customer/${customerId}/assets?pageSize=100&page=0`;
+    } else {
+        url = `/api/tenant/assets?pageSize=100&page=0`;
+    }
+      
+    const result = await fetchThingsboard<{ data: ThingsboardAsset[] }>(
+        url,
+        token,
+        instanceUrl
+    );
+    return result?.data || [];
+  }

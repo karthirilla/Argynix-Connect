@@ -16,6 +16,13 @@ export type Device = {
     lastActivity: string; // This might need to be derived or is part of a different API call
 };
 
+export type Asset = {
+    id: string;
+    name: string;
+    type: string;
+    label: string;
+};
+
 // Raw types from ThingsBoard API
 export type ThingsboardId = {
     id: string;
@@ -30,6 +37,15 @@ export type ThingsboardDashboard = {
 };
   
 export type ThingsboardDevice = {
+    id: ThingsboardId;
+    createdTime: number;
+    name: string;
+    type: string;
+    label: string | null;
+    customerId?: ThingsboardId;
+};
+
+export type ThingsboardAsset = {
     id: ThingsboardId;
     createdTime: number;
     name: string;

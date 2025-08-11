@@ -3,13 +3,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard/dashboards', label: 'Dashboards', icon: BarChart },
   { href: '/dashboard/devices', label: 'Devices', icon: HardDrive },
+  { href: '/dashboard/assets', label: 'Assets', icon: Package },
   { href: '/dashboard/data-export', label: 'Data Export', icon: Download },
 ];
 
