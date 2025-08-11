@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -5,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -12,14 +15,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
     if (!token) {
-      router.replace('/login');
+        setError('Authentication token not found. Redirecting to login...');
+        const timer = setTimeout(() => {
+            router.replace('/login');
+        }, 5000);
+        setIsAuthenticating(false);
+        return () => clearTimeout(timer);
     } else {
-      setIsAuthenticating(false);
+        setIsAuthenticated(true);
+        setIsAuthenticating(false);
     }
   }, [router]);
 
@@ -35,6 +46,22 @@ export default function DashboardLayout({
             </div>
         </div>
     );
+  }
+
+  if (error) {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <Alert variant="destructive" className="max-w-md">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Authentication Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
