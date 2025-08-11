@@ -70,7 +70,6 @@ function LoginFormBody() {
       
       const userData = await userResponse.json();
       
-      // This is the definitive check. Only allow CUSTOMER_USER to log in.
       if (userData.authority !== 'CUSTOMER_USER') {
         toast({
           variant: "destructive",
@@ -81,7 +80,7 @@ function LoginFormBody() {
         return;
       }
 
-      const customerId = userData.customerId.id;
+      const customerId = userData.customerId;
 
       localStorage.setItem('tb_instance_url', data.instanceUrl);
       localStorage.setItem('tb_auth_token', token);
