@@ -3,6 +3,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,13 +15,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getDevices } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
-import { Download, Loader2, CalendarIcon } from 'lucide-react';
+import { Download, Loader2, CalendarIcon, File as FileIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 
-type ExportFormat = 'JSON' | 'CSV';
+type ExportFormat = 'JSON' | 'CSV' | 'PDF';
 
 export default function DataExportPage() {
   const [devices, setDevices] = useState<ThingsboardDevice[]>([]);
@@ -139,6 +141,27 @@ export default function DataExportPage() {
       } else if (exportFormat === 'CSV') {
         const csvData = convertToCsv(data);
         downloadFile(csvData, `${deviceName}_${startTs}_${endTs}.csv`, 'text/csv');
+      } else if (exportFormat === 'PDF') {
+        const doc = new jsPDF();
+        doc.text(`Telemetry Data for ${deviceName}`, 14, 15);
+        
+        const tableData: (string | number)[][] = [];
+        for (const key in data) {
+          if (Object.prototype.hasOwnProperty.call(data, key)) {
+            const series = data[key];
+            series.forEach((point: { ts: number; value: any; }) => {
+              tableData.push([new Date(point.ts).toLocaleString(), key, point.value]);
+            });
+          }
+        }
+        
+        (doc as any).autoTable({
+          head: [['Timestamp', 'Key', 'Value']],
+          body: tableData,
+          startY: 20,
+        });
+        
+        doc.save(`${deviceName}_${startTs}_${endTs}.pdf`);
       }
       
       toast({
@@ -254,6 +277,10 @@ export default function DataExportPage() {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="CSV" id="r-csv" />
                 <Label htmlFor="r-csv">CSV</Label>
+              </div>
+               <div className="flex items-center space-x-2">
+                <RadioGroupItem value="PDF" id="r-pdf" />
+                <Label htmlFor="r-pdf">PDF</Label>
               </div>
             </RadioGroup>
           </div>
