@@ -27,6 +27,13 @@ import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line, Responsi
 
 type ExportFormat = 'JSON' | 'CSV' | 'PDF';
 type PdfExportType = 'raw' | 'graph';
+type ChartDataType = {
+    deviceName: string;
+    startTs: number;
+    endTs: number;
+    data: any[];
+}
+
 
 export default function DataExportPage() {
   const [devices, setDevices] = useState<ThingsboardDevice[]>([]);
@@ -51,7 +58,7 @@ export default function DataExportPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataType | null>(null);
   const chartRef = createRef<HTMLDivElement>();
 
   useEffect(() => {
@@ -79,6 +86,43 @@ export default function DataExportPage() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const generatePdf = async () => {
+      if (chartData && chartRef.current) {
+        const { deviceName, startTs, endTs, data } = chartData;
+        const canvas = await html2canvas(chartRef.current, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const doc = new jsPDF('landscape', 'px', 'a4');
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = doc.internal.pageSize.getHeight();
+        
+        const imgProps= doc.getImageProperties(imgData);
+        const imgWidth = imgProps.width;
+        const imgHeight = imgProps.height;
+        
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const finalWidth = imgWidth * ratio * 0.9;
+        const finalHeight = imgHeight * ratio * 0.9;
+
+        const x = (pdfWidth - finalWidth) / 2;
+        const y = (pdfHeight - finalHeight) / 2;
+
+        doc.text(`Telemetry Graph for ${deviceName}`, x, y - 10);
+        doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+        doc.save(`${deviceName}_graph_${startTs}_${endTs}.pdf`);
+
+        setChartData(null); // Clear chart data after export
+        toast({
+          title: 'Export Complete',
+          description: `Data has been successfully downloaded.`,
+        });
+        setIsExporting(false);
+      }
+    };
+    generatePdf();
+  }, [chartData, chartRef, toast]);
+
 
   const handleDeviceChange = async (deviceId: string) => {
     setSelectedEntity(deviceId);
@@ -134,6 +178,11 @@ export default function DataExportPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setIsExporting(false);
+    toast({
+        title: 'Export Complete',
+        description: `Data has been successfully downloaded.`,
+    });
   };
   
   const formatDataForChart = (data: any) => {
@@ -249,42 +298,22 @@ export default function DataExportPage() {
               });
               
               doc.save(`${deviceName}_${startTs}_${endTs}.pdf`);
+              setIsExporting(false);
+              toast({
+                title: 'Export Complete',
+                description: `Data has been successfully downloaded.`,
+              });
+
           } else { // 'graph'
-            setChartData(formatDataForChart(data));
-            
-            // Allow chart to render before capturing
-            setTimeout(async () => {
-                if (chartRef.current) {
-                    const canvas = await html2canvas(chartRef.current, { scale: 2 });
-                    const imgData = canvas.toDataURL('image/png');
-                    const doc = new jsPDF('landscape', 'px', 'a4');
-                    const pdfWidth = doc.internal.pageSize.getWidth();
-                    const pdfHeight = doc.internal.pageSize.getHeight();
-                    
-                    const imgProps= doc.getImageProperties(imgData);
-                    const imgWidth = imgProps.width;
-                    const imgHeight = imgProps.height;
-                    
-                    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                    const finalWidth = imgWidth * ratio * 0.9;
-                    const finalHeight = imgHeight * ratio * 0.9;
-
-                    const x = (pdfWidth - finalWidth) / 2;
-                    const y = (pdfHeight - finalHeight) / 2;
-
-                    doc.text(`Telemetry Graph for ${deviceName}`, x, y - 10);
-                    doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
-                    doc.save(`${deviceName}_graph_${startTs}_${endTs}.pdf`);
-                }
-                 setChartData([]); // Clear chart data after export
-            }, 500);
+            setChartData({
+                deviceName,
+                startTs,
+                endTs,
+                data: formatDataForChart(data)
+            });
+            // The useEffect will handle the PDF generation
           }
       }
-      
-      toast({
-        title: 'Export Complete',
-        description: `Data has been successfully downloaded.`,
-      });
 
     } catch (e: any) {
        toast({
@@ -292,8 +321,7 @@ export default function DataExportPage() {
         title: 'Export Failed',
         description: e.message || 'An unexpected error occurred.',
       });
-    } finally {
-      setIsExporting(false);
+       setIsExporting(false);
     }
   };
 
@@ -314,7 +342,7 @@ export default function DataExportPage() {
   const renderChartForExport = () => (
      <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '1000px', height: '600px', background: 'white' }} ref={chartRef}>
         <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <LineChart data={chartData?.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} interval="preserveStartEnd" />
                 <YAxis tick={{fontSize: 10}} />
@@ -330,7 +358,7 @@ export default function DataExportPage() {
 
   return (
     <div className="container mx-auto">
-      {chartData.length > 0 && renderChartForExport()}
+      {chartData && renderChartForExport()}
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Data Export</CardTitle>
@@ -522,3 +550,5 @@ export default function DataExportPage() {
     </div>
   );
 }
+
+    
