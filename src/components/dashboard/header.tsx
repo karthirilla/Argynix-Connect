@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
@@ -52,7 +53,10 @@ export function AppHeader() {
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[250px] p-0">
+              <SheetContent side="left" className="w-[250px] p-0 flex flex-col">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
                  <AppSidebar />
               </SheetContent>
             </Sheet>
