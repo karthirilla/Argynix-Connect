@@ -7,7 +7,8 @@ async function fetchThingsboard<T>(
   token: string,
   instanceUrl: string
 ): Promise<T> {
-  const response = await fetch(`${instanceUrl}${url}`, {
+  const finalUrl = new URL(url, instanceUrl).toString();
+  const response = await fetch(finalUrl, {
     headers: {
       'X-Authorization': `Bearer ${token}`,
     },
