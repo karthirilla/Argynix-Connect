@@ -11,10 +11,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { getDevices } from '@/lib/api';
 import type { Device as AppDevice, ThingsboardDevice } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Eye } from 'lucide-react';
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<AppDevice[]>([]);
@@ -67,6 +70,7 @@ export default function DevicesPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Activity</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,6 +80,7 @@ export default function DevicesPage() {
                   <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-[120px] float-right" /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -103,6 +108,7 @@ export default function DevicesPage() {
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Last Activity</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -122,6 +128,14 @@ export default function DevicesPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>{device.lastActivity}</TableCell>
+                <TableCell className="text-right">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/dashboard/devices/${device.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
+                    </Link>
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

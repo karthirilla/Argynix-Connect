@@ -24,14 +24,16 @@ export type ThingsboardId = {
 
 export type ThingsboardDashboard = {
     id: ThingsboardId;
+    createdTime: number;
     title: string;
     name: string; // For consistency, though API uses title
 };
   
 export type ThingsboardDevice = {
     id: ThingsboardId;
+    createdTime: number;
     name: string;
     type: string;
-    label: string;
+    label: string | null;
+    customerId?: ThingsboardId;
 };
-

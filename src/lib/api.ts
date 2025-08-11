@@ -73,3 +73,12 @@ export async function getDevices(
     );
     return result?.data || [];
 }
+
+export async function getDeviceById(
+  token: string,
+  instanceUrl: string,
+  deviceId: string
+): Promise<ThingsboardDevice> {
+  const url = `/api/device/${deviceId}`;
+  return await fetchThingsboard<ThingsboardDevice>(url, token, instanceUrl);
+}
