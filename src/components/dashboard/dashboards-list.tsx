@@ -1,16 +1,21 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
 import { BarChart, LayoutDashboard, Info } from 'lucide-react';
 import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
+  const [instanceUrl, setInstanceUrl] = useState('');
+
+  useEffect(() => {
+    // Client-side only: get the instance URL from localStorage
+    const url = localStorage.getItem('tb_instance_url');
+    setInstanceUrl(url || '');
+  }, []);
   
   if (dashboards.length === 0) {
     return (
@@ -23,13 +28,12 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
 
   return (
     <>
-    <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {dashboards.map((dashboard) => (
           <Card key={dashboard.id} className="flex flex-col">
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-grow">
+              <div className="flex items-center justify-center">
+                <div className="flex-grow text-center">
                     <CardTitle className="flex items-center justify-center gap-2">
                         <BarChart className="h-5 w-5 text-primary" />
                         {dashboard.name}
@@ -52,22 +56,16 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                     Details
                 </Link>
               </Button>
-               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button className="w-full">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Dashboard view is not yet implemented.</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button asChild className="w-full">
+                <a href={`${instanceUrl}/dashboards/${dashboard.id}`} target="_blank" rel="noopener noreferrer">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </a>
+              </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
-      </TooltipProvider>
     </>
   );
 }
