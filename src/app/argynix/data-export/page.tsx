@@ -89,36 +89,39 @@ export default function DataExportPage() {
 
   useEffect(() => {
     const generatePdf = async () => {
-      if (chartData && chartRef.current) {
-        const { deviceName, startTs, endTs, data } = chartData;
-        const canvas = await html2canvas(chartRef.current, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const doc = new jsPDF('landscape', 'px', 'a4');
-        const pdfWidth = doc.internal.pageSize.getWidth();
-        const pdfHeight = doc.internal.pageSize.getHeight();
-        
-        const imgProps= doc.getImageProperties(imgData);
-        const imgWidth = imgProps.width;
-        const imgHeight = imgProps.height;
-        
-        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-        const finalWidth = imgWidth * ratio * 0.9;
-        const finalHeight = imgHeight * ratio * 0.9;
+        if (chartData && chartRef.current) {
+            // Give react time to render the chart
+            setTimeout(async () => {
+                const { deviceName, startTs, endTs } = chartData;
+                const canvas = await html2canvas(chartRef.current!, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                const doc = new jsPDF('landscape', 'px', 'a4');
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = doc.internal.pageSize.getHeight();
+                
+                const imgProps= doc.getImageProperties(imgData);
+                const imgWidth = imgProps.width;
+                const imgHeight = imgProps.height;
+                
+                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+                const finalWidth = imgWidth * ratio * 0.9;
+                const finalHeight = imgHeight * ratio * 0.9;
 
-        const x = (pdfWidth - finalWidth) / 2;
-        const y = (pdfHeight - finalHeight) / 2;
+                const x = (pdfWidth - finalWidth) / 2;
+                const y = (pdfHeight - finalHeight) / 2;
 
-        doc.text(`Telemetry Graph for ${deviceName}`, x, y - 10);
-        doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
-        doc.save(`${deviceName}_graph_${startTs}_${endTs}.pdf`);
+                doc.text(`Telemetry Graph for ${deviceName}`, x, y - 10);
+                doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+                doc.save(`${deviceName}_graph_${startTs}_${endTs}.pdf`);
 
-        setChartData(null); // Clear chart data after export
-        toast({
-          title: 'Export Complete',
-          description: `Data has been successfully downloaded.`,
-        });
-        setIsExporting(false);
-      }
+                setChartData(null); // Clear chart data after export
+                toast({
+                  title: 'Export Complete',
+                  description: `Data has been successfully downloaded.`,
+                });
+                setIsExporting(false);
+            }, 100); // 100ms delay
+        }
     };
     generatePdf();
   }, [chartData, chartRef, toast]);
@@ -341,18 +344,20 @@ export default function DataExportPage() {
   // Hidden container for rendering the chart for PDF export
   const renderChartForExport = () => (
      <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '1000px', height: '600px', background: 'white' }} ref={chartRef}>
-        <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData?.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} interval="preserveStartEnd" />
-                <YAxis tick={{fontSize: 10}} />
-                <Tooltip />
-                <Legend />
-                {selectedKeys.map(key => (
-                     <Line key={key} type="monotone" dataKey={key} stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`} dot={false} />
-                ))}
-            </LineChart>
-        </ResponsiveContainer>
+        {chartData?.data && (
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData.data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} interval="preserveStartEnd" />
+                    <YAxis tick={{fontSize: 10}} />
+                    <Tooltip />
+                    <Legend />
+                    {selectedKeys.map(key => (
+                        <Line key={key} type="monotone" dataKey={key} stroke={`#${Math.floor(Math.random()*16777215).toString(16)}`} dot={false} />
+                    ))}
+                </LineChart>
+            </ResponsiveContainer>
+        )}
     </div>
   );
 
