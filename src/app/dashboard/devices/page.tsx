@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { getDevices } from '@/lib/api';
+import { getDevices, getDeviceAttributes } from '@/lib/api';
 import type { Device as AppDevice, ThingsboardDevice } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye } from 'lucide-react';
@@ -38,16 +38,38 @@ export default function DevicesPage() {
 
       try {
         const tbDevices: ThingsboardDevice[] = await getDevices(token, instanceUrl, customerId);
-        const formattedDevices: AppDevice[] = tbDevices.map(d => ({
-          id: d.id.id,
-          name: d.name,
-          type: d.type,
-          label: d.label,
-          // Status and last activity are not in this API response, using placeholders
-          status: 'Active', 
-          lastActivity: 'N/A',
+        
+        const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
+            let status = 'Inactive';
+            let lastActivity = 'N/A';
+            
+            try {
+                const attributes = await getDeviceAttributes(token, instanceUrl, d.id.id);
+                const activeAttr = attributes.find(attr => attr.key === 'active');
+                const lastActivityAttr = attributes.find(attr => attr.key === 'lastActivityTime');
+
+                if (activeAttr) {
+                    status = activeAttr.value ? 'Active' : 'Inactive';
+                }
+                if (lastActivityAttr) {
+                    lastActivity = new Date(lastActivityAttr.value).toLocaleString();
+                }
+            } catch (e) {
+                console.error(`Failed to get attributes for device ${d.id.id}`, e)
+            }
+
+            return {
+                id: d.id.id,
+                name: d.name,
+                type: d.type,
+                label: d.label,
+                status: status as 'Active' | 'Inactive',
+                lastActivity: lastActivity,
+            };
         }));
-        setDevices(formattedDevices);
+        
+        setDevices(devicesWithStatus);
+
       } catch (e) {
         setError('Failed to fetch devices.');
         console.error(e);
@@ -78,6 +100,7 @@ export default function DevicesPage() {
                 <TableRow key={i}>
                   <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+
                   <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-[120px] float-right" /></TableCell>

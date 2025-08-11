@@ -88,3 +88,12 @@ export async function getDeviceById(
   const url = `/api/device/${deviceId}`;
   return await fetchThingsboard<ThingsboardDevice>(url, token, instanceUrl);
 }
+
+export async function getDeviceAttributes(
+    token: string,
+    instanceUrl: string,
+    deviceId: string
+  ): Promise<{ key: string, value: any }[]> {
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/attributes/SERVER_SCOPE`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
