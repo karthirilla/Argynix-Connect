@@ -49,14 +49,14 @@ export default function DashboardsPage() {
 
   if (isLoading) {
     return (
-      <div class="container mx-auto">
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="container mx-auto">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} class="flex flex-col space-y-3">
-              <Skeleton class="h-[125px] w-full rounded-xl" />
-              <div class="space-y-2">
-                <Skeleton class="h-4 w-3/4" />
-                <Skeleton class="h-4 w-1/2" />
+            <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
             </div>
           ))}
@@ -66,11 +66,11 @@ export default function DashboardsPage() {
   }
 
   if (error) {
-    return <div class="text-center text-red-500">{error}</div>;
+    return <div className="text-center text-red-500">{error}</div>;
   }
 
   return (
-    <div class="container mx-auto">
+    <div className="container mx-auto">
       <DashboardsList dashboards={dashboards} />
     </div>
   );
