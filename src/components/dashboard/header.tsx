@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
@@ -58,6 +58,10 @@ export function AppHeader() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[250px] p-0 flex flex-col">
+                 <SheetHeader className="sr-only">
+                    <SheetTitle>Navigation Menu</SheetTitle>
+                    <SheetDescription>Main navigation links for the application.</SheetDescription>
+                 </SheetHeader>
                  <AppSidebar isMobile />
               </SheetContent>
             </Sheet>
