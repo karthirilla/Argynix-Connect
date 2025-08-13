@@ -1,4 +1,4 @@
-
+// /app/(dashboard)/layout.tsx
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from '@/components/ui/toaster';
+
 
 export default function DashboardLayout({
   children,
@@ -42,7 +43,7 @@ export default function DashboardLayout({
   }
 
   if (!isAuthenticated) {
-    return null;
+    return null; // Render nothing while redirecting
   }
 
   return (
