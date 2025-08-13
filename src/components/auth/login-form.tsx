@@ -31,7 +31,7 @@ function LoginFormBody() {
     // If user is already logged in, redirect them to the dashboard root
     const token = localStorage.getItem('tb_auth_token');
     if (token) {
-      router.replace('/dashboards');
+      router.replace('/home');
     } else {
       setIsAuthenticating(false);
     }
@@ -107,7 +107,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
-      router.push('/dashboards');
+      router.push('/home');
 
     } catch (error: any) {
         toast({

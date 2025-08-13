@@ -8,7 +8,7 @@ import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'Home', icon: Home, exact: true },
+  { href: '/home', label: 'Home', icon: Home, exact: true },
   { href: '/dashboards', label: 'Dashboards', icon: BarChart },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/assets', label: 'Assets', icon: Package },
@@ -22,7 +22,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const navContent = (
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
       {navItems.map((item) => {
-        const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+        const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href) && item.href !== '/home';
         return (
             <Link
                 key={item.label}
@@ -60,7 +60,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
     <div className="hidden border-r bg-card md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="/home" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6 text-primary" />
             <span className="">Argynix-TB</span>
           </Link>
