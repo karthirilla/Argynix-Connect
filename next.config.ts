@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  env: {
+    NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL: process.env.NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL,
+  }
 };
 
 export default nextConfig;

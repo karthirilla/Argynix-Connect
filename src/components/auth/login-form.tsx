@@ -15,7 +15,6 @@ import { Skeleton } from '../ui/skeleton';
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
-  instanceUrl: z.string().url({ message: "Please enter a valid URL (e.g., https://thingsboard.example.com)." }),
   username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
@@ -36,7 +35,6 @@ function LoginFormBody() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      instanceUrl: '',
       username: '',
       password: '',
     },
@@ -44,8 +42,20 @@ function LoginFormBody() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    const instanceUrl = process.env.NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL;
+
+    if (!instanceUrl) {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "ThingsBoard instance URL is not configured.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const loginResponse = await fetch(`${data.instanceUrl}/api/auth/login`, {
+      const loginResponse = await fetch(`${instanceUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +73,7 @@ function LoginFormBody() {
       
       const { token, refreshToken } = await loginResponse.json();
       
-      const userResponse = await fetch(`${data.instanceUrl}/api/auth/user`, {
+      const userResponse = await fetch(`${instanceUrl}/api/auth/user`, {
           headers: {
               'X-Authorization': `Bearer ${token}`
           }
@@ -75,7 +85,7 @@ function LoginFormBody() {
       
       const userData = await userResponse.json();
       
-      localStorage.setItem('tb_instance_url', data.instanceUrl);
+      localStorage.setItem('tb_instance_url', instanceUrl);
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
@@ -116,10 +126,6 @@ function LoginFormBody() {
                 <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-10 w-full" />
             </div>
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-            </div>
             <Skeleton className="h-10 w-full" />
         </div>
     );
@@ -132,19 +138,6 @@ function LoginFormBody() {
                 onSubmit={form.handleSubmit(onSubmit)} 
                 className="grid gap-4"
             >
-            <FormField
-                control={form.control}
-                name="instanceUrl"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Instance URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://thingsboard.example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
             <FormField
                 control={form.control}
                 name="username"
