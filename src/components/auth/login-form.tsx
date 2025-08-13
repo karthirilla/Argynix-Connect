@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Skeleton } from '../ui/skeleton';
-import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   username: z.string().min(1, { message: "Username is required." }),
@@ -25,16 +24,16 @@ function LoginFormBody() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
 
   useEffect(() => {
-    // If user is already logged in, redirect them
+    // If user is already logged in, redirect them to the dashboard root
     const token = localStorage.getItem('tb_auth_token');
     if (token) {
       router.replace('/');
     } else {
-      setIsMounted(true);
+      setIsAuthenticating(false);
     }
   }, [router]);
 
@@ -121,7 +120,7 @@ function LoginFormBody() {
     }
   };
   
-  if (!isMounted) {
+  if (isAuthenticating) {
     return (
         <div className="space-y-4">
             <div className="space-y-2">

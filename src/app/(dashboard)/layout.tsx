@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
