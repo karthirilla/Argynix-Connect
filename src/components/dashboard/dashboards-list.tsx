@@ -34,9 +34,9 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
           <Card key={dashboard.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-center justify-center">
+                <BarChart className="h-5 w-5 text-primary mr-2" />
                 <div className="flex-grow text-center">
-                    <CardTitle className="flex items-center justify-center gap-2">
-                        <BarChart className="h-5 w-5 text-primary" />
+                    <CardTitle>
                         {dashboard.name}
                     </CardTitle>
                     <CardDescription className="capitalize text-center">{dashboard.type}</CardDescription>
@@ -52,7 +52,7 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
             </CardContent>
             <CardFooter className="flex justify-between gap-2">
                <Button asChild variant="outline" className="w-full">
-                <Link href={`/argynix/dashboards/${dashboard.id}`}>
+                <Link href={`/dashboards/${dashboard.id}`}>
                     <Info className="mr-2 h-4 w-4" />
                     Details
                 </Link>

@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
@@ -38,12 +38,13 @@ export function AppHeader() {
   };
 
   const getTitle = () => {
-    if (pathname.startsWith('/argynix/dashboards')) return 'Dashboards';
-    if (pathname.startsWith('/argynix/devices')) return 'Devices';
-    if (pathname.startsWith('/argynix/assets')) return 'Assets';
-    if (pathname.startsWith('/argynix/alarms')) return 'Alarms';
-    if (pathname.startsWith('/argynix/data-export')) return 'Data Export';
-    if (pathname.startsWith('/argynix/profile')) return 'User Profile';
+    if (pathname.startsWith('/home')) return 'Home';
+    if (pathname.startsWith('/dashboards')) return 'Dashboards';
+    if (pathname.startsWith('/devices')) return 'Devices';
+    if (pathname.startsWith('/assets')) return 'Assets';
+    if (pathname.startsWith('/alarms')) return 'Alarms';
+    if (pathname.startsWith('/data-export')) return 'Data Export';
+    if (pathname.startsWith('/profile')) return 'User Profile';
     return 'Home';
   }
 
@@ -80,7 +81,7 @@ export function AppHeader() {
           <DropdownMenuLabel>{username || 'My Account'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
            <DropdownMenuItem asChild>
-             <Link href="/argynix/profile">Profile</Link>
+             <Link href="/profile">Profile</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
