@@ -12,7 +12,7 @@ export const Logo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => 
       className={cn("h-6 w-6", className)}
       {...props}
     >
-      <title>Argynix-TB Logo</title>
+      <title>TBConnect Logo</title>
       <path d="M12 2L2 7l10 5 10-5-10-5z"/>
       <path d="M2 17l10 5 10-5"/>
       <path d="M2 12l10 5 10-5"/>

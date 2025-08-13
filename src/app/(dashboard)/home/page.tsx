@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
-import type { ThingsboardDevice, ThingsboardDashboard, ThingsboardAlarm } from '@/lib/types';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
 
 const features = [
@@ -155,69 +154,82 @@ export default function HomePage() {
         }
         
         return (
-             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatsCard
-                  title="Total Devices"
-                  value={deviceStats?.total ?? 0}
-                  icon={<HardDrive className="h-4 w-4 text-muted-foreground" />}
-                  description="All registered devices"
-                />
-                <StatsCard
-                  title="Active Devices"
-                  value={deviceStats?.active ?? 0}
-                  icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
-                  description="Devices currently online"
-                />
-                <StatsCard
-                  title="Total Dashboards"
-                  value={dashboardCount ?? 0}
-                  icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
-                  description="Available visualization dashboards"
-                />
-                <StatsCard
-                  title="Critical Alarms"
-                  value={alarmStats?.critical ?? 0}
-                  icon={<Siren className="h-4 w-4 text-muted-foreground" />}
-                  description="High-priority active alarms"
-                />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+                    <StatsCard
+                    title="Total Devices"
+                    value={deviceStats?.total ?? 0}
+                    icon={<HardDrive className="h-4 w-4 text-muted-foreground" />}
+                    description="All registered devices"
+                    />
+                </div>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+                    <StatsCard
+                    title="Active Devices"
+                    value={deviceStats?.active ?? 0}
+                    icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                    description="Devices currently online"
+                    />
+                </div>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
+                    <StatsCard
+                    title="Total Dashboards"
+                    value={dashboardCount ?? 0}
+                    icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
+                    description="Available visualization dashboards"
+                    />
+                </div>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
+                    <StatsCard
+                    title="Critical Alarms"
+                    value={alarmStats?.critical ?? 0}
+                    icon={<Siren className="h-4 w-4 text-muted-foreground" />}
+                    description="High-priority active alarms"
+                    />
+                </div>
             </div>
         )
     }
 
     return (
         <div className="container mx-auto space-y-8">
-            <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
-            </div>
-            
-            {renderStats()}
-
-            <div className="space-y-4">
-                <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynix-TB</h1>
-                <p className="text-muted-foreground">
-                    Your central hub for managing ThingsBoard instances, dashboards, and devices.
+             <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <h1 className="text-3xl font-bold tracking-tight">Welcome to TBConnect</h1>
+                <p className="text-muted-foreground max-w-2xl">
+                    Your central hub for managing ThingsBoard instances. Get a quick overview of your system, visualize data, and manage all your IoT assets and devices from one place.
                 </p>
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {features.map((feature) => (
-                    <Link href={feature.href} key={feature.title} className="group">
-                        <Card className="h-full flex flex-col transition-all duration-200 group-hover:shadow-lg group-hover:-translate-y-1">
-                            <CardHeader className="flex-row items-center gap-4 space-y-0">
-                                {feature.icon}
-                                <div>
-                                    <CardTitle>{feature.title}</CardTitle>
-                                    <CardDescription>{feature.description}</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-grow flex items-end justify-end">
-                                 <div className="flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Go to {feature.title}
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ))}
+
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+                <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
+                 {renderStats()}
+            </div>
+           
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700">
+                <h2 className="text-2xl font-bold tracking-tight">Quick Access</h2>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {features.map((feature, index) => (
+                        <div key={feature.title} className={`animate-in fade-in slide-in-from-bottom-4 duration-500`} style={{animationDelay: `${700 + (index + 1) * 100}ms`}}>
+                            <Link href={feature.href} className="group">
+                                <Card className="h-full flex flex-col transition-all duration-200 group-hover:shadow-lg group-hover:-translate-y-1">
+                                    <CardHeader className="flex-row items-center gap-4 space-y-0">
+                                        {feature.icon}
+                                        <div>
+                                            <CardTitle>{feature.title}</CardTitle>
+                                            <CardDescription>{feature.description}</CardDescription>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow flex items-end justify-end">
+                                        <div className="flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                            Go to {feature.title}
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
