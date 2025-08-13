@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Toaster } from "@/components/ui/toaster"
 
 export default function DashboardLayout({
   children,
@@ -52,6 +53,7 @@ export default function DashboardLayout({
         <main className="flex-1 p-4 md:p-8 lg:p-10 bg-background/50">
           {children}
         </main>
+        <Toaster />
       </div>
     </div>
   );
