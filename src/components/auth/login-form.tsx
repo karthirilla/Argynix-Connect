@@ -29,8 +29,14 @@ function LoginFormBody() {
 
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    // If user is already logged in, redirect them
+    const token = localStorage.getItem('tb_auth_token');
+    if (token) {
+      router.replace('/');
+    } else {
+      setIsMounted(true);
+    }
+  }, [router]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

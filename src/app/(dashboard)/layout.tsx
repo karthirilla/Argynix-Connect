@@ -17,21 +17,15 @@ export default function DashboardLayout({
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
-    if (!token) {
-        setError('Authentication token not found. Redirecting to login...');
-        const timer = setTimeout(() => {
-            router.replace('/login');
-        }, 5000);
-        setIsAuthenticating(false);
-        return () => clearTimeout(timer);
-    } else {
+    if (token) {
         setIsAuthenticated(true);
-        setIsAuthenticating(false);
+    } else {
+        router.replace('/login');
     }
+    setIsAuthenticating(false);
   }, [router]);
 
   if (isAuthenticating) {
@@ -44,18 +38,6 @@ export default function DashboardLayout({
                     <Skeleton className="h-4 w-[200px]" />
                 </div>
             </div>
-        </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background">
-            <Alert variant="destructive" className="max-w-md">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Authentication Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
         </div>
     );
   }
