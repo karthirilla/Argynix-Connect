@@ -38,7 +38,7 @@ export function AppHeader() {
   };
 
   const getTitle = () => {
-    if (pathname.startsWith('/home')) return 'Home';
+    if (pathname === '/') return 'Home';
     if (pathname.startsWith('/dashboards')) return 'Dashboards';
     if (pathname.startsWith('/devices')) return 'Devices';
     if (pathname.startsWith('/assets')) return 'Assets';

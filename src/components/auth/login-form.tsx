@@ -102,7 +102,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
-      router.push('/home');
+      router.push('/');
 
     } catch (error: any) {
         toast({
