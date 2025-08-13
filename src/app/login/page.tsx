@@ -19,7 +19,7 @@ export default function LoginPage() {
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
              <Logo className="mx-auto h-16 w-16 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">TBConnect</h1>
+            <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
           </div>
           <LoginForm />
         </div>
