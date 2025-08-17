@@ -58,10 +58,10 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                 </Link>
               </Button>
                <Button asChild className="w-full">
-                <a href={`${instanceUrl}/dashboards/${dashboard.id}`} target="_blank" rel="noopener noreferrer">
+                <Link href={`/dashboards/${dashboard.id}/iframe`}>
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
-                </a>
+                  View Dashboard
+                </Link>
               </Button>
             </CardFooter>
           </Card>

@@ -2,11 +2,12 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 
 
 export default function DashboardLayout({
@@ -15,8 +16,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  
+  // Check if the current page is the iframe page
+  const isIframePage = /^\/dashboards\/[a-zA-Z0-9-]+\/iframe$/.test(pathname);
+
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
@@ -48,10 +54,13 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-      <AppSidebar />
+      {!isIframePage && <AppSidebar />}
       <div className="flex flex-1 flex-col">
-        <AppHeader />
-        <main className="flex-1 p-4 md:p-8 lg:p-10 bg-background/50">
+        {!isIframePage && <AppHeader />}
+        <main className={cn(
+          "flex-1 bg-background/50",
+          !isIframePage && "p-4 md:p-8 lg:p-10"
+        )}>
           {children}
         </main>
         <Toaster />
