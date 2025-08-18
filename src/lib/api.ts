@@ -222,7 +222,7 @@ export async function getAlarms(
 }
 
 export async function getTenantProfileInfos(token: string, instanceUrl: string): Promise<ThingsboardTenantProfileInfo[]> {
-    const url = `/api/tenantProfileInfos?pageSize=100&page=0`;
+    const url = `/api/tenantProfiles?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardTenantProfileInfo[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
