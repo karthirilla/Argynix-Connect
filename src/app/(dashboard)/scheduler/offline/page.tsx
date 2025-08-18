@@ -1,3 +1,4 @@
+
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -53,7 +54,8 @@ function ScheduleForm({
   onSave,
   onCancel,
   existingSchedule,
-  isSaving
+  isSaving,
+  scheduleNumber
 }: {
   device: ThingsboardDevice;
   telemetryKeys: string[];
@@ -61,6 +63,7 @@ function ScheduleForm({
   onCancel: () => void;
   existingSchedule?: Omit<Schedule, 'key' | 'enabled'>;
   isSaving: boolean;
+  scheduleNumber: number;
 }) {
     const [attributeKey, setAttributeKey] = useState(existingSchedule?.attributeKey || '');
     const [attributeValue, setAttributeValue] = useState(existingSchedule?.attributeValue || '');
@@ -139,6 +142,14 @@ function ScheduleForm({
 
     return (
         <CardContent className="space-y-6 pt-4">
+             <CardHeader className="p-0 mb-4">
+                 <CardTitle>
+                    {existingSchedule ? `Edit Schedule #${scheduleNumber}` : `Create Schedule #${scheduleNumber}`}
+                 </CardTitle>
+                 <CardDescription>
+                    {existingSchedule ? "Modify the details for this schedule." : "This command will be queued and sent when the device is next online."}
+                </CardDescription>
+             </CardHeader>
             <div className="space-y-2">
                 <Label htmlFor="attribute-key">Attribute Key</Label>
                 <Select onValueChange={setAttributeKey} value={attributeKey}>
@@ -369,17 +380,13 @@ export default function OfflineSchedulerPage() {
     
     let scheduleKey = keyToSave;
     if (!scheduleKey) {
-        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10));
-        let nextIndex = 1;
-        while(existingIndexes.includes(nextIndex)) {
-            nextIndex++;
-        }
-        if(nextIndex > MAX_SCHEDULES) {
-            toast({ variant: 'destructive', title: 'Limit Reached', description: 'Maximum number of schedules reached.' });
-            setIsSaving(false);
-            return;
-        }
-        scheduleKey = `offlineSchedule_${nextIndex}`;
+        scheduleKey = `offlineSchedule_${getNextScheduleIndex()}`;
+    }
+    
+    if(parseInt(scheduleKey.split('_')[1], 10) > MAX_SCHEDULES) {
+        toast({ variant: 'destructive', title: 'Limit Reached', description: 'Maximum number of schedules reached.' });
+        setIsSaving(false);
+        return;
     }
     
     const newSchedule: Omit<Schedule, 'key'> = {
@@ -506,12 +513,12 @@ export default function OfflineSchedulerPage() {
                  {schedules.map(schedule => (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
                         <Card className={cn("overflow-hidden mb-2", !schedule.enabled && "bg-muted/50")}>
-                           <AccordionTrigger className="p-3 hover:no-underline [&[data-state=open]]:border-b">
+                           <div className="flex items-center p-3">
                                <div className="flex-1 text-left">
-                                   <p className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
+                                   <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
                                       <Badge variant="secondary" className="mr-2">#{schedule.key.split('_')[1]}</Badge>
                                       {getScheduleSummary(schedule)}
-                                    </p>
+                                    </div>
                                     <p className="text-xs text-muted-foreground ml-10">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
                                </div>
                                 <div className="flex items-center gap-2 pl-4 ml-auto" onClick={e => e.stopPropagation()}>
@@ -523,14 +530,15 @@ export default function OfflineSchedulerPage() {
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
-                                    <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
-                                       <ChevronDown className="h-4 w-4" />
-                                    </div>
+                                    <AccordionTrigger>
+                                       <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
+                                            <Pencil className="h-4 w-4" />
+                                       </div>
+                                    </AccordionTrigger>
                                 </div>
-                            </AccordionTrigger>
+                            </div>
                             <AccordionContent>
-                               <div className="p-4 bg-background">
-                                <h4 className="font-semibold mb-4">Edit Schedule #{schedule.key.split('_')[1]}</h4>
+                               <div className="p-4 bg-background border-t">
                                  <ScheduleForm
                                         device={selectedDevice!}
                                         telemetryKeys={telemetryKeys}
@@ -538,6 +546,7 @@ export default function OfflineSchedulerPage() {
                                         onCancel={() => setEditingKey(null)}
                                         existingSchedule={schedule}
                                         isSaving={isSaving}
+                                        scheduleNumber={parseInt(schedule.key.split('_')[1], 10)}
                                  />
                                </div>
                             </AccordionContent>
@@ -545,32 +554,28 @@ export default function OfflineSchedulerPage() {
                     </AccordionItem>
                  ))}
 
-                 {editingKey !== "new-schedule" && schedules.length < MAX_SCHEDULES && (
-                    <div className="text-center mt-6">
-                        <Button variant="outline" onClick={() => setEditingKey("new-schedule")} disabled={isSaving}>
-                            <PlusCircle className="mr-2" />
-                            Create New Schedule
-                        </Button>
-                    </div>
-                 )}
-
-                 {editingKey === "new-schedule" && (
-                     <AccordionItem value="new-schedule" className="border-t mt-4 pt-4 border-dashed">
+                <AccordionItem value="new-schedule" className="border-t-0">
+                    {editingKey !== "new-schedule" && schedules.length < MAX_SCHEDULES && (
+                        <div className="text-center mt-6">
+                            <Button variant="outline" onClick={() => setEditingKey("new-schedule")} disabled={isSaving}>
+                                <PlusCircle className="mr-2" />
+                                Create New Schedule
+                            </Button>
+                        </div>
+                    )}
+                    <AccordionContent>
                         <Card>
-                          <CardHeader>
-                             <CardTitle>Create Schedule #{getNextScheduleIndex()}</CardTitle>
-                             <CardDescription>This command will be queued and sent when the device is next online.</CardDescription>
-                          </CardHeader>
-                         <ScheduleForm
-                                 device={selectedDevice!}
-                                 telemetryKeys={telemetryKeys}
-                                 onSave={(data) => handleSave(data)}
-                                 onCancel={() => setEditingKey(null)}
-                                 isSaving={isSaving}
-                         />
+                            <ScheduleForm
+                                    device={selectedDevice!}
+                                    telemetryKeys={telemetryKeys}
+                                    onSave={(data) => handleSave(data)}
+                                    onCancel={() => setEditingKey(null)}
+                                    isSaving={isSaving}
+                                    scheduleNumber={getNextScheduleIndex()}
+                            />
                         </Card>
-                     </AccordionItem>
-                 )}
+                    </AccordionContent>
+                </AccordionItem>
             </Accordion>
         </div>
     )
