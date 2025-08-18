@@ -1,29 +1,23 @@
 import LoginForm from '@/components/auth/login-form';
 import { Logo } from '@/components/icons/logo';
-import Image from 'next/image';
 
 export default function LoginPage() {
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://placehold.co/1080x1920.png"
-          alt="IOT background"
-          data-ai-hint="internet of things technology"
-          width="1080"
-          height="1920"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
-      </div>
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+        <div className="mx-auto grid w-[380px] gap-6">
+          <div className="grid gap-4 text-center animate-in fade-in-50 zoom-in-90 duration-500">
              <Logo className="mx-auto h-16 w-16 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
+             <div>
+                <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
+                <p className="text-balance text-muted-foreground">
+                    Enter your credentials to access your dashboard
+                </p>
+             </div>
           </div>
-          <LoginForm />
+          <div className="animate-in fade-in-50 zoom-in-90 duration-500 delay-200">
+            <LoginForm />
+          </div>
         </div>
-      </div>
     </div>
   );
 }
