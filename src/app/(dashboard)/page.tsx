@@ -4,9 +4,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, CheckCircle } from 'lucide-react';
+import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, CheckCircle, PieChart, AlertTriangle } from 'lucide-react';
 import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend } from 'recharts';
 
 const features = [
   {
@@ -45,14 +46,34 @@ interface DeviceStats {
     total: number;
     active: number;
     inactive: number;
+    types: { name: string; value: number }[];
 }
 
 interface AlarmStats {
+    total: number;
     critical: number;
     major: number;
     minor: number;
     warning: number;
+    bySeverity: { name: string; value: number }[];
 }
+
+const SEVERITY_COLORS: { [key: string]: string } = {
+    CRITICAL: 'hsl(var(--destructive))',
+    MAJOR: 'hsl(var(--chart-1))',
+    MINOR: 'hsl(var(--chart-4))',
+    WARNING: 'hsl(var(--chart-2))',
+    INDETERMINATE: 'hsl(var(--muted-foreground))',
+}
+
+const PIE_CHART_COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+
 
 export default function HomePage() {
     const [deviceStats, setDeviceStats] = useState<DeviceStats | null>(null);
@@ -84,11 +105,17 @@ export default function HomePage() {
                     const activeAttr = attributes.find(attr => attr.key === 'active');
                     return activeAttr?.value === true;
                 }).length;
+
+                const deviceTypes = tbDevices.reduce((acc, device) => {
+                    acc[device.type] = (acc[device.type] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
                 
                 setDeviceStats({
                     total: tbDevices.length,
                     active: activeDevices,
                     inactive: tbDevices.length - activeDevices,
+                    types: Object.entries(deviceTypes).map(([name, value]) => ({ name, value }))
                 });
             } catch (e: any) {
                  console.error("Could not fetch device stats:", e.message);
@@ -107,8 +134,11 @@ export default function HomePage() {
             // Fetch Alarm Stats
             try {
                 const tbAlarms = await getAlarms(token, instanceUrl);
-                const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
+                const alarms = { total: tbAlarms.length, critical: 0, major: 0, minor: 0, warning: 0, bySeverity: [] as {name: string, value: number}[] };
+                const severityCounts: Record<string, number> = {};
+
                 tbAlarms.forEach(alarm => {
+                    severityCounts[alarm.severity] = (severityCounts[alarm.severity] || 0) + 1;
                     switch (alarm.severity) {
                         case 'CRITICAL': alarms.critical++; break;
                         case 'MAJOR': alarms.major++; break;
@@ -116,6 +146,9 @@ export default function HomePage() {
                         case 'WARNING': alarms.warning++; break;
                     }
                 });
+
+                alarms.bySeverity = Object.entries(severityCounts).map(([name, value]) => ({ name: name.charAt(0) + name.slice(1).toLowerCase(), value }));
+
                 setAlarmStats(alarms);
             } catch(e: any) {
                 console.error("Could not fetch alarms. User may not have permissions:", e.message);
@@ -143,13 +176,13 @@ export default function HomePage() {
                 title="Total Devices"
                 value={deviceStats?.total ?? 'N/A'}
                 icon={<HardDrive className="h-4 w-4 text-muted-foreground" />}
-                description={deviceStats === null ? "Permission denied" : "All registered devices"}
+                description={deviceStats === null ? "Permission denied" : `${deviceStats.active} active`}
                 />
                 <StatsCard
-                title="Active Devices"
-                value={deviceStats?.active ?? 'N/A'}
-                icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
-                description={deviceStats === null ? "Permission denied" : "Devices currently online"}
+                title="Active Alarms"
+                value={alarmStats?.total ?? 'N/A'}
+                icon={<Siren className="h-4 w-4 text-muted-foreground" />}
+                description={alarmStats === null ? "Permission denied" : `${alarmStats.critical} critical`}
                 />
                 <StatsCard
                 title="Total Dashboards"
@@ -157,11 +190,11 @@ export default function HomePage() {
                 icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
                 description={dashboardCount === null ? "Permission denied" : "Available visualization dashboards"}
                 />
-                <StatsCard
-                title="Critical Alarms"
-                value={alarmStats?.critical ?? 'N/A'}
-                icon={<Siren className="h-4 w-4 text-muted-foreground" />}
-                description={alarmStats === null ? "Permission denied" : "High-priority active alarms"}
+                 <StatsCard
+                title="Connectivity"
+                value={deviceStats ? `${Math.round((deviceStats.active / deviceStats.total) * 100) || 0}%` : 'N/A'}
+                icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                description={deviceStats === null ? "Permission denied" : "Overall device uptime"}
                 />
             </div>
         )
@@ -180,30 +213,119 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
                  {renderStats()}
             </div>
-           
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold tracking-tight">Quick Access</h2>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {features.map((feature, index) => (
-                        <Link href={feature.href} key={feature.title} className="group">
-                            <Card className="h-full flex flex-col transition-all duration-200 group-hover:shadow-lg group-hover:-translate-y-1">
-                                <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-                                    <div className="shrink-0 rounded-full bg-primary/10 p-3">{feature.icon}</div>
-                                    <div className="flex-1">
-                                        <CardTitle>{feature.title}</CardTitle>
 
-                                        <CardDescription>{feature.description}</CardDescription>
+            <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 grid gap-8">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Alarms by Severity</CardTitle>
+                            <CardDescription>Distribution of active alarms.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><StatsCardSkeleton /></div> :
+                             (alarmStats && alarmStats.bySeverity.length > 0) ? (
+                                <div className="h-[300px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={alarmStats.bySeverity} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip
+                                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                                contentStyle={{
+                                                    background: 'hsl(var(--background))',
+                                                    border: '1px solid hsl(var(--border))',
+                                                    borderRadius: 'var(--radius)',
+                                                }}
+                                            />
+                                            <Bar dataKey="value" name="Count" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                             ) : (
+                                <div className="h-[300px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/50 rounded-lg">
+                                    <CheckCircle className="h-10 w-10 mb-2" />
+                                    <p className="font-medium">No Active Alarms</p>
+                                    <p className="text-sm">Your system is currently clear of all alarms.</p>
+                                </div>
+                             )}
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Devices by Type</CardTitle>
+                            <CardDescription>Distribution of registered device types.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><StatsCardSkeleton /></div> :
+                             (deviceStats && deviceStats.types.length > 0) ? (
+                                <div className="h-[300px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                         <PieChart>
+                                            <Pie
+                                                data={deviceStats.types}
+                                                cx="50%"
+                                                cy="50%"
+                                                labelLine={false}
+                                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                                    const RADIAN = Math.PI / 180;
+                                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                                    return (
+                                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+                                                        {`${(percent * 100).toFixed(0)}%`}
+                                                        </text>
+                                                    );
+                                                }}
+                                                outerRadius={120}
+                                                fill="#8884d8"
+                                                dataKey="value"
+                                                nameKey="name"
+                                            >
+                                                {deviceStats.types.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                 contentStyle={{
+                                                    background: 'hsl(var(--background))',
+                                                    border: '1px solid hsl(var(--border))',
+                                                    borderRadius: 'var(--radius)',
+                                                }}
+                                            />
+                                            <Legend iconSize={10} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                             ): (
+                                <div className="h-[300px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/50 rounded-lg">
+                                    <HardDrive className="h-10 w-10 mb-2" />
+                                    <p className="font-medium">No Devices Found</p>
+                                    <p className="text-sm">There are no devices registered in the system.</p>
+                                </div>
+                             )}
+                        </CardContent>
+                    </Card>
+                </div>
+           
+                <div className="space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quick Access</CardTitle>
+                            <CardDescription>Navigate to key areas of the application.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-4">
+                           {features.slice(0,4).map((feature, index) => (
+                                <Link href={feature.href} key={feature.title} className="group">
+                                    <div className="flex flex-col items-center text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
+                                        <div className="mb-3 shrink-0 rounded-full bg-primary/10 p-3">{feature.icon}</div>
+                                        <p className="text-sm font-medium">{feature.title}</p>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="flex-grow flex items-end justify-end">
-                                    <div className="flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Go to {feature.title}
-                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
+                                </Link>
+                            ))}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
