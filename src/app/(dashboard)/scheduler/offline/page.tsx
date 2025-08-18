@@ -285,8 +285,8 @@ export default function OfflineSchedulerPage() {
   
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
-  const [editingKey, setEditingKey] = useState<string | null>(null); // To control which accordion is open
-  const [scheduleNumberToCreate, setScheduleNumberToCreate] = useState<number | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -326,6 +326,7 @@ export default function OfflineSchedulerPage() {
     setIsFetchingSchedules(true);
     setIsKeysLoading(true);
     setEditingKey(null);
+    setIsCreating(false);
     try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -369,6 +370,7 @@ export default function OfflineSchedulerPage() {
     setSchedules([]);
     setTelemetryKeys([]);
     setEditingKey(null);
+    setIsCreating(false);
     if(deviceId) {
         fetchDeviceData(deviceId);
     }
@@ -380,12 +382,17 @@ export default function OfflineSchedulerPage() {
     setIsSaving(true);
     
     let scheduleKey = keyToSave;
-    if (!scheduleKey && scheduleNumberToCreate) {
-        scheduleKey = `offlineSchedule_${scheduleNumberToCreate}`;
-    } else if (!scheduleKey) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not determine schedule number.' });
-        setIsSaving(false);
-        return;
+    if (!scheduleKey) {
+        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
+        let nextIndex = 1;
+        for (const index of existingIndexes) {
+            if (index === nextIndex) {
+                nextIndex++;
+            } else {
+                break;
+            }
+        }
+        scheduleKey = `offlineSchedule_${nextIndex}`;
     }
     
     if(parseInt(scheduleKey.split('_')[1], 10) > MAX_SCHEDULES) {
@@ -418,7 +425,7 @@ export default function OfflineSchedulerPage() {
     } finally {
         setIsSaving(false);
         setEditingKey(null);
-        setScheduleNumberToCreate(null);
+        setIsCreating(false);
     }
   };
 
@@ -488,28 +495,36 @@ export default function OfflineSchedulerPage() {
     return summary;
   }
   
-  const handleCreateNew = () => {
-    const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
-    let nextIndex = 1;
-    for (const index of existingIndexes) {
-        if (index === nextIndex) {
-            nextIndex++;
-        } else {
-            break;
-        }
-    }
-    setScheduleNumberToCreate(nextIndex);
-    setEditingKey('new-schedule');
-  };
+  const handleCreateNewClick = () => {
+    setIsCreating(true);
+    setEditingKey(null); // Ensure no other item is being edited
+  }
+  
+  const handleCancelCreate = () => {
+    setIsCreating(false);
+  }
 
   const renderSchedulesList = () => {
     if (isFetchingSchedules) {
         return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
+    const nextScheduleNumber = (() => {
+        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
+        let nextIndex = 1;
+        for (const index of existingIndexes) {
+            if (index === nextIndex) {
+                nextIndex++;
+            } else {
+                break;
+            }
+        }
+        return nextIndex;
+    })();
+
     return (
         <div className="space-y-4">
-            {schedules.length === 0 && editingKey !== "new-schedule" && (
+            {schedules.length === 0 && !isCreating && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -517,14 +532,22 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || ""} onValueChange={(value) => {
-                if (!value) setScheduleNumberToCreate(null);
-                setEditingKey(value)
+            <Accordion type="single" collapsible value={editingKey || (isCreating ? 'new-schedule' : '')} onValueChange={(value) => {
+                if (value === 'new-schedule') {
+                    setIsCreating(true);
+                    setEditingKey(null);
+                } else if (value) {
+                    setIsCreating(false);
+                    setEditingKey(value);
+                } else {
+                    setIsCreating(false);
+                    setEditingKey(null);
+                }
             }}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
-                    <AccordionItem value={schedule.key} key={schedule.key}>
+                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
                            <AccordionTrigger className="p-3 hover:no-underline">
                            <div className="flex items-center w-full">
@@ -568,10 +591,10 @@ export default function OfflineSchedulerPage() {
                  )})}
 
                 {/* Create New Form */}
-                <AccordionItem value="new-schedule">
-                    {editingKey !== "new-schedule" && schedules.length < MAX_SCHEDULES && (
+                <AccordionItem value="new-schedule" className="border-b-0">
+                    {!isCreating && schedules.length < MAX_SCHEDULES && (
                         <div className="text-center mt-6">
-                            <Button variant="outline" onClick={handleCreateNew} disabled={isSaving}>
+                            <Button variant="outline" onClick={handleCreateNewClick} disabled={isSaving}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
@@ -579,17 +602,14 @@ export default function OfflineSchedulerPage() {
                     )}
                     <AccordionContent>
                         <Card>
-                           {scheduleNumberToCreate !== null && (
+                           {isCreating && (
                              <ScheduleForm
                                     device={selectedDevice!}
                                     telemetryKeys={telemetryKeys}
                                     onSave={(data) => handleSave(data)}
-                                    onCancel={() => {
-                                        setEditingKey(null)
-                                        setScheduleNumberToCreate(null);
-                                    }}
+                                    onCancel={handleCancelCreate}
                                     isSaving={isSaving}
-                                    scheduleNumber={scheduleNumberToCreate}
+                                    scheduleNumber={nextScheduleNumber}
                             />
                            )}
                         </Card>
