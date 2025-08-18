@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu } from 'lucide-react';
+import { CircleUser, Menu, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,8 @@ export function AppHeader() {
     if (pathname.startsWith('/profile')) return 'User Profile';
     return 'Home';
   }
+  
+  const isIframePage = pathname.includes('/iframe');
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
@@ -67,7 +69,15 @@ export function AppHeader() {
               </SheetContent>
             </Sheet>
         </div>
-      <div className="w-full flex-1">
+      <div className="w-full flex-1 flex items-center gap-4">
+        {isIframePage && (
+           <Button asChild variant="outline" size="sm">
+            <Link href="/dashboards">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboards
+            </Link>
+          </Button>
+        )}
         <h1 className="font-semibold text-xl">{getTitle()}</h1>
       </div>
       <DropdownMenu>
