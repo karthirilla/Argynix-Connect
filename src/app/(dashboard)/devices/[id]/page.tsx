@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { subHours } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Brush } from 'recharts';
 
 
 type ActivityStatus = {
@@ -121,7 +121,7 @@ export default function DeviceDetailsPage() {
                 <Skeleton className="h-4 w-64" />
             </CardHeader>
             <CardContent>
-                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[350px] w-full" />
             </CardContent>
         </Card>
       </div>
@@ -186,23 +186,24 @@ export default function DeviceDetailsPage() {
         <CardHeader>
             <CardTitle>Activity Status (Last 24h)</CardTitle>
             <CardDescription>
-                A visual representation of the device's online/offline status based on telemetry data.
+                A visual representation of the device's online/offline status. Drag the handles to zoom.
             </CardDescription>
         </CardHeader>
         <CardContent>
             {isHistoryLoading ? (
-                 <Skeleton className="h-[300px] w-full" />
+                 <Skeleton className="h-[350px] w-full" />
             ) : activityStatus.length > 0 ? (
-                <div className="h-[300px] w-full">
+                <div className="h-[350px] w-full">
                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={activityStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <BarChart data={activityStatus} margin={{ top: 5, right: 20, left: -10, bottom: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis 
                                 dataKey="time" 
                                 tick={{ fontSize: 12 }} 
                                 tickLine={false} 
                                 axisLine={false} 
-                                interval={24} // Show a tick every 2 hours (24 * 5min intervals)
+                                interval="preserveStartEnd"
+                                minTickGap={80}
                             />
                             <YAxis 
                                 allowDecimals={false} 
@@ -212,7 +213,7 @@ export default function DeviceDetailsPage() {
                                 axisLine={false}
                                 domain={[0, 1]}
                                 ticks={[0, 1]}
-                                tickFormatter={(value) => value === 1 ? 'Online' : 'Offline'}
+                                tickFormatter={(value) => value === 1 ? 'Online' : ''}
                             />
                             <Tooltip
                                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -223,16 +224,24 @@ export default function DeviceDetailsPage() {
                                 }}
                                 labelStyle={{ fontWeight: 'bold' }}
                             />
-                            <Bar dataKey="status" barSize={4}>
+                            <Bar dataKey="status" barSize={10} radius={[2, 2, 0, 0]}>
                                {activityStatus.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.status === 'Online' ? 'hsl(var(--primary))' : 'hsl(var(--muted))'} />
                                 ))}
                             </Bar>
+                            <Brush 
+                                dataKey="time" 
+                                height={30} 
+                                stroke="hsl(var(--primary))"
+                                startIndex={activityStatus.length > 100 ? activityStatus.length - 100 : 0}
+                                endIndex={activityStatus.length - 1}
+                                tickFormatter={() => ''}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] border-2 border-dashed rounded-lg">
+                <div className="flex flex-col items-center justify-center h-[350px] border-2 border-dashed rounded-lg">
                     <Rss className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold">No Telemetry Data Found</h3>
                     <p className="text-muted-foreground text-sm text-center">This device has not reported any telemetry in the last 24 hours.</p>
