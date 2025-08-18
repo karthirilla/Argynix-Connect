@@ -47,8 +47,8 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
 }
 
 export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
-    // This endpoint is for TENANT_ADMIN or SYS_ADMIN to get a list of users for the tenant.
-    const url = `/api/tenant/users?pageSize=100&page=0`;
+    // This endpoint is for TENANT_ADMIN to get a list of customer users for the tenant.
+    const url = `/api/tenant/users?authority=CUSTOMER_USER&pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
