@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, Building2 } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -26,6 +26,11 @@ const adminNavItems = [
         label: 'Users',
         icon: Users,
     },
+    {
+        href: '/audit-logs',
+        label: 'Audit Logs',
+        icon: History,
+    }
 ]
 
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {

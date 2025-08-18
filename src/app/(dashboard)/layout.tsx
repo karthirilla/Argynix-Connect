@@ -42,7 +42,7 @@ export default function DashboardLayout({
             const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
             
             // Redirect non-admins away from admin pages
-            if ((pathname.startsWith('/users') || pathname.startsWith('/tenant-profiles')) && !userIsAdmin) {
+            if ((pathname.startsWith('/users') || pathname.startsWith('/audit-logs')) && !userIsAdmin) {
                  router.replace('/');
             }
 

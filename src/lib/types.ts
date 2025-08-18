@@ -44,6 +44,17 @@ export interface AppUser extends ThingsboardUser {
     permissions: UserPermissions
 }
 
+export type AppAuditLog = {
+    id: string;
+    createdTime: number;
+    entityType: string | null;
+    entityName: string | null;
+    userName: string;
+    actionType: string;
+    actionStatus: string;
+    failureDetails: string | null;
+};
+
 
 // Raw types from ThingsBoard API
 export type ThingsboardId = {
@@ -139,3 +150,17 @@ export interface Schedule {
   days?: string[];
   time?: string;
 }
+
+export type ThingsboardAuditLog = {
+    id: ThingsboardId;
+    createdTime: number;
+    tenantId: ThingsboardId;
+    customerId: ThingsboardId | null;
+    entityId: ThingsboardId | null;
+    userId: ThingsboardId;
+    userName: string; // User email
+    actionType: string; // e.g., 'LOGIN', 'LOGOUT', 'ADDED'
+    actionData: any; // Contains details about the action
+    actionStatus: 'SUCCESS' | 'FAILURE';
+    actionFailureDetails: string | null;
+};
