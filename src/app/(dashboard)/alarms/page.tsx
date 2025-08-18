@@ -16,8 +16,9 @@ import type { Alarm as AppAlarm, ThingsboardAlarm } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 const severityColors = {
   CRITICAL: 'bg-red-500/20 text-red-700 border-red-500/20 hover:bg-red-500/30',
@@ -38,6 +39,7 @@ export default function AlarmsPage() {
   const [alarms, setAlarms] = useState<AppAlarm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +77,13 @@ export default function AlarmsPage() {
 
     fetchData();
   }, []);
+
+  const filteredAlarms = alarms.filter(alarm =>
+    alarm.name.toLowerCase().includes(filter.toLowerCase()) ||
+    alarm.originatorName.toLowerCase().includes(filter.toLowerCase()) ||
+    alarm.severity.toLowerCase().replace('_', ' ').includes(filter.toLowerCase()) ||
+    alarm.status.toLowerCase().replace('_', ' ').includes(filter.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -126,10 +135,22 @@ export default function AlarmsPage() {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4">
+    <div className="container mx-auto px-0 md:px-4 space-y-4">
+        <div className="flex justify-between items-center">
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Filter by type, originator, severity..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+        </div>
+
         {/* Mobile View */}
         <div className="md:hidden grid gap-4">
-            {alarms.map((alarm) => (
+            {filteredAlarms.map((alarm) => (
                 <Card key={alarm.id}>
                     <CardHeader>
                         <CardTitle className="text-base">{alarm.name}</CardTitle>
@@ -164,7 +185,7 @@ export default function AlarmsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {alarms.map((alarm) => (
+                    {filteredAlarms.map((alarm) => (
                     <TableRow key={alarm.id}>
                         <TableCell>{new Date(alarm.createdTime).toLocaleString()}</TableCell>
                         <TableCell className="font-medium">{alarm.originatorName}</TableCell>
@@ -185,6 +206,11 @@ export default function AlarmsPage() {
                 </Table>
             </div>
         </div>
+        {filteredAlarms.length === 0 && (
+            <div className="text-center text-muted-foreground py-10">
+                No alarms match your filter.
+            </div>
+        )}
     </div>
   );
 }

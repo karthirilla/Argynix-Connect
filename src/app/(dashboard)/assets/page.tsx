@@ -15,14 +15,15 @@ import type { Asset as AppAsset, ThingsboardAsset } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Eye } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { Input } from '@/components/ui/input';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<AppAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +59,12 @@ export default function AssetsPage() {
 
     fetchData();
   }, []);
+
+  const filteredAssets = assets.filter(asset =>
+    asset.name.toLowerCase().includes(filter.toLowerCase()) ||
+    asset.type.toLowerCase().includes(filter.toLowerCase()) ||
+    asset.label.toLowerCase().includes(filter.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -99,10 +106,22 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4">
+    <div className="container mx-auto px-0 md:px-4 space-y-4">
+        <div className="flex justify-between items-center">
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Filter by name, type, or label..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+        </div>
+
         {/* Mobile View */}
         <div className="md:hidden grid gap-4">
-            {assets.map((asset) => (
+            {filteredAssets.map((asset) => (
                 <Card key={asset.id}>
                     <CardHeader>
                         <CardTitle className="text-base">{asset.name}</CardTitle>
@@ -134,7 +153,7 @@ export default function AssetsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {assets.map((asset) => (
+                    {filteredAssets.map((asset) => (
                     <TableRow key={asset.id}>
                         <TableCell className="font-medium">{asset.name}</TableCell>
                         <TableCell>{asset.type}</TableCell>
@@ -153,6 +172,11 @@ export default function AssetsPage() {
                 </Table>
             </div>
         </div>
+        {filteredAssets.length === 0 && (
+            <div className="text-center text-muted-foreground py-10">
+                No assets match your filter.
+            </div>
+        )}
     </div>
   );
 }

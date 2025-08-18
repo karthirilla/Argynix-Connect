@@ -1,4 +1,3 @@
-
 // /app/(dashboard)/audit-logs/page.tsx
 "use client";
 
@@ -17,8 +16,9 @@ import type { AppAuditLog, ThingsboardAuditLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, History } from 'lucide-react';
+import { AlertCircle, History, Search } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 const actionStatusColors = {
   SUCCESS: 'bg-green-500/20 text-green-700 border-green-500/20',
@@ -29,6 +29,7 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AppAuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,6 +68,13 @@ export default function AuditLogsPage() {
 
     fetchData();
   }, []);
+
+  const filteredLogs = logs.filter(log =>
+    log.userName.toLowerCase().includes(filter.toLowerCase()) ||
+    log.actionType.toLowerCase().includes(filter.toLowerCase()) ||
+    (log.entityName && log.entityName.toLowerCase().includes(filter.toLowerCase())) ||
+    (log.entityType && log.entityType.toLowerCase().includes(filter.toLowerCase()))
+  );
 
   if (isLoading) {
     return (
@@ -126,10 +134,22 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4">
+    <div className="container mx-auto px-0 md:px-4 space-y-4">
+         <div className="flex justify-between items-center">
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Filter by user, action, entity..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+        </div>
+
         {/* Mobile View */}
         <div className="md:hidden grid gap-4">
-            {logs.map((log) => (
+            {filteredLogs.map((log) => (
                 <Card key={log.id}>
                     <CardHeader>
                         <CardTitle className="text-base">
@@ -166,7 +186,7 @@ export default function AuditLogsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {logs.map((log) => (
+                    {filteredLogs.map((log) => (
                     <TableRow key={log.id}>
                         <TableCell>{new Date(log.createdTime).toLocaleString()}</TableCell>
                         <TableCell className="font-medium">{log.userName}</TableCell>
@@ -186,6 +206,11 @@ export default function AuditLogsPage() {
                 </Table>
             </div>
         </div>
+         {filteredLogs.length === 0 && (
+            <div className="text-center text-muted-foreground py-10">
+                No logs match your filter.
+            </div>
+        )}
     </div>
   );
 }

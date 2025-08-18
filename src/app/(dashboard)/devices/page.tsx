@@ -17,16 +17,18 @@ import { cn } from '@/lib/utils';
 import { getDevices, getDeviceAttributes } from '@/lib/api';
 import type { Device as AppDevice, ThingsboardDevice } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, HardDrive } from 'lucide-react';
+import { Eye, HardDrive, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<AppDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,6 +86,12 @@ export default function DevicesPage() {
 
     fetchData();
   }, []);
+  
+  const filteredDevices = devices.filter(device => 
+    device.name.toLowerCase().includes(filter.toLowerCase()) ||
+    device.type.toLowerCase().includes(filter.toLowerCase()) ||
+    (device.label && device.label.toLowerCase().includes(filter.toLowerCase()))
+  );
 
   if (isLoading) {
     return (
@@ -158,10 +166,22 @@ export default function DevicesPage() {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4">
+    <div className="container mx-auto px-0 md:px-4 space-y-4">
+        <div className="flex justify-between items-center">
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Filter by name, type, or label..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="pl-10"
+                />
+            </div>
+        </div>
+
        {/* Mobile View */}
       <div className="md:hidden grid gap-4">
-        {devices.map((device) => (
+        {filteredDevices.map((device) => (
             <Card key={device.id}>
                 <CardHeader>
                     <CardTitle className="text-base">{device.name}</CardTitle>
@@ -206,7 +226,7 @@ export default function DevicesPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {devices.map((device) => (
+                {filteredDevices.map((device) => (
                 <TableRow key={device.id}>
                     <TableCell className="font-medium">{device.name}</TableCell>
                     <TableCell>{device.type}</TableCell>
@@ -237,6 +257,11 @@ export default function DevicesPage() {
             </Table>
         </div>
       </div>
+       {filteredDevices.length === 0 && (
+            <div className="text-center text-muted-foreground py-10">
+                No devices match your filter.
+            </div>
+        )}
     </div>
   );
 }
