@@ -1,4 +1,3 @@
-
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -76,7 +75,17 @@ export type ThingsboardUser = {
     authority: string;
     customerId: { id: string, entityType: string };
     tenantId: { id: string, entityType: string };
-    additionalInfo: any;
+    additionalInfo: {
+        description?: string;
+        address?: {
+            street?: string;
+            city?: string;
+            state?: string;
+            zip?: string;
+            country?: string;
+        };
+        mobile?: string;
+    } | null;
 };
 
 export type ThingsboardAlarm = {
