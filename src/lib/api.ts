@@ -48,13 +48,23 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
 }
 
 export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
-    // A TENANT_ADMIN should use /api/tenant/users. /api/users is for SYS_ADMIN.
-    const url = `/api/tenant/users?pageSize=100&page=0`;
-    const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(
-        url,
-        token,
-        instanceUrl
-    );
+    // This endpoint is for TENANT_ADMIN or SYS_ADMIN to get a list of users.
+    const url = `${instanceUrl}/api/tenant/users?pageSize=100&page=0`;
+    
+    const response = await fetch(url, {
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("ThingsBoard API Error fetching users:", errorBody);
+        throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
+    }
+
+    const result = await response.json();
     return result?.data || [];
 }
 
