@@ -60,7 +60,8 @@ export function AppHeader() {
     html2canvas(mainContent, {
         allowTaint: true,
         useCORS: true,
-        scale: 2
+        scale: 2,
+        backgroundColor: null // Use transparent background
     }).then((canvas) => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `${getTitle().toLowerCase().replace(/\s/g, '_')}_${timestamp}`;
@@ -115,21 +116,23 @@ export function AppHeader() {
         <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
       </div>
       <div className="flex items-center gap-2">
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-full">
-                    <Download className="h-5 w-5" />
-                    <span className="sr-only">Export Page</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Export Page As</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleExport('png')}>PNG Image</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('jpeg')}>JPEG Image</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')}>PDF Document</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        {!isIframePage && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-full">
+                        <Download className="h-5 w-5" />
+                        <span className="sr-only">Export Page</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Export Page As</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleExport('png')}>PNG Image</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('jpeg')}>JPEG Image</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pdf')}>PDF Document</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )}
 
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
