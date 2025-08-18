@@ -197,9 +197,9 @@ export default function HomePage() {
                         <div key={feature.title} className={`animate-in fade-in slide-in-from-bottom-4 duration-500`} style={{animationDelay: `${700 + (index + 1) * 100}ms`}}>
                             <Link href={feature.href} className="group">
                                 <Card className="h-full flex flex-col transition-all duration-200 group-hover:shadow-lg group-hover:-translate-y-1">
-                                    <CardHeader className="flex-row items-center gap-4 space-y-0">
-                                        {feature.icon}
-                                        <div>
+                                    <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+                                        <div className="shrink-0">{feature.icon}</div>
+                                        <div className="flex-1">
                                             <CardTitle>{feature.title}</CardTitle>
                                             <CardDescription>{feature.description}</CardDescription>
                                         </div>
