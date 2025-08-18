@@ -5,6 +5,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wifi, WifiOff, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SchedulerPage() {
   return (
@@ -24,7 +25,7 @@ export default function SchedulerPage() {
                 </div>
                 <div>
                     <CardTitle>Online Scheduler</CardTitle>
-                    <CardDescription>Schedule commands for devices that are currently connected.</CardDescription>
+                    <CardDescription>Schedule commands for connected devices.</CardDescription>
                 </div>
             </div>
           </CardHeader>
@@ -34,9 +35,11 @@ export default function SchedulerPage() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button disabled>
+            <Button asChild disabled>
+              <Link href="/scheduler/online">
                 Launch Online Scheduler
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardFooter>
         </Card>
@@ -48,7 +51,7 @@ export default function SchedulerPage() {
                 </div>
                 <div>
                     <CardTitle>Offline Scheduler</CardTitle>
-                    <CardDescription>Queue commands for devices that are currently offline.</CardDescription>
+                    <CardDescription>Queue commands for offline devices.</CardDescription>
                 </div>
             </div>
           </CardHeader>
@@ -58,9 +61,11 @@ export default function SchedulerPage() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button disabled>
-                Launch Offline Scheduler
-                 <ArrowRight className="ml-2 h-4 w-4" />
+            <Button asChild>
+                <Link href="/scheduler/offline">
+                    Launch Offline Scheduler
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
             </Button>
           </CardFooter>
         </Card>

@@ -6,14 +6,18 @@ import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, Thingsb
 async function fetchThingsboard<T>(
   url: string,
   token: string,
-  instanceUrl: string
+  instanceUrl: string,
+  options: RequestInit = {}
 ): Promise<T> {
   // Ensure the URL is correctly formed to prevent fetch errors
   const finalUrl = new URL(url, instanceUrl).toString();
   
   const response = await fetch(finalUrl, {
+    ...options,
     headers: {
+      'Content-Type': 'application/json',
       'X-Authorization': `Bearer ${token}`,
+      ...options.headers,
     },
   });
 
@@ -24,7 +28,11 @@ async function fetchThingsboard<T>(
     throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
-  // Handle cases where response might be empty
+  // Handle cases where response might be empty (e.g., for 204 No Content on delete)
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return null as T;
+  }
+
   const text = await response.text();
   try {
     return text ? JSON.parse(text) : null;
@@ -106,6 +114,32 @@ export async function getDeviceAttributes(
     const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/attributes/SERVER_SCOPE`;
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
+
+export async function saveDeviceAttributes(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    attributes: Record<string, any>
+): Promise<void> {
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/SERVER_SCOPE`;
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(attributes),
+    });
+}
+
+export async function deleteDeviceAttributes(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    keys: string[]
+): Promise<void> {
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/SERVER_SCOPE?keys=${keys.join(',')}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'DELETE',
+    });
+}
+
 
 export async function getDeviceTelemetryKeys(
     token: string,
