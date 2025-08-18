@@ -22,6 +22,8 @@ export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [username, setUsername] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
@@ -52,7 +54,7 @@ export function AppHeader() {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-        <Sheet>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
             <Button
                 variant="outline"
@@ -64,7 +66,7 @@ export function AppHeader() {
             </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col w-[250px] p-0">
-                <AppSidebar isMobile />
+                <AppSidebar isMobile onLinkClick={() => setIsMobileMenuOpen(false)} />
             </SheetContent>
         </Sheet>
         <div className="w-full flex-1 flex items-center gap-4">

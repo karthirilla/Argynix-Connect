@@ -33,7 +33,7 @@ const adminNavItems = [
     }
 ]
 
-export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
+export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boolean, onLinkClick?: () => void }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
   
@@ -64,6 +64,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
          <Link
             key={item.label}
             href={item.href}
+            onClick={onLinkClick}
             className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
                 { 'bg-muted text-primary': isActive }
@@ -89,7 +90,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
     return (
         <>
             <SheetHeader className="h-14 flex flex-row items-center border-b px-4 lg:h-[60px] lg:px-6">
-                 <Link href="/" className="flex items-center gap-2 font-semibold">
+                 <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
                     <Logo className="h-6 w-6 text-primary" />
                     <SheetTitle className="text-base">Argynic-Connect</SheetTitle>
                 </Link>
