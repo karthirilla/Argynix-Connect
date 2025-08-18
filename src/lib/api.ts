@@ -1,7 +1,6 @@
-
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -48,11 +47,23 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
 }
 
 export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
-    // This endpoint is for TENANT_ADMIN to get a list of customer users for the tenant.
-    const url = `/api/tenant/users?authority=CUSTOMER_USER&pageSize=100&page=0`;
+    const url = `/api/users?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
+
+export async function getCustomers(token: string, instanceUrl: string): Promise<ThingsboardCustomer[]> {
+    const url = `/api/customers?pageSize=100&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardCustomer[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
+export async function getCustomerUsers(token: string, instanceUrl: string, customerId: string): Promise<ThingsboardUser[]> {
+    const url = `/api/customer/${customerId}/users?pageSize=100&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
 
 export async function getUserAttributes(
     token: string,

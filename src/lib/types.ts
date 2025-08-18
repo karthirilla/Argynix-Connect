@@ -76,6 +76,22 @@ export type ThingsboardAsset = {
     customerId?: ThingsboardId;
 };
 
+export type ThingsboardCustomer = {
+    id: ThingsboardId;
+    createdTime: number;
+    title: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
+    address?: string | null;
+    address2?: string | null;
+    zip?: string | null;
+    additionalInfo?: any;
+}
+
 export type ThingsboardUser = {
     id: { id: string, entityType: string };
     createdTime: number;

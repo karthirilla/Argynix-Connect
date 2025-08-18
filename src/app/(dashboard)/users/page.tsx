@@ -4,14 +4,16 @@
 import { useEffect, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsers, getUserAttributes, saveUserAttributes } from '@/lib/api';
-import type { ThingsboardUser, AppUser, UserPermissions } from '@/lib/types';
+import { getCustomers, getCustomerUsers, getUserAttributes, saveUserAttributes } from '@/lib/api';
+import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const defaultPermissions: UserPermissions = {
     canExport: true,
@@ -37,10 +39,17 @@ export default function UsersPage() {
             }
 
             try {
-                const tbUsers: ThingsboardUser[] = await getUsers(token, instanceUrl);
+                // For a Tenant Admin, we must first get all customers, then get users for each customer.
+                const customers: ThingsboardCustomer[] = await getCustomers(token, instanceUrl);
+
+                const allUsers: ThingsboardUser[] = [];
+                for (const customer of customers) {
+                    const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
+                    allUsers.push(...customerUsers);
+                }
 
                 const usersWithPermissions = await Promise.all(
-                    tbUsers.map(async (user) => {
+                    allUsers.map(async (user) => {
                         try {
                             const attributes = await getUserAttributes(token, instanceUrl, user.id.id);
                             
@@ -61,8 +70,8 @@ export default function UsersPage() {
                 );
                 
                 setUsers(usersWithPermissions);
-            } catch (e) {
-                setError('Failed to fetch users.');
+            } catch (e: any) {
+                setError(e.message || 'Failed to fetch users.');
                 console.error(e);
             } finally {
                 setIsLoading(false);
@@ -105,14 +114,14 @@ export default function UsersPage() {
     
     if (isLoading) {
         return (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(6)].map((_, i) => (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {[...Array(8)].map((_, i) => (
                     <Card key={i}>
                         <CardHeader>
                             <Skeleton className="h-6 w-3/4" />
                             <Skeleton className="h-4 w-1/2" />
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-4 pt-6">
                             <Skeleton className="h-5 w-full" />
                             <Skeleton className="h-5 w-full" />
                             <Separator />
@@ -125,7 +134,23 @@ export default function UsersPage() {
     }
     
     if(error) {
-        return <p className="text-destructive">{error}</p>
+        return (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
+    
+    if (users.length === 0) {
+        return (
+            <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>No Customer Users Found</AlertTitle>
+                <AlertDescription>There are no customer users assigned to any customers for this tenant.</AlertDescription>
+            </Alert>
+        );
     }
 
     return (
