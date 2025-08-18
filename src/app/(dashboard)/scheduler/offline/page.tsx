@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
-import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil } from 'lucide-react';
+import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -401,6 +401,7 @@ export default function OfflineSchedulerPage() {
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the schedule.' });
     } finally {
         setIsSaving(false);
+        setEditingKey(null);
     }
   };
 
@@ -488,64 +489,64 @@ export default function OfflineSchedulerPage() {
                  {schedules.map(schedule => (
                     <AccordionItem value={schedule.key} key={schedule.key}>
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                             <div className="flex items-center p-2 pr-4">
-                                <AccordionTrigger asChild>
-                                    <div className="flex flex-1 items-center gap-4 p-2 cursor-pointer rounded-md hover:bg-muted">
-                                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                                        <div className="flex-grow">
-                                            <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
-                                            <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
-                                        </div>
-                                    </div>
-                                </AccordionTrigger>
-                                <div className="flex items-center gap-2 pl-4 border-l ml-2">
+                            <div className="flex items-center p-3 border-b">
+                                <div className="flex-grow">
+                                    <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
+                                    <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
+                                </div>
+                                <div className="flex items-center gap-2 pl-4 ml-2">
                                     <Switch
-                                            checked={schedule.enabled}
-                                            onCheckedChange={() => handleToggleEnable(schedule)}
-                                            disabled={isSaving}
+                                        checked={schedule.enabled}
+                                        onCheckedChange={() => handleToggleEnable(schedule)}
+                                        disabled={isSaving}
                                     />
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
+                                    <AccordionTrigger>
+                                        <ChevronDown className="h-5 w-5 transition-transform duration-200" />
+                                    </AccordionTrigger>
                                 </div>
                             </div>
                             <AccordionContent>
-                            <ScheduleForm
-                                    device={selectedDevice!}
-                                    telemetryKeys={telemetryKeys}
-                                    onSave={(data) => handleSave(data, schedule.key)}
-                                    existingSchedule={schedule}
-                                    isSaving={isSaving}
-                            />
+                               <div className="p-4">
+                                <h4 className="font-semibold mb-4">Edit Schedule</h4>
+                                 <ScheduleForm
+                                        device={selectedDevice!}
+                                        telemetryKeys={telemetryKeys}
+                                        onSave={(data) => handleSave(data, schedule.key)}
+                                        existingSchedule={schedule}
+                                        isSaving={isSaving}
+                                 />
+                               </div>
                             </AccordionContent>
                         </Card>
                     </AccordionItem>
                  ))}
 
-                 {schedules.length < MAX_SCHEDULES && (
-                    <AccordionItem value="new-schedule" className="border-none mt-4">
-                         <div className="text-center">
-                            <AccordionTrigger asChild>
-                                <Button variant="outline" onClick={() => setEditingKey(editingKey === "new-schedule" ? null : "new-schedule")}>
-                                    <PlusCircle className="mr-2" />
-                                    Create New Schedule
-                                </Button>
-                            </AccordionTrigger>
-                        </div>
-                        <AccordionContent className="mt-4">
-                           <Card>
-                             <CardHeader>
-                                <CardTitle>New Schedule Details</CardTitle>
-                             </CardHeader>
-                            <ScheduleForm
-                                    device={selectedDevice!}
-                                    telemetryKeys={telemetryKeys}
-                                    onSave={(data) => handleSave(data)}
-                                    isSaving={isSaving}
-                            />
-                           </Card>
-                        </AccordionContent>
-                    </AccordionItem>
+                {schedules.length < MAX_SCHEDULES && (
+                    <div className="text-center mt-6">
+                        <Button variant="outline" onClick={() => setEditingKey(editingKey === "new-schedule" ? null : "new-schedule")} disabled={editingKey === "new-schedule"}>
+                            <PlusCircle className="mr-2" />
+                            Create New Schedule
+                        </Button>
+                    </div>
+                 )}
+
+                 {editingKey === "new-schedule" && (
+                     <AccordionItem value="new-schedule" className="border-t mt-4 pt-4">
+                        <Card>
+                          <CardHeader>
+                             <CardTitle>New Schedule Details</CardTitle>
+                          </CardHeader>
+                         <ScheduleForm
+                                 device={selectedDevice!}
+                                 telemetryKeys={telemetryKeys}
+                                 onSave={(data) => handleSave(data)}
+                                 isSaving={isSaving}
+                         />
+                        </Card>
+                     </AccordionItem>
                  )}
             </Accordion>
         </div>
@@ -604,3 +605,5 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
+
+    
