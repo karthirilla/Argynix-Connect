@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
+import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -285,7 +285,7 @@ export default function OfflineSchedulerPage() {
   
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
-  const [editingKey, setEditingKey] = useState<string | undefined>(undefined); // This will hold the key of the item being edited or 'new-schedule'
+  const [editingKey, setEditingKey] = useState<string | undefined>(undefined); 
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -425,26 +425,29 @@ export default function OfflineSchedulerPage() {
     }
   };
 
-  const handleDelete = async (scheduleKey: string) => {
+  const handleDelete = async (schedule: Schedule) => {
     if (!selectedDevice) return;
 
-    setIsSaving(true); // Reuse saving state for delete operation
+    const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, enabled: false };
+    delete (updatedSchedule as any).key;
+
+    setIsSaving(true);
      try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
         if (!token || !instanceUrl) throw new Error("Auth details missing");
-
-        await deleteDeviceAttributes(token, instanceUrl, selectedDevice.id.id, [scheduleKey]);
+        
+        await saveDeviceAttributes(token, instanceUrl, selectedDevice.id.id, { [schedule.key]: updatedSchedule });
         
         await fetchDeviceData(selectedDevice.id.id);
 
         toast({
-          title: 'Schedule Deleted',
-          description: 'The schedule has been successfully deleted.',
+          title: 'Schedule Disabled',
+          description: 'The schedule has been successfully disabled.',
         });
 
     } catch (error) {
-        toast({ variant: 'destructive', title: 'Delete Failed', description: 'Could not delete the schedule.' });
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not disable the schedule.' });
     } finally {
         setIsSaving(false);
     }
@@ -529,7 +532,7 @@ export default function OfflineSchedulerPage() {
                     return (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                           <div className="flex items-center p-3 hover:bg-muted/50">
+                           <div className="flex items-center p-3 hover:bg-muted/50 gap-2">
                                 <div className="flex-1 text-left">
                                      <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
                                        <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
@@ -543,13 +546,10 @@ export default function OfflineSchedulerPage() {
                                         disabled={isSaving}
                                     />
                                     <AccordionTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                      <Button variant="ghost" size="icon">
+                                          <Pencil className="h-4 w-4" />
+                                      </Button>
                                     </AccordionTrigger>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
                                 </div>
                             </div>
                             <AccordionContent>
@@ -572,9 +572,9 @@ export default function OfflineSchedulerPage() {
                 {/* Create New Form */}
                 {schedules.length < MAX_SCHEDULES && (
                 <AccordionItem value="new-schedule" className="border-b-0">
-                    <AccordionTrigger disabled={isSaving || !!editingKey}>
-                         <div className="w-full text-center mt-4">
-                            <Button variant="outline">
+                    <AccordionTrigger asChild>
+                        <div className="w-full text-center mt-4">
+                            <Button variant="outline" disabled={isSaving || !!editingKey}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
