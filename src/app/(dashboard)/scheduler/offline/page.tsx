@@ -523,7 +523,7 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || ''} onValueChange={setEditingKey}>
+            <Accordion type="single" collapsible value={editingKey || undefined} onValueChange={setEditingKey}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
@@ -536,7 +536,7 @@ export default function OfflineSchedulerPage() {
                                        {getScheduleSummary(schedule)}
                                      </div>
                                 </div>
-                                <div className="flex items-center gap-2 pl-4 ml-auto">
+                                <div className="flex items-center gap-2">
                                     <Switch
                                         checked={schedule.enabled}
                                         onCheckedChange={() => handleToggleEnable(schedule)}
