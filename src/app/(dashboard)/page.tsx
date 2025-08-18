@@ -1,3 +1,4 @@
+
 // /app/(dashboard)/page.tsx
 "use client";
 
@@ -59,23 +60,20 @@ export default function HomePage() {
     const [dashboardCount, setDashboardCount] = useState<number | null>(null);
     const [alarmStats, setAlarmStats] = useState<AlarmStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchAllStats = async () => {
             setIsLoading(true);
-            setError(null);
             const token = localStorage.getItem('tb_auth_token');
             const instanceUrl = localStorage.getItem('tb_instance_url');
             const customerId = localStorage.getItem('tb_customer_id');
 
             if (!token || !instanceUrl) {
-                setError('Authentication details not found.');
                 setIsLoading(false);
                 return;
             }
 
-            // Device Stats
+            // Fetch Device Stats
             try {
                 const tbDevices = await getDevices(token, instanceUrl, customerId);
                 const deviceAttributesPromises = tbDevices.map(d => 
@@ -94,20 +92,20 @@ export default function HomePage() {
                     inactive: tbDevices.length - activeDevices,
                 });
             } catch (e: any) {
-                 console.error("Could not fetch device stats.", e.message);
-                 setDeviceStats(null); // Set to null on error
+                 console.error("Could not fetch device stats:", e.message);
+                 setDeviceStats(null); // Set to null on error to show N/A
             }
 
-            // Dashboard Stats
+            // Fetch Dashboard Stats
             try {
                 const tbDashboards = await getDashboards(token, instanceUrl, customerId);
                 setDashboardCount(tbDashboards.length);
             } catch(e: any) {
-                console.error("Could not fetch dashboard stats.", e.message);
+                console.error("Could not fetch dashboard stats:", e.message);
                 setDashboardCount(null); // Set to null on error
             }
             
-            // Alarm Stats
+            // Fetch Alarm Stats
             try {
                 const tbAlarms = await getAlarms(token, instanceUrl);
                 const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
@@ -121,8 +119,7 @@ export default function HomePage() {
                 });
                 setAlarmStats(alarms);
             } catch(e: any) {
-                // This is expected for some user roles, so we console.warn
-                console.warn("Could not fetch alarms. User may not have permissions.", e.message);
+                console.warn("Could not fetch alarms. User may not have permissions:", e.message);
                 setAlarmStats(null); // Set to null on error
             }
 
@@ -140,8 +137,6 @@ export default function HomePage() {
                 </div>
             )
         }
-        
-        // Don't show a global error, just let cards show N/A
         
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
