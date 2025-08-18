@@ -460,7 +460,7 @@ export default function OfflineSchedulerPage() {
 
         toast({
           title: 'Schedule Deleted',
-          description: 'The schedule has been successfully removed from view.',
+          description: 'The schedule has been successfully removed.',
         });
 
     } catch (error) {
@@ -552,7 +552,7 @@ export default function OfflineSchedulerPage() {
                     return (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
                         <Card className="overflow-hidden">
-                           <div className={cn("flex items-center p-3 hover:bg-muted/50 gap-2", !schedule.enabled && "opacity-60")}>
+                           <div className={cn("flex items-center p-3 hover:bg-muted/50", !schedule.enabled && "opacity-60")}>
                                 <div className="flex-1 text-left">
                                      <div className="font-semibold text-sm">
                                        <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
@@ -566,9 +566,9 @@ export default function OfflineSchedulerPage() {
                                         disabled={isSaving}
                                     />
                                     <AccordionTrigger asChild>
-                                      <Button variant="ghost" size="icon">
-                                          <Pencil className="h-4 w-4" />
-                                      </Button>
+                                        <Button variant="ghost" size="icon">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
                                     </AccordionTrigger>
                                      <AlertDialog>
                                         <AlertDialogTrigger asChild>
@@ -580,7 +580,7 @@ export default function OfflineSchedulerPage() {
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
+                                                This will permanently delete the schedule from view. This action cannot be undone.
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
