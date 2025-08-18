@@ -393,6 +393,7 @@ export default function OfflineSchedulerPage() {
     
     let scheduleKey = keyToSave;
 
+    // This logic handles creating a new schedule vs updating an existing one
     if (!scheduleKey) {
         const reusedSchedule = schedules.find(s => s.deleted);
         if (reusedSchedule) {
@@ -421,7 +422,7 @@ export default function OfflineSchedulerPage() {
     
     const newSchedule: Omit<Schedule, 'key'> = {
         enabled: existingSchedule ? existingSchedule.enabled : true,
-        deleted: false,
+        deleted: false, // Explicitly set deleted to false when saving/reusing
         ...scheduleData
     };
 
@@ -546,9 +547,7 @@ export default function OfflineSchedulerPage() {
         }
         return nextIndex;
     })();
-
-    const visibleSchedules = schedules.filter(s => !s.deleted);
-
+    
     const getScheduleToEdit = (key?: string) => {
         if (!key) return undefined;
         const schedule = schedules.find(s => s.key === key);
@@ -557,7 +556,12 @@ export default function OfflineSchedulerPage() {
         return rest;
     }
     
+    const visibleSchedules = schedules.filter(s => !s.deleted);
     const hasDeletedSchedules = schedules.some(s => s.deleted);
+    const hasVisibleSchedules = visibleSchedules.length > 0;
+    
+    // Combine visible schedules with any reused schedule that's being edited
+    const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
 
     return (
         <div className="space-y-4">
@@ -568,15 +572,12 @@ export default function OfflineSchedulerPage() {
                     <AlertDescription>This device has no offline schedules. You can create one below.</AlertDescription>
                 </Alert>
             )}
-
+            
             <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
-                 {schedules.map(schedule => {
+                 {schedulesToRender.map(schedule => {
                      const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
-                     if (schedule.deleted && editingKey !== schedule.key) {
-                         return null; // Don't render deleted schedules in the list unless we are editing it
-                     }
                      return (
-                         <AccordionItem value={schedule.key} key={schedule.key} className={cn("border-b-0 mb-2", schedule.deleted ? "hidden" : "")}>
+                         <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
                              <Card className="overflow-hidden">
                                 <div className={cn("flex items-center p-3 hover:bg-muted/50", !schedule.enabled && "opacity-60")}>
                                      <div className="flex-1 text-left">
@@ -606,7 +607,7 @@ export default function OfflineSchedulerPage() {
                                                  <AlertDialogHeader>
                                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                  <AlertDialogDescription>
-                                                    This action will delete the schedule.
+                                                    This will delete the schedule.
                                                  </AlertDialogDescription>
                                                  </AlertDialogHeader>
                                                  <AlertDialogFooter>
@@ -633,7 +634,7 @@ export default function OfflineSchedulerPage() {
                              </Card>
                          </AccordionItem>
                       )
-                 }).filter(Boolean)}
+                 })}
                  
                 {/* Create New Form Area */}
                 <AccordionItem value="new-schedule" className="border-b-0">
@@ -652,12 +653,14 @@ export default function OfflineSchedulerPage() {
                 </AccordionItem>
             </Accordion>
             
-            <div className="w-full text-center mt-4">
-                <Button variant="outline" disabled={isSaving || (visibleSchedules.length >= MAX_SCHEDULES && !hasDeletedSchedules)} onClick={handleCreateNew}>
-                    <PlusCircle className="mr-2" />
-                        {hasDeletedSchedules ? "Create / Reuse Schedule" : "Create New Schedule"}
-                </Button>
-            </div>
+            {editingKey === undefined && (
+                 <div className="w-full text-center mt-4">
+                    <Button variant="outline" disabled={isSaving || (visibleSchedules.length >= MAX_SCHEDULES && !hasDeletedSchedules)} onClick={handleCreateNew}>
+                        <PlusCircle className="mr-2" />
+                            {hasDeletedSchedules ? "Create / Reuse Schedule" : "Create New Schedule"}
+                    </Button>
+                </div>
+            )}
         </div>
     )
   }
