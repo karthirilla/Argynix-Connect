@@ -1,3 +1,4 @@
+
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -330,12 +331,16 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
         })
     );
     
-    const DayContent = (props: { date: Date; activeModifiers: any }) => {
+    const DayContent = (props: { date: Date; activeModifiers: any, displayMonth: Date }) => {
         if (!isValid(props.date)) {
           return <></>;
         }
       
-        const { date, activeModifiers } = props;
+        const { date, displayMonth } = props;
+
+        // react-day-picker's `activeModifiers` is not reliable with custom components.
+        // We will check if the day is outside the current month manually.
+        const isOutside = date.getMonth() !== displayMonth.getMonth();
       
         const schedulesForDay = activeSchedules.filter((schedule) => {
           if (schedule.mode === 'particular' && schedule.fireTime) {
@@ -352,7 +357,7 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
       
         const dayNumber = format(date, 'd');
       
-        if (activeModifiers.outside) {
+        if (isOutside) {
           return <div className="text-muted-foreground opacity-50">{dayNumber}</div>;
         }
       
@@ -639,7 +644,7 @@ export default function OfflineSchedulerPage() {
     }
 
     const hasDeletedSchedules = schedules.some(s => s.deleted);
-    const visibleSchedules = schedules.filter(s => !s.deleted);
+    const hasVisibleSchedules = schedules.some(s => !s.deleted);
 
     const getScheduleToEdit = (key?: string) => {
         if (!key) return undefined;
@@ -649,9 +654,7 @@ export default function OfflineSchedulerPage() {
         return rest;
     }
     
-    // Determine the number for the next new schedule
     const nextScheduleNumber = (() => {
-        // Find existing schedule numbers, including deleted ones to find gaps
         const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).filter(n => !isNaN(n)).sort((a,b) => a-b);
         let nextIndex = 1;
         for (const index of existingIndexes) {
@@ -664,12 +667,11 @@ export default function OfflineSchedulerPage() {
         return nextIndex;
     })();
 
-    // Schedules to render in the accordion. If we are editing, we need to include the item being edited, even if deleted.
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
 
     return (
         <div className="space-y-4">
-            {!visibleSchedules.length && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
+            {!hasVisibleSchedules && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -714,7 +716,7 @@ export default function OfflineSchedulerPage() {
                                                     <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
+                                                        This action will delete the schedule from this UI.
                                                     </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
@@ -744,7 +746,6 @@ export default function OfflineSchedulerPage() {
                     )
                 })}
                  
-                {/* Create New Form Area */}
                 <AccordionItem value="new-schedule" className="border-b-0">
                     <AccordionContent>
                          <Card className="ring-2 ring-primary">
@@ -763,7 +764,7 @@ export default function OfflineSchedulerPage() {
             
             {editingKey === undefined && (
                  <div className="w-full text-center mt-4">
-                    <Button variant="outline" disabled={isSaving || (visibleSchedules.length >= MAX_SCHEDULES && !hasDeletedSchedules)} onClick={handleCreateNew}>
+                    <Button variant="outline" disabled={isSaving || (schedules.filter(s => !s.deleted).length >= MAX_SCHEDULES && !hasDeletedSchedules)} onClick={handleCreateNew}>
                         <PlusCircle className="mr-2" />
                             {hasDeletedSchedules ? "Create / Reuse Schedule" : "Create New Schedule"}
                     </Button>
@@ -788,41 +789,44 @@ export default function OfflineSchedulerPage() {
   
   return (
     <div className="container mx-auto px-0 md:px-4">
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>On-Device Command Scheduler</CardTitle>
-          <CardDescription>Schedules are stored on the device and run without an internet connection.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor='device-select'>Device</Label>
-            <Select onValueChange={handleDeviceChange} value={selectedDevice?.id.id || ''}>
-              <SelectTrigger id="device-select">
-                <SelectValue placeholder="Select a device..." />
-              </SelectTrigger>
-              <SelectContent>
-                {devices.map((device) => (
-                  <SelectItem key={device.id.id} value={device.id.id}>
-                    {device.name} ({device.type})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="mt-6">
-             {selectedDevice ? renderSchedulesList() : (
-                 <Alert className="text-center">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Select a Device</AlertTitle>
-                    <AlertDescription>
-                        Please choose a device from the dropdown to view or manage its on-device schedules.
-                    </AlertDescription>
-                </Alert>
-             )}
-          </div>
-        </CardContent>
-      </Card>
-      {selectedDevice && schedules.length > 0 && <ScheduleCalendar schedules={schedules} />}
+      <div className="max-w-3xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>On-Device Command Scheduler</CardTitle>
+            <CardDescription>Schedules are stored on the device and run without an internet connection.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor='device-select'>Device</Label>
+              <Select onValueChange={handleDeviceChange} value={selectedDevice?.id.id || ''}>
+                <SelectTrigger id="device-select">
+                  <SelectValue placeholder="Select a device..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.map((device) => (
+                    <SelectItem key={device.id.id} value={device.id.id}>
+                      {device.name} ({device.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-6">
+               {selectedDevice ? renderSchedulesList() : (
+                   <Alert className="text-center">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Select a Device</AlertTitle>
+                      <AlertDescription>
+                          Please choose a device from the dropdown to view or manage its on-device schedules.
+                      </AlertDescription>
+                  </Alert>
+               )}
+            </div>
+          </CardContent>
+        </Card>
+        {selectedDevice && schedules.length > 0 && <ScheduleCalendar schedules={schedules} />}
+      </div>
     </div>
   );
 }
+
