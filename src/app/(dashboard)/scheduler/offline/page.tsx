@@ -296,9 +296,16 @@ const getScheduleSummary = (schedule: Schedule): string => {
     if (schedule.mode === 'particular' && schedule.fireTime) {
         summary += ` on ${format(parseISO(schedule.fireTime), 'PPP @ p')}`;
     } else if (schedule.mode === 'recurring' && schedule.days?.length && schedule.time) {
-        const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
         const time12hr = format(parse(schedule.time, 'HH:mm', new Date()), 'p');
-        summary += ` on ${dayString} @ ${time12hr}`;
+        if (schedule.days.length === 7) {
+            summary += ` daily @ ${time12hr}`;
+        } else if (schedule.days.length === 5 && !schedule.days.includes('SATURDAY') && !schedule.days.includes('SUNDAY')) {
+            summary += ` on weekdays @ ${time12hr}`;
+        }
+        else {
+             const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
+             summary += ` on ${dayString} @ ${time12hr}`;
+        }
     }
     return summary;
 }
@@ -325,55 +332,58 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
         })
     );
     
-    const dayRenderer = (day: Date, _: any, modifiers: any) => {
-        if (!isValid(day)) {
-            return <div />;
+    const DayContent = (props: { date: Date, activeModifiers: any }) => {
+        const { date, activeModifiers } = props;
+        if (!isValid(date)) {
+          return <></>;
         }
-        
-        const schedulesForDay = activeSchedules.filter(schedule => {
-            if (schedule.mode === 'particular' && schedule.fireTime) {
-                return isSameDay(day, parseISO(schedule.fireTime));
-            }
-            if (schedule.mode === 'recurring' && schedule.days) {
-                const scheduleDayIndexes = schedule.days.map(dayName => weekdays.find(wd => wd.id === dayName)!.dayIndex);
-                return scheduleDayIndexes.includes(getDay(day));
-            }
-            return false;
+      
+        const schedulesForDay = activeSchedules.filter((schedule) => {
+          if (schedule.mode === 'particular' && schedule.fireTime) {
+            return isSameDay(date, parseISO(schedule.fireTime));
+          }
+          if (schedule.mode === 'recurring' && schedule.days) {
+            const scheduleDayIndexes = schedule.days.map(
+              (dayName) => weekdays.find((wd) => wd.id === dayName)!.dayIndex
+            );
+            return scheduleDayIndexes.includes(getDay(date));
+          }
+          return false;
         });
-
-        const dayNumber = format(day, 'd');
-
-        if (modifiers.outside) {
-             return <div className="text-muted-foreground opacity-50">{dayNumber}</div>;
+      
+        const dayNumber = format(date, 'd');
+      
+        if (activeModifiers.outside) {
+          return <div className="text-muted-foreground opacity-50">{dayNumber}</div>;
         }
-
+      
         if (schedulesForDay.length > 0) {
-            return (
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                             <div className="relative flex items-center justify-center h-full w-full rounded-md bg-primary/10 text-primary font-bold">
-                                {dayNumber}
-                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary" />
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                           <div className="p-1 text-sm space-y-1">
-                                <p className="font-bold text-center">{format(day, 'PPP')}</p>
-                                <ul className="list-disc pl-4">
-                                     {schedulesForDay.map(s => (
-                                        <li key={s.key}>{getScheduleSummary(s)}</li>
-                                    ))}
-                                </ul>
-                           </div>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative flex items-center justify-center h-full w-full rounded-md bg-primary/10 text-primary font-bold">
+                    {dayNumber}
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="p-1 text-sm space-y-1">
+                    <p className="font-bold text-center">{format(date, 'PPP')}</p>
+                    <ul className="list-disc pl-4">
+                      {schedulesForDay.map((s) => (
+                        <li key={s.key}>{getScheduleSummary(s)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
         }
-        
+      
         return <div>{dayNumber}</div>;
-    }
+      };
 
     return (
         <Card className="mt-6">
@@ -388,7 +398,7 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
                     modifiers={{ scheduled: scheduledDays }}
                     modifiersClassNames={{ scheduled: 'day-scheduled' }}
                     components={{
-                        DayContent: dayRenderer
+                        DayContent: DayContent,
                     }}
                  />
             </CardContent>
@@ -655,11 +665,10 @@ export default function OfflineSchedulerPage() {
     const hasDeletedSchedules = schedules.some(s => s.deleted);
     
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
-    const hasVisibleSchedules = visibleSchedules.length > 0;
 
     return (
         <div className="space-y-4">
-             {!hasVisibleSchedules && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
+             {!visibleSchedules.length && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -701,7 +710,7 @@ export default function OfflineSchedulerPage() {
                                                  <AlertDialogHeader>
                                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                  <AlertDialogDescription>
-                                                    This action cannot be undone. This will permanently delete this schedule from the UI.
+                                                    This will remove the schedule from the UI, but it can be restored by creating a new schedule.
                                                  </AlertDialogDescription>
                                                  </AlertDialogHeader>
                                                  <AlertDialogFooter>
