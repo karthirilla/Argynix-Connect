@@ -26,7 +26,8 @@ export default function DashboardIframePage() {
 
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (instanceUrl) {
-      setIframeSrc(`${instanceUrl}/dashboards/${id}?kiosk=true`);
+      // Ensure kiosk=true is present to hide ThingsBoard's internal navigation
+      setIframeSrc(`${instanceUrl}/dashboard/${id}?kiosk=true`);
     } else {
       setError("ThingsBoard instance URL not found in local storage.");
     }
@@ -47,34 +48,26 @@ export default function DashboardIframePage() {
         </div>
     );
   }
+  
+  // Note: The "Back to Dashboards" button is now part of the AppHeader via the layout,
+  // but we can keep a contextual one here if needed, or rely on the header navigation.
+  // For a true full-screen experience, we'll render just the iframe.
 
   return (
-    <div className="h-full w-full flex flex-col">
-        <div className="p-4 border-b">
-             <Button asChild variant="outline" size="sm">
-                <Link href="/dashboards">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboards
-                </Link>
-            </Button>
-        </div>
-        <div className="flex-1 relative">
-            {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
-            {iframeSrc && (
-                <iframe
-                    src={iframeSrc}
-                    title="ThingsBoard Dashboard"
-                    className="w-full h-full border-0"
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                    }}
-                />
-            )}
-        </div>
+    <div className="h-full w-full relative">
+        {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
+        {iframeSrc && (
+            <iframe
+                src={iframeSrc}
+                title="ThingsBoard Dashboard"
+                className="w-full h-full border-0"
+            />
+        )}
+        {!isLoading && !iframeSrc && !error && (
+             <div className="flex h-full w-full items-center justify-center p-4">
+                <p>Preparing dashboard...</p>
+             </div>
+        )}
     </div>
   );
 }
