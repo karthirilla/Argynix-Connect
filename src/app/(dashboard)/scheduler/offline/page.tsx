@@ -1,4 +1,3 @@
-
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -12,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
-import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, CalendarIcon, Save, Trash2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -35,6 +34,7 @@ export default function OfflineSchedulerPage() {
 
   const [attributeKey, setAttributeKey] = useState('');
   const [attributeValue, setAttributeValue] = useState('');
+  const [valueType, setValueType] = useState('Custom'); // ON, OFF, Custom
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('00:00');
 
@@ -70,14 +70,19 @@ export default function OfflineSchedulerPage() {
 
     fetchData();
   }, []);
-
-  const handleDeviceChange = async (deviceId: string) => {
-    setSelectedDevice(deviceId);
+  
+  const resetForm = () => {
     setSchedule(null);
     setAttributeKey('');
     setAttributeValue('');
+    setValueType('Custom');
     setScheduledDate(undefined);
     setScheduledTime('00:00');
+  }
+
+  const handleDeviceChange = async (deviceId: string) => {
+    setSelectedDevice(deviceId);
+    resetForm();
     setTelemetryKeys([]);
     
     if (!deviceId) return;
@@ -103,6 +108,13 @@ export default function OfflineSchedulerPage() {
             setSchedule(savedSchedule);
             setAttributeKey(savedSchedule.attributeKey);
             setAttributeValue(savedSchedule.attributeValue);
+            
+            if (savedSchedule.attributeValue === 'ON' || savedSchedule.attributeValue === 'OFF') {
+                setValueType(savedSchedule.attributeValue);
+            } else {
+                setValueType('Custom');
+            }
+
             const fireDate = parseISO(savedSchedule.fireTime);
             setScheduledDate(fireDate);
             setScheduledTime(format(fireDate, 'HH:mm'));
@@ -126,7 +138,7 @@ export default function OfflineSchedulerPage() {
   };
   
   const handleSave = async () => {
-    if (!selectedDevice || !attributeKey || !scheduledDate) {
+    if (!selectedDevice || !attributeKey || !attributeValue || !scheduledDate) {
         toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all schedule fields.' });
         return;
     }
@@ -174,11 +186,7 @@ export default function OfflineSchedulerPage() {
 
         await deleteDeviceAttributes(token, instanceUrl, selectedDevice, ['offlineSchedule']);
 
-        setSchedule(null);
-        setAttributeKey('');
-        setAttributeValue('');
-        setScheduledDate(undefined);
-        setScheduledTime('00:00');
+        resetForm();
         
         toast({
           title: 'Schedule Deleted',
@@ -191,6 +199,16 @@ export default function OfflineSchedulerPage() {
         setIsDeleting(false);
     }
   }
+  
+  const handleValueTypeChange = (type: string) => {
+      setValueType(type);
+      if (type === 'ON' || type === 'OFF') {
+          setAttributeValue(type);
+      } else {
+          setAttributeValue(''); // Clear it for custom input
+      }
+  }
+
 
   const renderContent = () => {
     if (!selectedDevice) {
@@ -224,26 +242,46 @@ export default function OfflineSchedulerPage() {
                  {schedule && <CardDescription>Last updated: {new Date(schedule.fireTime).toLocaleString()}</CardDescription>}
             </CardHeader>
             <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="attribute-key">Attribute Key</Label>
+                    <Select onValueChange={setAttributeKey} value={attributeKey} disabled={isKeysLoading}>
+                        <SelectTrigger id="attribute-key">
+                            <SelectValue placeholder={isKeysLoading ? "Loading keys..." : "Select a key..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {telemetryKeys.map((key) => (
+                            <SelectItem key={key} value={key}>
+                                {key}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="attribute-key">Attribute Key</Label>
-                        <Select onValueChange={setAttributeKey} value={attributeKey} disabled={isKeysLoading}>
-                            <SelectTrigger id="attribute-key">
-                                <SelectValue placeholder={isKeysLoading ? "Loading keys..." : "Select a key..."} />
+                     <div className="space-y-2">
+                        <Label htmlFor="attribute-value-type">Value Type</Label>
+                        <Select onValueChange={handleValueTypeChange} value={valueType}>
+                            <SelectTrigger id="attribute-value-type">
+                                <SelectValue placeholder="Select a value type..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {telemetryKeys.map((key) => (
-                                <SelectItem key={key} value={key}>
-                                    {key}
-                                </SelectItem>
-                                ))}
+                                <SelectItem value="ON">ON</SelectItem>
+                                <SelectItem value="OFF">OFF</SelectItem>
+                                <SelectItem value="Custom">Custom</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="attribute-value">Attribute Value</Label>
-                        <Input id="attribute-value" placeholder="e.g., OFF" value={attributeValue} onChange={e => setAttributeValue(e.target.value)} />
-                    </div>
+                    {valueType === 'Custom' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="attribute-value">Custom Value</Label>
+                            <Input 
+                                id="attribute-value" 
+                                placeholder="Enter custom value" 
+                                value={attributeValue} 
+                                onChange={e => setAttributeValue(e.target.value)} 
+                            />
+                        </div>
+                    )}
                 </div>
                  <div className="grid sm:grid-cols-2 gap-4">
                      <div className="space-y-2">
