@@ -9,9 +9,6 @@ export default function LoginPage() {
              <Logo className="mx-auto h-16 w-16 text-primary" />
              <div>
                 <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
-                <p className="text-balance text-muted-foreground">
-                    Enter your credentials to access your dashboard
-                </p>
              </div>
           </div>
           <div className="animate-in fade-in-50 zoom-in-90 duration-500 delay-200">
