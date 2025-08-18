@@ -16,11 +16,31 @@ import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+
+
+type ScheduleMode = 'particular' | 'recurring';
+
+const weekdays = [
+  { id: 'SUNDAY', label: 'S' },
+  { id: 'MONDAY', label: 'M' },
+  { id: 'TUESDAY', label: 'T' },
+  { id: 'WEDNESDAY', label: 'W' },
+  { id: 'THURSDAY', label: 'T' },
+  { id: 'FRIDAY', label: 'F' },
+  { id: 'SATURDAY', label: 'S' },
+];
 
 interface Schedule {
   attributeKey: string;
   attributeValue: string;
-  fireTime: string;
+  mode: ScheduleMode;
+  // For 'particular' mode
+  fireTime?: string; 
+  // For 'recurring' mode
+  days?: string[];
+  time?: string;
 }
 
 export default function OfflineSchedulerPage() {
@@ -35,8 +55,12 @@ export default function OfflineSchedulerPage() {
   const [attributeKey, setAttributeKey] = useState('');
   const [attributeValue, setAttributeValue] = useState('');
   const [valueType, setValueType] = useState('Custom'); // ON, OFF, Custom
+  
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('particular');
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [scheduledTime, setScheduledTime] = useState('00:00');
+  const [recurringDays, setRecurringDays] = useState<string[]>([]);
+
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingSchedule, setIsFetchingSchedule] = useState(false);
@@ -76,8 +100,10 @@ export default function OfflineSchedulerPage() {
     setAttributeKey('');
     setAttributeValue('');
     setValueType('Custom');
+    setScheduleMode('particular');
     setScheduledDate(undefined);
     setScheduledTime('00:00');
+    setRecurringDays([]);
   }
 
   const handleDeviceChange = async (deviceId: string) => {
@@ -104,21 +130,26 @@ export default function OfflineSchedulerPage() {
         setTelemetryKeys(keys);
         
         if (scheduleAttr) {
-            const savedSchedule = scheduleAttr.value;
+            const savedSchedule: Schedule = scheduleAttr.value;
             setSchedule(savedSchedule);
             setAttributeKey(savedSchedule.attributeKey);
             setAttributeValue(savedSchedule.attributeValue);
-            
+            setScheduleMode(savedSchedule.mode || 'particular');
+
             if (savedSchedule.attributeValue === 'ON' || savedSchedule.attributeValue === 'OFF') {
                 setValueType(savedSchedule.attributeValue);
             } else {
                 setValueType('Custom');
             }
 
-            const fireDate = parseISO(savedSchedule.fireTime);
-            setScheduledDate(fireDate);
-            setScheduledTime(format(fireDate, 'HH:mm'));
-
+            if (savedSchedule.mode === 'recurring') {
+              setRecurringDays(savedSchedule.days || []);
+              setScheduledTime(savedSchedule.time || '00:00');
+            } else {
+              const fireDate = savedSchedule.fireTime ? parseISO(savedSchedule.fireTime) : undefined;
+              setScheduledDate(fireDate);
+              setScheduledTime(fireDate ? format(fireDate, 'HH:mm') : '00:00');
+            }
         } else {
             setSchedule(null);
         }
@@ -138,27 +169,50 @@ export default function OfflineSchedulerPage() {
   };
   
   const handleSave = async () => {
-    if (!selectedDevice || !attributeKey || !attributeValue || !scheduledDate) {
-        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all schedule fields.' });
+    if (!selectedDevice || !attributeKey || !attributeValue) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please select a device, attribute key, and value.' });
         return;
     }
     
+    if (scheduleMode === 'particular' && !scheduledDate) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please select a date for the schedule.' });
+        return;
+    }
+
+     if (scheduleMode === 'recurring' && recurringDays.length === 0) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please select at least one day for the recurring schedule.' });
+        return;
+    }
+
     setIsSaving(true);
     
     try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
         if (!token || !instanceUrl) throw new Error("Auth details missing");
+        
+        let newSchedule: Schedule;
+        
+        if (scheduleMode === 'particular') {
+            const [hours, minutes] = scheduledTime.split(':').map(Number);
+            const fireDateTime = new Date(scheduledDate!);
+            fireDateTime.setHours(hours, minutes, 0, 0);
 
-        const [hours, minutes] = scheduledTime.split(':').map(Number);
-        const fireDateTime = new Date(scheduledDate);
-        fireDateTime.setHours(hours, minutes, 0, 0);
-
-        const newSchedule = {
-            attributeKey,
-            attributeValue,
-            fireTime: fireDateTime.toISOString(),
-        };
+            newSchedule = {
+                attributeKey,
+                attributeValue,
+                mode: 'particular',
+                fireTime: fireDateTime.toISOString(),
+            };
+        } else { // recurring
+            newSchedule = {
+                attributeKey,
+                attributeValue,
+                mode: 'recurring',
+                days: recurringDays,
+                time: scheduledTime
+            };
+        }
 
         await saveDeviceAttributes(token, instanceUrl, selectedDevice, { offlineSchedule: newSchedule });
         setSchedule(newSchedule);
@@ -209,6 +263,11 @@ export default function OfflineSchedulerPage() {
       }
   }
 
+  const handleRecurringDayChange = (dayId: string, checked: boolean | string) => {
+    setRecurringDays(prev => 
+      checked ? [...prev, dayId] : prev.filter(d => d !== dayId)
+    );
+  }
 
   const renderContent = () => {
     if (!selectedDevice) {
@@ -239,7 +298,7 @@ export default function OfflineSchedulerPage() {
                     {schedule ? 'Edit Schedule' : 'Create Schedule'}
                 </CardTitle>
                  {!schedule && <CardDescription>No schedule found for this device. Fill out the form below to create one.</CardDescription>}
-                 {schedule && <CardDescription>Last updated: {new Date(schedule.fireTime).toLocaleString()}</CardDescription>}
+                 {schedule && <CardDescription>A schedule is currently active for this device.</CardDescription>}
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -283,34 +342,80 @@ export default function OfflineSchedulerPage() {
                         </div>
                     )}
                 </div>
-                 <div className="grid sm:grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label>Scheduled Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn( "w-full justify-start text-left font-normal", !scheduledDate && "text-muted-foreground" )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {scheduledDate ? format(scheduledDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={scheduledDate}
-                                onSelect={setScheduledDate}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                      <Label>Schedule Mode</Label>
+                      <RadioGroup
+                        value={scheduleMode}
+                        onValueChange={(val) => setScheduleMode(val as ScheduleMode)}
+                        className="flex items-center gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="particular" id="r-particular" />
+                          <Label htmlFor="r-particular" className="font-normal">Particular Day</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="recurring" id="r-recurring" />
+                          <Label htmlFor="r-recurring" className="font-normal">Recurring</Label>
+                        </div>
+                      </RadioGroup>
+                  </div>
+                  
+                  {scheduleMode === 'particular' ? (
+                      <div className="grid sm:grid-cols-2 gap-4 animate-in fade-in">
+                          <div className="space-y-2">
+                              <Label>Scheduled Date</Label>
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                  <Button
+                                      variant={"outline"}
+                                      className={cn( "w-full justify-start text-left font-normal", !scheduledDate && "text-muted-foreground" )}
+                                  >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {scheduledDate ? format(scheduledDate, "PPP") : <span>Pick a date</span>}
+                                  </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                      mode="single"
+                                      selected={scheduledDate}
+                                      onSelect={setScheduledDate}
+                                      initialFocus
+                                  />
+                                  </PopoverContent>
+                              </Popover>
+                          </div>
+                           <div className="space-y-2">
+                              <Label htmlFor="scheduled-time">Scheduled Time</Label>
+                              <Input id="scheduled-time" type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} />
+                           </div>
+                      </div>
+                  ) : (
+                     <div className="space-y-4 animate-in fade-in">
+                          <div className="space-y-2">
+                            <Label>Recurring Days</Label>
+                            <div className="flex items-center justify-between gap-2 p-2 rounded-lg border">
+                              {weekdays.map(day => (
+                                <div key={day.id} className="flex flex-col items-center gap-2">
+                                  <Label htmlFor={`day-${day.id}`} className="text-xs">{day.label}</Label>
+                                  <Checkbox
+                                    id={`day-${day.id}`}
+                                    checked={recurringDays.includes(day.id)}
+                                    onCheckedChange={(checked) => handleRecurringDayChange(day.id, checked)}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2 sm:max-w-[50%]">
+                              <Label htmlFor="scheduled-time-recurring">Time</Label>
+                              <Input id="scheduled-time-recurring" type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} />
+                          </div>
                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="scheduled-time">Scheduled Time</Label>
-                        <Input id="scheduled-time" type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} />
-                     </div>
-                 </div>
+                  )}
+
+                </div>
             </CardContent>
             <CardFooter className="justify-end gap-2">
                 {schedule && (
