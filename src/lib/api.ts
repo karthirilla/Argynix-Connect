@@ -208,6 +208,15 @@ export async function getAssets(
     return result?.data || [];
   }
 
+export async function getAssetById(
+    token: string,
+    instanceUrl: string,
+    assetId: string
+  ): Promise<ThingsboardAsset> {
+    const url = `/api/asset/${assetId}`;
+    return await fetchThingsboard<ThingsboardAsset>(url, token, instanceUrl);
+  }
+
 export async function getAlarms(
   token: string,
   instanceUrl: string

@@ -143,7 +143,7 @@ export default function AssetsPage() {
                     <CardContent className="space-y-3 text-sm">
                         <div><strong>Type:</strong> {asset.type}</div>
                         <div><strong>Label:</strong> {asset.label}</div>
-                        <Button asChild variant="outline" size="sm" disabled className="w-full mt-2">
+                        <Button asChild variant="outline" size="sm" className="w-full mt-2">
                             <Link href={`/assets/${asset.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
@@ -173,7 +173,7 @@ export default function AssetsPage() {
                         <TableCell>{asset.type}</TableCell>
                         <TableCell>{asset.label}</TableCell>
                         <TableCell className="text-right">
-                        <Button asChild variant="outline" size="sm" disabled>
+                        <Button asChild variant="outline" size="sm">
                             <Link href={`/assets/${asset.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
