@@ -8,6 +8,8 @@ import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { getUser } from '@/lib/api';
+import type { ThingsboardUser } from '@/lib/types';
 
 
 export default function DashboardLayout({
@@ -17,20 +19,46 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   
   const isIframePage = pathname.includes('/iframe');
 
   useEffect(() => {
-    const token = localStorage.getItem('tb_auth_token');
-    if (token) {
-        setIsAuthenticated(true);
-    } else {
-        router.replace('/login');
-    }
-    setIsAuthenticating(false);
-  }, [router]);
+    const checkAuthAndFetchUser = async () => {
+        const token = localStorage.getItem('tb_auth_token');
+        const instanceUrl = localStorage.getItem('tb_instance_url');
+
+        if (!token || !instanceUrl) {
+            router.replace('/login');
+            setIsAuthenticating(false);
+            return;
+        }
+
+        try {
+            const userData = await getUser(token, instanceUrl);
+            setUser(userData);
+            
+            // Redirect non-admins away from admin page
+            const isAdminPage = pathname.startsWith('/admin');
+            const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
+            if(isAdminPage && !userIsAdmin) {
+                router.replace('/');
+            }
+
+        } catch (e) {
+            // Token might be expired, log out
+            console.error('Failed to fetch user, logging out', e);
+            localStorage.clear();
+            router.replace('/login');
+        } finally {
+            setIsAuthenticating(false);
+        }
+    };
+    
+    checkAuthAndFetchUser();
+
+  }, [router, pathname]);
 
   if (isAuthenticating) {
     return (
@@ -46,7 +74,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null; // Render nothing while redirecting
   }
 

@@ -46,6 +46,7 @@ export function AppHeader() {
     if (pathname.startsWith('/scheduler')) return 'Scheduler';
     if (pathname.startsWith('/data-export')) return 'Data Export';
     if (pathname.startsWith('/profile')) return 'User Profile';
+    if (pathname.startsWith('/admin')) return 'Super Admin';
     return 'Home';
   }
   

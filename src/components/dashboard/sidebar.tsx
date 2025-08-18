@@ -3,10 +3,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, ShieldCheck } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
+import { useEffect, useState } from 'react';
+import { getUser } from '@/lib/api';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, exact: true },
@@ -18,33 +20,61 @@ const navItems = [
   { href: '/data-export', label: 'Data Export', icon: Download },
 ];
 
+const adminNavItem = {
+    href: '/admin',
+    label: 'Admin',
+    icon: ShieldCheck,
+};
+
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+        const token = localStorage.getItem('tb_auth_token');
+        const instanceUrl = localStorage.getItem('tb_instance_url');
+        if (!token || !instanceUrl) return;
+
+        try {
+            const user = await getUser(token, instanceUrl);
+            if(user.authority === 'SYS_ADMIN' || user.authority === 'TENANT_ADMIN') {
+                setIsAdmin(true);
+            }
+        } catch(e) {
+            console.error("Could not fetch user to determine role", e);
+        }
+    }
+    fetchUser();
+  }, [])
+
+
+  const renderNavItem = (item: typeof navItems[0]) => {
+     const isActive = item.exact 
+          ? pathname === item.href 
+          : (pathname.startsWith(item.href) && item.href !== '/');
+    return (
+         <Link
+            key={item.label}
+            href={item.href}
+            className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                { 'bg-muted text-primary': isActive }
+            )}
+        >
+            <item.icon className="h-4 w-4" />
+            {item.label}
+        </Link>
+    );
+  };
 
   const navContent = (
     <nav className={cn(
         "grid items-start text-sm font-medium",
         isMobile ? "px-2" : "px-2 lg:px-4"
     )}>
-      {navItems.map((item) => {
-        const isActive = item.exact 
-          ? pathname === item.href 
-          : (pathname.startsWith(item.href) && item.href !== '/');
-        
-        return (
-            <Link
-                key={item.label}
-                href={item.href}
-                className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                    { 'bg-muted text-primary': isActive }
-                )}
-            >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-            </Link>
-        )
-      })}
+      {navItems.map(item => renderNavItem(item))}
+      {isAdmin && renderNavItem(adminNavItem)}
     </nav>
   );
 

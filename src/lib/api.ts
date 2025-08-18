@@ -1,4 +1,3 @@
-
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm } from './types';
@@ -45,6 +44,41 @@ async function fetchThingsboard<T>(
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
+}
+
+export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
+    const url = `/api/users?pageSize=100&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(
+        url,
+        token,
+        instanceUrl
+    );
+    return result?.data || [];
+}
+
+export async function getUserAttributes(
+    token: string,
+    instanceUrl: string,
+    userId: string,
+    scope: 'SERVER_SCOPE' | 'SHARED_SCOPE' = 'SHARED_SCOPE'
+  ): Promise<{ key: string, value: any }[]> {
+    const url = `/api/plugins/telemetry/USER/${userId}/values/attributes/${scope}`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
+
+export async function saveUserAttributes(
+    token: string,
+    instanceUrl: string,
+    userId: string,
+    attributes: Record<string, any>,
+    scope: 'SERVER_SCOPE' | 'SHARED_SCOPE' = 'SHARED_SCOPE'
+): Promise<void> {
+    const url = `/api/plugins/telemetry/USER/${userId}/${scope}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(attributes),
+    });
 }
 
 

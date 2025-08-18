@@ -33,6 +33,17 @@ export type Alarm = {
     createdTime: number;
 }
 
+export interface UserPermissions {
+    canExport: boolean;
+    canSchedule: boolean;
+    userDisabled: boolean;
+}
+
+export interface AppUser extends ThingsboardUser {
+    permissions: UserPermissions
+}
+
+
 // Raw types from ThingsBoard API
 export type ThingsboardId = {
     id: string;
@@ -72,7 +83,7 @@ export type ThingsboardUser = {
     firstName: string | null;
     lastName: string | null;
     email: string;
-    authority: string;
+    authority: 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER';
     customerId: { id: string, entityType: string };
     tenantId: { id: string, entityType: string };
     additionalInfo: {
