@@ -15,7 +15,7 @@ import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemet
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, parse, parseISO, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
+import { format, parse, parseISO, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -326,6 +326,10 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
     );
     
     const dayRenderer = (day: Date, _: any, modifiers: any) => {
+        if (!isValid(day)) {
+            return <div />;
+        }
+        
         const schedulesForDay = activeSchedules.filter(schedule => {
             if (schedule.mode === 'particular' && schedule.fireTime) {
                 return isSameDay(day, parseISO(schedule.fireTime));
@@ -650,7 +654,6 @@ export default function OfflineSchedulerPage() {
     const visibleSchedules = schedules.filter(s => !s.deleted);
     const hasDeletedSchedules = schedules.some(s => s.deleted);
     
-    // Always render all non-deleted schedules. Also render a deleted one if it's the one being edited (reused).
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
     const hasVisibleSchedules = visibleSchedules.length > 0;
 
@@ -698,7 +701,7 @@ export default function OfflineSchedulerPage() {
                                                  <AlertDialogHeader>
                                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                  <AlertDialogDescription>
-                                                   This action will permanently delete the schedule from the UI.
+                                                    This action cannot be undone. This will permanently delete this schedule from the UI.
                                                  </AlertDialogDescription>
                                                  </AlertDialogHeader>
                                                  <AlertDialogFooter>
