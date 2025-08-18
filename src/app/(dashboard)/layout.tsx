@@ -22,7 +22,10 @@ export default function DashboardLayout({
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   
-  const isIframePage = pathname.includes('/iframe');
+  // This layout will now be skipped for the iframe page, which has its own layout.
+  if (pathname.includes('/iframe')) {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     const checkAuthAndFetchUser = async () => {
@@ -81,13 +84,10 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-      {!isIframePage && <AppSidebar />}
+      <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className={cn(
-            "flex-1 bg-background/50",
-            !isIframePage && "p-4 md:p-8 lg:p-10"
-          )}>
+        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10">
           {children}
         </main>
         <Toaster />

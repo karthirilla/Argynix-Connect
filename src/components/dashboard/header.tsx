@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Loader2, ArrowLeft, Printer } from 'lucide-react';
+import { CircleUser, Menu } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -17,68 +17,23 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-
-// This is a global event bus to communicate between a page and this header
-const eventBus = {
-  subscribe: (event: string, callback: EventListener) => {
-    document.addEventListener(event, callback);
-  },
-  unsubscribe: (event: string, callback: EventListener) => {
-    document.removeEventListener(event, callback);
-  },
-  dispatch: (event: string, data?: any) => {
-    document.dispatchEvent(new CustomEvent(event, { detail: data }));
-  }
-};
 
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const { toast } = useToast();
   const [username, setUsername] = useState<string | null>(null);
-  const [isIframePage, setIsIframePage] = useState(false);
-  const [isIframeReady, setIsIframeReady] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
     setUsername(storedUser);
-    
-    const onIframePage = pathname.includes('/iframe');
-    setIsIframePage(onIframePage);
-
-    const handleIframeReady = () => {
-        setIsIframeReady(true);
-        toast({
-            title: "Dashboard Ready",
-            description: "You can now print or save the dashboard as a PDF.",
-        });
-    };
-
-    if(onIframePage) {
-        eventBus.subscribe('iframe:ready', handleIframeReady);
-    }
-    
-    return () => {
-        if(onIframePage) {
-            eventBus.unsubscribe('iframe:ready', handleIframeReady);
-        }
-    }
-
-  }, [pathname, toast]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
 
-  const handlePrintRequest = () => {
-    eventBus.dispatch('print:request');
-  };
-
   const getTitle = () => {
-    if (isIframePage) return 'Dashboard';
     if (pathname === '/') return 'Home';
     if (pathname.startsWith('/dashboards')) return 'Dashboards';
     if (pathname.startsWith('/devices')) return 'Devices';
@@ -110,24 +65,9 @@ export function AppHeader() {
             </SheetContent>
         </Sheet>
       <div className="w-full flex-1 flex items-center gap-4">
-        {isIframePage && (
-             <Button onClick={() => router.back()} variant="outline" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back</span>
-            </Button>
-        )}
-        <h1 className={cn(
-            "font-semibold text-lg md:text-xl",
-            isIframePage && "text-base md:text-lg"
-            )}>{getTitle()}</h1>
+        <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
       </div>
       <div className="flex items-center gap-2">
-        {isIframePage && (
-            <Button variant="outline" size="icon" disabled={!isIframeReady} onClick={handlePrintRequest}>
-                {!isIframeReady ? <Loader2 className="h-4 w-4 animate-spin"/> : <Printer className="h-4 w-4"/>}
-                <span className="sr-only">Print / Save as PDF</span>
-            </Button>
-        )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">

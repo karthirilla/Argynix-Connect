@@ -2,33 +2,22 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
-// This is a global event bus to communicate between the header and this page
-const eventBus = {
-  subscribe: (event: string, callback: EventListener) => {
-    document.addEventListener(event, callback);
-  },
-  unsubscribe: (event: string, callback: EventListener) => {
-    document.removeEventListener(event, callback);
-  },
-  dispatch: (event: string, data?: any) => {
-    document.dispatchEvent(new CustomEvent(event, { detail: data }));
-  }
-};
-
 
 export default function DashboardIframePage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!id) {
@@ -39,6 +28,7 @@ export default function DashboardIframePage() {
 
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (instanceUrl) {
+      // The "?kiosk=true" parameter hides the default ThingsBoard header and sidebar
       setIframeSrc(`${instanceUrl}/dashboard/${id}?kiosk=true`);
     } else {
       setError('ThingsBoard instance URL not found in local storage.');
@@ -46,26 +36,21 @@ export default function DashboardIframePage() {
   }, [id]);
 
   const handleIframeLoad = () => {
-    // Wait for the iframe content to render before signaling readiness
+    // A small delay to allow complex widgets to render before we consider it "loaded"
     setTimeout(() => {
-        setIsLoading(false);
-        eventBus.dispatch('iframe:ready'); // Signal to header that it can enable the export button
-    }, 2000); // 2-second delay to allow complex widgets to load
+      setIsLoading(false);
+      toast({
+        title: "Dashboard Ready",
+        description: "You can now print or save the dashboard as a PDF.",
+      });
+    }, 2000); 
   };
   
-  const handlePrintRequest = () => {
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      iframeRef.current.contentWindow.print();
-    }
-  };
-
-
-  useEffect(() => {
-    eventBus.subscribe('print:request', handlePrintRequest as EventListener);
-    return () => {
-      eventBus.unsubscribe('print:request', handlePrintRequest as EventListener);
-    };
-  }, []);
+  const handlePrint = () => {
+    // `window.print()` will open the browser's print dialog for the current page,
+    // which is exactly what we need to print the dashboard.
+    window.print();
+  }
 
   if (error) {
     return (
@@ -80,18 +65,33 @@ export default function DashboardIframePage() {
   }
 
   return (
-    <div className="h-full w-full relative">
-      {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
-      {iframeSrc && (
-        <iframe
-          ref={iframeRef}
-          src={iframeSrc}
-          title="ThingsBoard Dashboard"
-          className="w-full h-full border-0"
-          onLoad={handleIframeLoad}
-          style={{ visibility: isLoading ? 'hidden' : 'visible' }}
-        />
-      )}
+    <div className="flex flex-col h-screen w-screen bg-background">
+       <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0">
+         <Button onClick={() => router.back()} variant="outline" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+            </Button>
+            <h1 className="font-semibold text-lg">Dashboard</h1>
+            <div className="ml-auto">
+                <Button variant="outline" size="icon" disabled={isLoading} onClick={handlePrint}>
+                    <Printer className="h-4 w-4" />
+                    <span className="sr-only">Print / Save as PDF</span>
+                </Button>
+            </div>
+       </header>
+       <main className="flex-1 relative">
+            {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
+            {iframeSrc && (
+                <iframe
+                ref={iframeRef}
+                src={iframeSrc}
+                title="ThingsBoard Dashboard"
+                className="w-full h-full border-0"
+                onLoad={handleIframeLoad}
+                style={{ visibility: isLoading ? 'hidden' : 'visible' }}
+                />
+            )}
+       </main>
     </div>
   );
 }
