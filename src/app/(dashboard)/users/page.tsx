@@ -14,6 +14,7 @@ import { Loader2, User as UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const defaultPermissions: UserPermissions = {
     canExport: true,
@@ -24,6 +25,7 @@ const defaultPermissions: UserPermissions = {
 export default function UsersPage() {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState<string | null>(null); // Store saving user's ID
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -90,6 +92,8 @@ export default function UsersPage() {
             return;
         }
 
+        setIsSaving(userId);
+
         // Optimistic update
         const originalUsers = [...users];
         setUsers(currentUsers =>
@@ -109,6 +113,8 @@ export default function UsersPage() {
             setUsers(originalUsers);
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save permission.' });
             console.error(e);
+        } finally {
+            setIsSaving(null);
         }
     };
     
@@ -156,7 +162,16 @@ export default function UsersPage() {
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {users.map(user => (
-                <Card key={user.id.id} className={user.permissions.userDisabled ? 'bg-muted/50' : ''}>
+                <Card key={user.id.id} className={cn(
+                    'relative',
+                    user.permissions.userDisabled && 'bg-muted/50',
+                    isSaving === user.id.id && 'pointer-events-none'
+                )}>
+                    {isSaving === user.id.id && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                    )}
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                            <UserIcon className="h-5 w-5"/> {user.firstName} {user.lastName}
@@ -173,7 +188,7 @@ export default function UsersPage() {
                                     id={`export-${user.id.id}`}
                                     checked={user.permissions.canExport}
                                     onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canExport', checked)}
-                                    disabled={user.permissions.userDisabled}
+                                    disabled={user.permissions.userDisabled || !!isSaving}
                                 />
                             </div>
                             <div className="flex items-center justify-between">
@@ -182,7 +197,7 @@ export default function UsersPage() {
                                     id={`schedule-${user.id.id}`}
                                     checked={user.permissions.canSchedule}
                                     onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canSchedule', checked)}
-                                    disabled={user.permissions.userDisabled}
+                                    disabled={user.permissions.userDisabled || !!isSaving}
                                 />
                             </div>
                         </div>
@@ -196,6 +211,7 @@ export default function UsersPage() {
                                 checked={user.permissions.userDisabled}
                                 onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'userDisabled', checked)}
                                 className="data-[state=checked]:bg-destructive"
+                                disabled={!!isSaving}
                             />
                         </div>
                     </CardContent>
