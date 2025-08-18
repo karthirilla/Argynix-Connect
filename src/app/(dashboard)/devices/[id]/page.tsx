@@ -7,25 +7,25 @@ import { getDeviceById, getDeviceTelemetry, getDeviceTelemetryKeys } from '@/lib
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, History, Rss } from 'lucide-react';
+import { AlertCircle, ArrowLeft, History, Rss, BarChart2 } from 'lucide-react';
 import { ThingsboardDevice } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { subDays } from 'date-fns';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { subHours } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-type ActivityLog = {
-  ts: number;
-  key: string;
-  value: string | number | boolean;
-}
+
+type ActivityStatus = {
+  time: string;
+  status: 'Online' | 'Offline';
+};
 
 export default function DeviceDetailsPage() {
   const params = useParams();
   const id = params.id as string;
   const [device, setDevice] = useState<ThingsboardDevice | null>(null);
-  const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
+  const [activityStatus, setActivityStatus] = useState<ActivityStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,26 +54,15 @@ export default function DeviceDetailsPage() {
         
         if (keys && keys.length > 0) {
             const endTs = new Date().getTime();
-            const startTs = subDays(endTs, 1).getTime();
-            const telemetry = await getDeviceTelemetry(token, instanceUrl, id, keys, startTs, endTs, 500);
+            const startTs = subHours(endTs, 24).getTime();
+            const telemetry = await getDeviceTelemetry(token, instanceUrl, id, keys, startTs, endTs, 50000);
 
-            const formattedLog: ActivityLog[] = [];
-            for (const key in telemetry) {
-                if (Object.prototype.hasOwnProperty.call(telemetry, key)) {
-                    telemetry[key].forEach((item: { ts: number, value: any }) => {
-                        formattedLog.push({
-                            ts: item.ts,
-                            key: key,
-                            value: String(item.value),
-                        });
-                    });
-                }
-            }
-            
-            // Sort by most recent first
-            formattedLog.sort((a, b) => b.ts - a.ts);
-            
-            setActivityLog(formattedLog);
+            // Process data for activity chart
+            const statusData = processTelemetryForActivityChart(telemetry, startTs, endTs);
+            setActivityStatus(statusData);
+
+        } else {
+            setActivityStatus([]);
         }
       } catch (e: any) {
         setError(e.message || 'Failed to fetch device details.');
@@ -86,6 +75,28 @@ export default function DeviceDetailsPage() {
 
     fetchData();
   }, [id]);
+  
+  const processTelemetryForActivityChart = (telemetry: any, startTs: number, endTs: number): ActivityStatus[] => {
+      const interval = 5 * 60 * 1000; // 5 minutes
+      const telemetryTimestamps = new Set<number>();
+      
+      for (const key in telemetry) {
+        telemetry[key].forEach((item: { ts: number }) => {
+            telemetryTimestamps.add(Math.floor(item.ts / interval) * interval);
+        });
+      }
+      
+      const chartData: ActivityStatus[] = [];
+      for (let ts = startTs; ts <= endTs; ts += interval) {
+        const intervalStart = Math.floor(ts / interval) * interval;
+        const status: 'Online' | 'Offline' = telemetryTimestamps.has(intervalStart) ? 'Online' : 'Offline';
+        chartData.push({
+          time: new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          status: status,
+        });
+      }
+      return chartData;
+  };
   
   const renderLoadingState = () => (
      <div className="container mx-auto">
@@ -173,34 +184,52 @@ export default function DeviceDetailsPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Activity History</CardTitle>
+            <CardTitle>Activity Status (Last 24h)</CardTitle>
             <CardDescription>
-                A log of the most recent telemetry data received from this device in the last 24 hours.
+                A visual representation of the device's online/offline status based on telemetry data.
             </CardDescription>
         </CardHeader>
         <CardContent>
             {isHistoryLoading ? (
                  <Skeleton className="h-[300px] w-full" />
-            ) : activityLog.length > 0 ? (
-                <div className="h-[400px] w-full relative overflow-y-auto">
-                    <Table>
-                        <TableHeader className="sticky top-0 bg-card">
-                            <TableRow>
-                                <TableHead>Time</TableHead>
-                                <TableHead>Key</TableHead>
-                                <TableHead>Value</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {activityLog.map((log) => (
-                                <TableRow key={`${log.ts}-${log.key}`}>
-                                    <TableCell className="text-muted-foreground whitespace-nowrap">{new Date(log.ts).toLocaleString()}</TableCell>
-                                    <TableCell><Badge variant="outline">{log.key}</Badge></TableCell>
-                                    <TableCell className="font-medium">{log.value}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+            ) : activityStatus.length > 0 ? (
+                <div className="h-[300px] w-full">
+                   <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={activityStatus} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis 
+                                dataKey="time" 
+                                tick={{ fontSize: 12 }} 
+                                tickLine={false} 
+                                axisLine={false} 
+                                interval={24} // Show a tick every 2 hours (24 * 5min intervals)
+                            />
+                            <YAxis 
+                                allowDecimals={false} 
+                                width={30} 
+                                tick={{ fontSize: 12 }} 
+                                tickLine={false} 
+                                axisLine={false}
+                                domain={[0, 1]}
+                                ticks={[0, 1]}
+                                tickFormatter={(value) => value === 1 ? 'Online' : 'Offline'}
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                contentStyle={{
+                                    background: 'hsl(var(--background))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: 'var(--radius)',
+                                }}
+                                labelStyle={{ fontWeight: 'bold' }}
+                            />
+                            <Bar dataKey="status" barSize={4}>
+                               {activityStatus.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.status === 'Online' ? 'hsl(var(--primary))' : 'hsl(var(--muted))'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center h-[300px] border-2 border-dashed rounded-lg">
