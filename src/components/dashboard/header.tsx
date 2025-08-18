@@ -47,6 +47,7 @@ export function AppHeader() {
     if (pathname.startsWith('/data-export')) return 'Data Export';
     if (pathname.startsWith('/profile')) return 'User Profile';
     if (pathname.startsWith('/users')) return 'User Management';
+    if (pathname.startsWith('/tenant-profiles')) return 'Tenant Profiles';
     return 'Home';
   }
   

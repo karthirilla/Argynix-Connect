@@ -1,6 +1,6 @@
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardTenantProfileInfo } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -44,12 +44,6 @@ async function fetchThingsboard<T>(
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
-}
-
-export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
-    const url = `/api/users?pageSize=100&page=0`;
-    const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
-    return result?.data || [];
 }
 
 export async function getCustomers(token: string, instanceUrl: string): Promise<ThingsboardCustomer[]> {
@@ -225,4 +219,10 @@ export async function getAlarms(
     instanceUrl
   );
   return result?.data || [];
+}
+
+export async function getTenantProfileInfos(token: string, instanceUrl: string): Promise<ThingsboardTenantProfileInfo[]> {
+    const url = `/api/tenantProfileInfos?pageSize=100&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardTenantProfileInfo[] }>(url, token, instanceUrl);
+    return result?.data || [];
 }

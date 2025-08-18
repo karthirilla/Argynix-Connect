@@ -138,3 +138,10 @@ export interface Schedule {
   days?: string[];
   time?: string;
 }
+
+export type ThingsboardTenantProfileInfo = {
+    id: ThingsboardId;
+    name: string;
+    description: string | null;
+    default: boolean;
+}

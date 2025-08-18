@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, Building2 } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -20,11 +20,18 @@ const navItems = [
   { href: '/data-export', label: 'Data Export', icon: Download },
 ];
 
-const adminNavItem = {
-    href: '/users',
-    label: 'Users',
-    icon: Users,
-};
+const adminNavItems = [
+    {
+        href: '/users',
+        label: 'Users',
+        icon: Users,
+    },
+    {
+        href: '/tenant-profiles',
+        label: 'Tenant Profiles',
+        icon: Building2,
+    }
+]
 
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
@@ -74,7 +81,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
         isMobile ? "px-2" : "px-2 lg:px-4"
     )}>
       {navItems.map(item => renderNavItem(item))}
-      {isAdmin && renderNavItem(adminNavItem)}
+      {isAdmin && adminNavItems.map(item => renderNavItem(item))}
     </nav>
   );
 

@@ -39,12 +39,13 @@ export default function DashboardLayout({
             const userData = await getUser(token, instanceUrl);
             setUser(userData);
             
-            // Redirect non-admins away from admin page
-            const isUsersPage = pathname.startsWith('/users');
             const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
-            if(isUsersPage && !userIsAdmin) {
-                router.replace('/');
+            
+            // Redirect non-admins away from admin pages
+            if ((pathname.startsWith('/users') || pathname.startsWith('/tenant-profiles')) && !userIsAdmin) {
+                 router.replace('/');
             }
+
 
         } catch (e) {
             // Token might be expired, log out
