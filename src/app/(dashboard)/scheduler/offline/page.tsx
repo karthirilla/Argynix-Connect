@@ -14,7 +14,7 @@ import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttr
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { format, parse, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -286,6 +286,7 @@ export default function OfflineSchedulerPage() {
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null); // To control which accordion is open
+  const [scheduleNumberToCreate, setScheduleNumberToCreate] = useState<number | null>(null);
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -379,8 +380,12 @@ export default function OfflineSchedulerPage() {
     setIsSaving(true);
     
     let scheduleKey = keyToSave;
-    if (!scheduleKey) {
-        scheduleKey = `offlineSchedule_${getNextScheduleIndex()}`;
+    if (!scheduleKey && scheduleNumberToCreate) {
+        scheduleKey = `offlineSchedule_${scheduleNumberToCreate}`;
+    } else if (!scheduleKey) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not determine schedule number.' });
+        setIsSaving(false);
+        return;
     }
     
     if(parseInt(scheduleKey.split('_')[1], 10) > MAX_SCHEDULES) {
@@ -413,6 +418,7 @@ export default function OfflineSchedulerPage() {
     } finally {
         setIsSaving(false);
         setEditingKey(null);
+        setScheduleNumberToCreate(null);
     }
   };
 
@@ -471,17 +477,18 @@ export default function OfflineSchedulerPage() {
   }
   
   const getScheduleSummary = (schedule: Schedule): string => {
-      let summary = `Set ${schedule.attributeKey} to "${schedule.attributeValue}"`;
-      if (schedule.mode === 'particular' && schedule.fireTime) {
-          summary += ` on ${format(parseISO(schedule.fireTime), 'PPP @ p')}`;
-      } else if (schedule.mode === 'recurring' && schedule.days?.length) {
-          const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
-          summary += ` on ${dayString} at ${schedule.time}`;
-      }
-      return summary;
+    let summary = `Set ${schedule.attributeKey} to "${schedule.attributeValue}"`;
+    if (schedule.mode === 'particular' && schedule.fireTime) {
+        summary += ` on ${format(parseISO(schedule.fireTime), 'PPP @ p')}`;
+    } else if (schedule.mode === 'recurring' && schedule.days?.length && schedule.time) {
+        const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
+        const time12hr = format(parse(schedule.time, 'HH:mm', new Date()), 'p');
+        summary += ` on ${dayString} @ ${time12hr}`;
+    }
+    return summary;
   }
   
-  const getNextScheduleIndex = () => {
+  const handleCreateNew = () => {
     const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
     let nextIndex = 1;
     for (const index of existingIndexes) {
@@ -491,8 +498,9 @@ export default function OfflineSchedulerPage() {
             break;
         }
     }
-    return nextIndex;
-  }
+    setScheduleNumberToCreate(nextIndex);
+    setEditingKey('new-schedule');
+  };
 
   const renderSchedulesList = () => {
     if (isFetchingSchedules) {
@@ -509,14 +517,20 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || ""} onValueChange={(value) => setEditingKey(value)}>
-                 {schedules.map(schedule => (
-                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
-                        <Card className={cn("overflow-hidden mb-2", !schedule.enabled && "bg-muted/50")}>
-                           <div className="flex items-center p-3">
+            <Accordion type="single" collapsible value={editingKey || ""} onValueChange={(value) => {
+                if (!value) setScheduleNumberToCreate(null);
+                setEditingKey(value)
+            }}>
+                 {schedules.map(schedule => {
+                    const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
+                    return (
+                    <AccordionItem value={schedule.key} key={schedule.key}>
+                        <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
+                           <AccordionTrigger className="p-3 hover:no-underline">
+                           <div className="flex items-center w-full">
                                <div className="flex-1 text-left">
                                    <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
-                                      <Badge variant="secondary" className="mr-2">#{schedule.key.split('_')[1]}</Badge>
+                                      <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
                                       {getScheduleSummary(schedule)}
                                     </div>
                                     <p className="text-xs text-muted-foreground ml-10">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
@@ -530,13 +544,12 @@ export default function OfflineSchedulerPage() {
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
-                                    <AccordionTrigger>
-                                       <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
+                                    <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
                                             <Pencil className="h-4 w-4" />
-                                       </div>
-                                    </AccordionTrigger>
+                                    </div>
                                 </div>
                             </div>
+                           </AccordionTrigger>
                             <AccordionContent>
                                <div className="p-4 bg-background border-t">
                                  <ScheduleForm
@@ -546,18 +559,19 @@ export default function OfflineSchedulerPage() {
                                         onCancel={() => setEditingKey(null)}
                                         existingSchedule={schedule}
                                         isSaving={isSaving}
-                                        scheduleNumber={parseInt(schedule.key.split('_')[1], 10)}
+                                        scheduleNumber={scheduleNum}
                                  />
                                </div>
                             </AccordionContent>
                         </Card>
                     </AccordionItem>
-                 ))}
+                 )})}
 
-                <AccordionItem value="new-schedule" className="border-t-0">
+                {/* Create New Form */}
+                <AccordionItem value="new-schedule">
                     {editingKey !== "new-schedule" && schedules.length < MAX_SCHEDULES && (
                         <div className="text-center mt-6">
-                            <Button variant="outline" onClick={() => setEditingKey("new-schedule")} disabled={isSaving}>
+                            <Button variant="outline" onClick={handleCreateNew} disabled={isSaving}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
@@ -565,14 +579,19 @@ export default function OfflineSchedulerPage() {
                     )}
                     <AccordionContent>
                         <Card>
-                            <ScheduleForm
+                           {scheduleNumberToCreate !== null && (
+                             <ScheduleForm
                                     device={selectedDevice!}
                                     telemetryKeys={telemetryKeys}
                                     onSave={(data) => handleSave(data)}
-                                    onCancel={() => setEditingKey(null)}
+                                    onCancel={() => {
+                                        setEditingKey(null)
+                                        setScheduleNumberToCreate(null);
+                                    }}
                                     isSaving={isSaving}
-                                    scheduleNumber={getNextScheduleIndex()}
+                                    scheduleNumber={scheduleNumberToCreate}
                             />
+                           )}
                         </Card>
                     </AccordionContent>
                 </AccordionItem>
