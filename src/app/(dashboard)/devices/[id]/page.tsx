@@ -7,18 +7,18 @@ import { getDeviceById, getDeviceTelemetry, getDeviceTelemetryKeys } from '@/lib
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, History, Rss, BarChart2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Rss } from 'lucide-react';
 import { ThingsboardDevice } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { subHours } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Brush } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush } from 'recharts';
 
 
 type ActivityStatus = {
   time: string;
-  status: 'Online' | 'Offline';
+  status: 0 | 1; // 0 for Offline, 1 for Online
 };
 
 export default function DeviceDetailsPage() {
@@ -57,7 +57,6 @@ export default function DeviceDetailsPage() {
             const startTs = subHours(endTs, 24).getTime();
             const telemetry = await getDeviceTelemetry(token, instanceUrl, id, keys, startTs, endTs, 50000);
 
-            // Process data for activity chart
             const statusData = processTelemetryForActivityChart(telemetry, startTs, endTs);
             setActivityStatus(statusData);
 
@@ -89,7 +88,7 @@ export default function DeviceDetailsPage() {
       const chartData: ActivityStatus[] = [];
       for (let ts = startTs; ts <= endTs; ts += interval) {
         const intervalStart = Math.floor(ts / interval) * interval;
-        const status: 'Online' | 'Offline' = telemetryTimestamps.has(intervalStart) ? 'Online' : 'Offline';
+        const status: 0 | 1 = telemetryTimestamps.has(intervalStart) ? 1 : 0;
         chartData.push({
           time: new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           status: status,
@@ -157,6 +156,10 @@ export default function DeviceDetailsPage() {
         <p className="text-base font-semibold">{value || 'N/A'}</p>
     </div>
   );
+  
+  const formatTooltip = (value: number) => {
+    return value === 1 ? 'Online' : 'Offline';
+  };
 
   return (
     <div className="container mx-auto space-y-6">
@@ -195,7 +198,13 @@ export default function DeviceDetailsPage() {
             ) : activityStatus.length > 0 ? (
                 <div className="h-[350px] w-full">
                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={activityStatus} margin={{ top: 5, right: 20, left: -10, bottom: 20 }}>
+                        <AreaChart data={activityStatus} margin={{ top: 5, right: 20, left: -10, bottom: 20 }}>
+                            <defs>
+                                <linearGradient id="colorStatus" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis 
                                 dataKey="time" 
@@ -213,22 +222,19 @@ export default function DeviceDetailsPage() {
                                 axisLine={false}
                                 domain={[0, 1]}
                                 ticks={[0, 1]}
-                                tickFormatter={(value) => value === 1 ? 'Online' : ''}
+                                tickFormatter={(value) => value === 1 ? 'Online' : 'Offline'}
                             />
                             <Tooltip
-                                cursor={{ fill: 'hsl(var(--muted))' }}
-                                contentStyle={{
+                                 formatter={formatTooltip}
+                                 cursor={{ fill: 'hsl(var(--muted))' }}
+                                 contentStyle={{
                                     background: 'hsl(var(--background))',
                                     border: '1px solid hsl(var(--border))',
                                     borderRadius: 'var(--radius)',
                                 }}
                                 labelStyle={{ fontWeight: 'bold' }}
                             />
-                            <Bar dataKey="status" barSize={10} radius={[2, 2, 0, 0]}>
-                               {activityStatus.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.status === 'Online' ? 'hsl(var(--primary))' : 'hsl(var(--muted))'} />
-                                ))}
-                            </Bar>
+                            <Area type="step" dataKey="status" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorStatus)" />
                             <Brush 
                                 dataKey="time" 
                                 height={30} 
@@ -237,7 +243,7 @@ export default function DeviceDetailsPage() {
                                 endIndex={activityStatus.length - 1}
                                 tickFormatter={() => ''}
                             />
-                        </BarChart>
+                        </AreaChart>
                     </ResponsiveContainer>
                 </div>
             ) : (
