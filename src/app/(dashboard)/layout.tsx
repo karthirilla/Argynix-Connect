@@ -83,7 +83,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10 flex flex-col">
+        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10 flex flex-col relative">
           {children}
         </main>
         <Toaster />
