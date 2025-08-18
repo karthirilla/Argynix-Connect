@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttributes } from '@/lib/api';
+import { getDevices, getDeviceAttributes, saveDeviceAttributes, deleteDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +29,10 @@ export default function OfflineSchedulerPage() {
   const [selectedDevice, setSelectedDevice] = useState<string>('');
   
   const [schedule, setSchedule] = useState<Schedule | null>(null);
+  
+  const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
+  const [isKeysLoading, setIsKeysLoading] = useState(false);
+
   const [attributeKey, setAttributeKey] = useState('');
   const [attributeValue, setAttributeValue] = useState('');
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
@@ -74,17 +78,25 @@ export default function OfflineSchedulerPage() {
     setAttributeValue('');
     setScheduledDate(undefined);
     setScheduledTime('00:00');
+    setTelemetryKeys([]);
     
     if (!deviceId) return;
 
     setIsFetchingSchedule(true);
+    setIsKeysLoading(true);
     try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
         if (!token || !instanceUrl) throw new Error("Auth details missing");
 
-        const attributes = await getDeviceAttributes(token, instanceUrl, deviceId);
+        // Fetch existing schedule and telemetry keys in parallel
+        const [attributes, keys] = await Promise.all([
+             getDeviceAttributes(token, instanceUrl, deviceId),
+             getDeviceTelemetryKeys(token, instanceUrl, deviceId)
+        ]);
+
         const scheduleAttr = attributes.find(attr => attr.key === 'offlineSchedule');
+        setTelemetryKeys(keys);
         
         if (scheduleAttr) {
             const savedSchedule = scheduleAttr.value;
@@ -103,11 +115,13 @@ export default function OfflineSchedulerPage() {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Could not fetch schedule for the selected device.'
+            description: 'Could not fetch data for the selected device.'
         });
         setSchedule(null);
+        setTelemetryKeys([]);
     } finally {
         setIsFetchingSchedule(false);
+        setIsKeysLoading(false);
     }
   };
   
@@ -213,7 +227,18 @@ export default function OfflineSchedulerPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="attribute-key">Attribute Key</Label>
-                        <Input id="attribute-key" placeholder="e.g., powerStatus" value={attributeKey} onChange={e => setAttributeKey(e.target.value)} />
+                        <Select onValueChange={setAttributeKey} value={attributeKey} disabled={isKeysLoading}>
+                            <SelectTrigger id="attribute-key">
+                                <SelectValue placeholder={isKeysLoading ? "Loading keys..." : "Select a key..."} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {telemetryKeys.map((key) => (
+                                <SelectItem key={key} value={key}>
+                                    {key}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="attribute-value">Attribute Value</Label>
