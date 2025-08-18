@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemetryKeys } from '@/lib/api';
+import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemetryKeys, deleteDeviceAttributes } from '@/lib/api';
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 type ScheduleMode = 'particular' | 'recurring';
 
@@ -286,6 +298,7 @@ export default function OfflineSchedulerPage() {
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string | undefined>(undefined); 
+  const [isCreating, setIsCreating] = useState(false);
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -325,6 +338,7 @@ export default function OfflineSchedulerPage() {
     setIsFetchingSchedules(true);
     setIsKeysLoading(true);
     setEditingKey(undefined);
+    setIsCreating(false);
     try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -368,6 +382,7 @@ export default function OfflineSchedulerPage() {
     setSchedules([]);
     setTelemetryKeys([]);
     setEditingKey(undefined);
+    setIsCreating(false);
     if(deviceId) {
         fetchDeviceData(deviceId);
     }
@@ -422,6 +437,7 @@ export default function OfflineSchedulerPage() {
     } finally {
         setIsSaving(false);
         setEditingKey(undefined);
+        setIsCreating(false);
     }
   };
 
@@ -443,7 +459,7 @@ export default function OfflineSchedulerPage() {
 
         toast({
           title: 'Schedule Disabled',
-          description: 'The schedule has been successfully disabled.',
+          description: 'The schedule has been successfully disabled and will be ignored by the hardware.',
         });
 
     } catch (error) {
@@ -496,6 +512,17 @@ export default function OfflineSchedulerPage() {
   
   const handleCancelForm = () => {
     setEditingKey(undefined);
+    setIsCreating(false);
+  }
+
+  const handleEditClick = (key: string) => {
+    setIsCreating(false);
+    setEditingKey(key)
+  }
+  
+  const handleCreateClick = () => {
+    setEditingKey(undefined);
+    setIsCreating(true);
   }
 
   const renderSchedulesList = () => {
@@ -516,25 +543,27 @@ export default function OfflineSchedulerPage() {
         return nextIndex;
     })();
 
+    const activeSchedules = schedules.filter(s => s.enabled);
+
     return (
         <div className="space-y-4">
-            {schedules.length === 0 && editingKey !== 'new-schedule' && (
+            {activeSchedules.length === 0 && !isCreating && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No Schedules Found</AlertTitle>
-                    <AlertDescription>This device has no offline schedules. You can create one below.</AlertDescription>
+                    <AlertTitle>No Active Schedules Found</AlertTitle>
+                    <AlertDescription>This device has no enabled offline schedules. You can create one below.</AlertDescription>
                 </Alert>
             )}
 
             <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
-                 {schedules.map(schedule => {
+                 {activeSchedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
-                        <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
+                        <Card className="overflow-hidden">
                            <div className="flex items-center p-3 hover:bg-muted/50 gap-2">
                                 <div className="flex-1 text-left">
-                                     <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
+                                     <div className="font-semibold text-sm">
                                        <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
                                        {getScheduleSummary(schedule)}
                                      </div>
@@ -546,10 +575,29 @@ export default function OfflineSchedulerPage() {
                                         disabled={isSaving}
                                     />
                                     <AccordionTrigger asChild>
-                                      <Button variant="ghost" size="icon">
+                                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(schedule.key)}>
                                           <Pencil className="h-4 w-4" />
                                       </Button>
                                     </AccordionTrigger>
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-destructive/80 hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will disable the schedule. It will no longer execute but will remain in the device's attributes for the hardware to see.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(schedule)}>Continue</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             </div>
                             <AccordionContent>
@@ -568,33 +616,30 @@ export default function OfflineSchedulerPage() {
                         </Card>
                     </AccordionItem>
                  )})}
-
-                {/* Create New Form */}
-                {schedules.length < MAX_SCHEDULES && (
-                <AccordionItem value="new-schedule" className="border-b-0">
-                    <AccordionTrigger asChild>
-                        <div className="w-full text-center mt-4">
-                            <Button variant="outline" disabled={isSaving || !!editingKey}>
-                                <PlusCircle className="mr-2" />
-                                Create New Schedule
-                            </Button>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <Card>
-                                <ScheduleForm
-                                    device={selectedDevice!}
-                                    telemetryKeys={telemetryKeys}
-                                    onSave={(data) => handleSave(data)}
-                                    onCancel={handleCancelForm}
-                                    isSaving={isSaving}
-                                    scheduleNumber={nextScheduleNumber}
-                            />
-                        </Card>
-                    </AccordionContent>
-                </AccordionItem>
-                )}
             </Accordion>
+            
+             {/* Create New Form Area */}
+            {isCreating ? (
+                <Card>
+                    <ScheduleForm
+                        device={selectedDevice!}
+                        telemetryKeys={telemetryKeys}
+                        onSave={(data) => handleSave(data)}
+                        onCancel={handleCancelForm}
+                        isSaving={isSaving}
+                        scheduleNumber={nextScheduleNumber}
+                    />
+                </Card>
+            ) : (
+                schedules.length < MAX_SCHEDULES && (
+                     <div className="w-full text-center mt-4">
+                        <Button variant="outline" disabled={isSaving || !!editingKey} onClick={handleCreateClick}>
+                            <PlusCircle className="mr-2" />
+                            Create New Schedule
+                        </Button>
+                    </div>
+                )
+            )}
         </div>
     )
   }
