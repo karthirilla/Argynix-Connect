@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Download, Loader2, ArrowLeft } from 'lucide-react';
+import { CircleUser, Menu, Download, Loader2, ArrowLeft, Image as ImageIcon, FileType } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -72,8 +72,8 @@ export function AppHeader() {
     router.push('/login');
   };
 
-  const handleExportRequest = () => {
-    eventBus.dispatch('export:request');
+  const handleExportRequest = (format: 'pdf' | 'png' | 'jpeg') => {
+    eventBus.dispatch('export:request', { format });
   };
 
   const getTitle = () => {
@@ -122,10 +122,30 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-2">
         {isIframePage && (
-             <Button onClick={handleExportRequest} disabled={!isIframeReady || isExporting} variant="outline" size="icon">
-                {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
-                <span className="sr-only">Export as PDF</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" disabled={!isIframeReady || isExporting}>
+                   {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
+                   <span className="sr-only">Export Dashboard</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Export As</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExportRequest('pdf')}>
+                  <FileType className="mr-2 h-4 w-4" />
+                  <span>PDF</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportRequest('png')}>
+                  <ImageIcon className="mr-2 h-4 w-4" />
+                  <span>PNG</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportRequest('jpeg')}>
+                  <ImageIcon className="mr-2 h-4 w-4" />
+                  <span>JPEG</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

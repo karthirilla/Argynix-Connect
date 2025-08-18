@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,13 +29,13 @@ export default function DashboardIframePage() {
   const id = params.id as string;
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!id) {
       setError('No dashboard ID provided.');
-      setIsCapturing(false);
+      setIsLoading(false);
       return;
     }
 
@@ -50,18 +50,17 @@ export default function DashboardIframePage() {
   const handleIframeLoad = () => {
     // Wait for the iframe content to render before signaling readiness
     setTimeout(() => {
-        setIsCapturing(false);
+        setIsLoading(false);
         eventBus.dispatch('iframe:ready'); // Signal to header that it can enable the export button
-         toast({
-          title: 'Ready to Export',
-          description: 'Dashboard preview captured. You can now export it as a PDF.',
-        });
-    }, 3000); // 3-second delay to allow complex widgets to load
+    }, 2000); // 2-second delay to allow complex widgets to load
   };
   
-  const handleExport = useCallback(async () => {
+  const handleExport = useCallback(async (event: CustomEvent) => {
+    const format = event.detail.format;
+    if (!format) return;
+
     eventBus.dispatch('export:start');
-    toast({ title: "Capturing Dashboard...", description: "Please wait while we generate the PDF." });
+    toast({ title: "Capturing Dashboard...", description: `Please wait while we generate the ${format.toUpperCase()} file.` });
     
     try {
         const canvas = await html2canvas(document.body, {
@@ -70,12 +69,31 @@ export default function DashboardIframePage() {
             scale: 2,
         });
 
-        const capturedImage = canvas.toDataURL('image/png');
-        const doc = new jsPDF('l', 'px', [document.body.scrollWidth, document.body.scrollHeight]);
-        doc.addImage(capturedImage, 'PNG', 0, 0, document.body.scrollWidth, document.body.scrollHeight);
-        doc.save(`dashboard_${id}_${new Date().toISOString()}.pdf`);
+        const capturedImage = canvas.toDataURL(`image/${format === 'pdf' ? 'png' : format}`, 1.0);
+        
+        const downloadFile = (uri: string, fileName: string) => {
+            const link = document.createElement("a");
+            link.href = uri;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        
+        const fileName = `dashboard_${id}_${new Date().toISOString()}`;
 
-        toast({ title: "Export Complete", description: "Your PDF has been downloaded." });
+        if (format === 'pdf') {
+            const doc = new jsPDF('l', 'px', [document.body.scrollWidth, document.body.scrollHeight]);
+            doc.addImage(capturedImage, 'PNG', 0, 0, document.body.scrollWidth, document.body.scrollHeight);
+            doc.save(`${fileName}.pdf`);
+        } else if (format === 'png') {
+            downloadFile(capturedImage, `${fileName}.png`);
+        } else if (format === 'jpeg') {
+            downloadFile(capturedImage, `${fileName}.jpeg`);
+        }
+
+
+        toast({ title: "Export Complete", description: `Your ${format.toUpperCase()} has been downloaded.` });
 
     } catch (err) {
         console.error("Failed to export dashboard", err);
@@ -107,14 +125,14 @@ export default function DashboardIframePage() {
 
   return (
     <div className="h-full w-full relative">
-      {isCapturing && <Skeleton className="absolute inset-0 w-full h-full" />}
+      {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
       {iframeSrc && (
         <iframe
           src={iframeSrc}
           title="ThingsBoard Dashboard"
           className="w-full h-full border-0"
           onLoad={handleIframeLoad}
-          style={{ visibility: isCapturing ? 'hidden' : 'visible' }}
+          style={{ visibility: isLoading ? 'hidden' : 'visible' }}
         />
       )}
     </div>
