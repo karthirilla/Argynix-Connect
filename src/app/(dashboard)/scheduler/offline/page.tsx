@@ -487,22 +487,24 @@ export default function OfflineSchedulerPage() {
             <Accordion type="single" collapsible value={editingKey || ""} onValueChange={setEditingKey}>
                  {schedules.map(schedule => (
                     <AccordionItem value={schedule.key} key={schedule.key}>
-                        <Card className={cn(!schedule.enabled && "bg-muted/50")}>
-                            <AccordionTrigger className="w-full p-4 hover:no-underline">
-                                 <div className="flex-grow text-left">
-                                    <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
-                                    <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
+                        <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
+                             <div className="flex items-center p-4">
+                                <AccordionTrigger asChild>
+                                    <div className="flex-grow cursor-pointer">
+                                        <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
+                                        <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
+                                    </div>
+                                </AccordionTrigger>
+                                <div className="flex items-center gap-2 pl-4">
+                                    <Switch
+                                            checked={schedule.enabled}
+                                            onCheckedChange={() => handleToggleEnable(schedule)}
+                                            disabled={isSaving}
+                                    />
+                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
                                 </div>
-                            </AccordionTrigger>
-                            <div className="p-4 pt-0 -mt-4 flex justify-end items-center gap-2">
-                                <Switch
-                                        checked={schedule.enabled}
-                                        onCheckedChange={() => handleToggleEnable(schedule)}
-                                        disabled={isSaving}
-                                />
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
                             </div>
                             <AccordionContent>
                             <ScheduleForm
@@ -519,14 +521,14 @@ export default function OfflineSchedulerPage() {
 
                  {schedules.length < MAX_SCHEDULES && (
                     <AccordionItem value="new-schedule" className="border-none mt-4">
-                        <AccordionTrigger asChild>
-                            <div className="text-center">
+                         <div className="text-center">
+                            <AccordionTrigger asChild>
                                 <Button variant="outline">
                                     <PlusCircle className="mr-2" />
                                     Create New Schedule
                                 </Button>
-                            </div>
-                        </AccordionTrigger>
+                            </AccordionTrigger>
+                        </div>
                         <AccordionContent className="mt-4">
                            <Card>
                              <CardHeader>
@@ -599,5 +601,3 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
-
-    
