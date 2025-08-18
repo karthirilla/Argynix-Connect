@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Download, Loader2 } from 'lucide-react';
+import { CircleUser, Menu, Download, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 // This is a global event bus to communicate between a page and this header
 const eventBus = {
@@ -42,20 +43,22 @@ export function AppHeader() {
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
     setUsername(storedUser);
-    setIsIframePage(pathname.includes('/iframe'));
+    
+    const onIframePage = pathname.includes('/iframe');
+    setIsIframePage(onIframePage);
 
     const handleIframeReady = () => setIsIframeReady(true);
     const handleExportStart = () => setIsExporting(true);
     const handleExportEnd = () => setIsExporting(false);
 
-    if(pathname.includes('/iframe')) {
+    if(onIframePage) {
         eventBus.subscribe('iframe:ready', handleIframeReady);
         eventBus.subscribe('export:start', handleExportStart);
         eventBus.subscribe('export:end', handleExportEnd);
     }
     
     return () => {
-        if(pathname.includes('/iframe')) {
+        if(onIframePage) {
             eventBus.unsubscribe('iframe:ready', handleIframeReady);
             eventBus.unsubscribe('export:start', handleExportStart);
             eventBus.unsubscribe('export:end', handleExportEnd);
@@ -65,11 +68,7 @@ export function AppHeader() {
   }, [pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('tb_auth_token');
-    localStorage.removeItem('tb_refresh_token');
-    localStorage.removeItem('tb_instance_url');
-    localStorage.removeItem('tb_user');
-    localStorage.removeItem('tb_customer_id');
+    localStorage.clear();
     router.push('/login');
   };
 
@@ -78,7 +77,7 @@ export function AppHeader() {
   };
 
   const getTitle = () => {
-    if (pathname.includes('/iframe')) return 'View Dashboard';
+    if (isIframePage) return 'Dashboard';
     if (pathname === '/') return 'Home';
     if (pathname.startsWith('/dashboards')) return 'Dashboards';
     if (pathname.startsWith('/devices')) return 'Devices';
@@ -110,7 +109,16 @@ export function AppHeader() {
             </SheetContent>
         </Sheet>
       <div className="w-full flex-1 flex items-center gap-4">
-        <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
+        {isIframePage && (
+             <Button onClick={() => router.back()} variant="outline" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+            </Button>
+        )}
+        <h1 className={cn(
+            "font-semibold text-lg md:text-xl",
+            isIframePage && "text-base md:text-lg"
+            )}>{getTitle()}</h1>
       </div>
       <div className="flex items-center gap-2">
         {isIframePage && (
