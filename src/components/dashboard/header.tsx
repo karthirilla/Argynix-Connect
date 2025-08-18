@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Download, Loader2, ArrowLeft, Image as ImageIcon, FileType } from 'lucide-react';
+import { CircleUser, Menu, Loader2, ArrowLeft, Printer } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 // This is a global event bus to communicate between a page and this header
 const eventBus = {
@@ -35,10 +36,10 @@ const eventBus = {
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
   const [username, setUsername] = useState<string | null>(null);
   const [isIframePage, setIsIframePage] = useState(false);
   const [isIframeReady, setIsIframeReady] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
@@ -47,33 +48,33 @@ export function AppHeader() {
     const onIframePage = pathname.includes('/iframe');
     setIsIframePage(onIframePage);
 
-    const handleIframeReady = () => setIsIframeReady(true);
-    const handleExportStart = () => setIsExporting(true);
-    const handleExportEnd = () => setIsExporting(false);
+    const handleIframeReady = () => {
+        setIsIframeReady(true);
+        toast({
+            title: "Dashboard Ready",
+            description: "You can now print or save the dashboard as a PDF.",
+        });
+    };
 
     if(onIframePage) {
         eventBus.subscribe('iframe:ready', handleIframeReady);
-        eventBus.subscribe('export:start', handleExportStart);
-        eventBus.subscribe('export:end', handleExportEnd);
     }
     
     return () => {
         if(onIframePage) {
             eventBus.unsubscribe('iframe:ready', handleIframeReady);
-            eventBus.unsubscribe('export:start', handleExportStart);
-            eventBus.unsubscribe('export:end', handleExportEnd);
         }
     }
 
-  }, [pathname]);
+  }, [pathname, toast]);
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
 
-  const handleExportRequest = (format: 'pdf' | 'png' | 'jpeg') => {
-    eventBus.dispatch('export:request', { format });
+  const handlePrintRequest = () => {
+    eventBus.dispatch('print:request');
   };
 
   const getTitle = () => {
@@ -122,30 +123,10 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-2">
         {isIframePage && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" disabled={!isIframeReady || isExporting}>
-                   {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
-                   <span className="sr-only">Export Dashboard</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Export As</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleExportRequest('pdf')}>
-                  <FileType className="mr-2 h-4 w-4" />
-                  <span>PDF</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExportRequest('png')}>
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  <span>PNG</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExportRequest('jpeg')}>
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  <span>JPEG</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" size="icon" disabled={!isIframeReady} onClick={handlePrintRequest}>
+                {!isIframeReady ? <Loader2 className="h-4 w-4 animate-spin"/> : <Printer className="h-4 w-4"/>}
+                <span className="sr-only">Print / Save as PDF</span>
+            </Button>
         )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
