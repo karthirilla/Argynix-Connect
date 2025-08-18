@@ -50,7 +50,7 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                   </div>
                 )}
             </CardContent>
-            <CardFooter className="flex justify-between gap-2">
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
                <Button asChild variant="outline" className="w-full">
                 <Link href={`/dashboards/${dashboard.id}`}>
                     <Info className="mr-2 h-4 w-4" />
