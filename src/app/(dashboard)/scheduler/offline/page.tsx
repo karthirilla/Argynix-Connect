@@ -533,30 +533,33 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || ''} onValueChange={setEditingKey}>
+            <Accordion type="single" collapsible value={editingKey || ''} onValueChange={(value) => {
+                setIsCreating(value === 'new-schedule');
+                setEditingKey(value);
+            }}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
                            <div className="flex items-center p-3">
-                               <AccordionTrigger asChild>
-                                   <div className="flex-1 text-left cursor-pointer flex items-center">
-                                       <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
-                                          <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
-                                          {getScheduleSummary(schedule)}
-                                        </div>
-                                        <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
-                                                <Pencil className="h-4 w-4" />
-                                        </div>
-                                   </div>
-                               </AccordionTrigger>
+                                <div className="flex-1 text-left flex items-center">
+                                    <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
+                                       <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
+                                       {getScheduleSummary(schedule)}
+                                     </div>
+                                </div>
                                 <div className="flex items-center gap-2 pl-4 ml-auto">
                                     <Switch
                                         checked={schedule.enabled}
                                         onCheckedChange={() => handleToggleEnable(schedule)}
                                         disabled={isSaving}
                                     />
+                                    <AccordionTrigger asChild>
+                                       <Button variant="ghost" size="icon">
+                                            <Pencil className="h-4 w-4" />
+                                       </Button>
+                                    </AccordionTrigger>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
@@ -589,20 +592,20 @@ export default function OfflineSchedulerPage() {
                             </Button>
                         </div>
                     )}
-                    <AccordionContent>
-                        <Card>
-                           {isCreating && (
-                             <ScheduleForm
-                                    device={selectedDevice!}
-                                    telemetryKeys={telemetryKeys}
-                                    onSave={(data) => handleSave(data)}
-                                    onCancel={handleCancelForm}
-                                    isSaving={isSaving}
-                                    scheduleNumber={nextScheduleNumber}
-                            />
-                           )}
-                        </Card>
-                    </AccordionContent>
+                    {isCreating && (
+                        <AccordionContent forceMount>
+                            <Card>
+                                 <ScheduleForm
+                                        device={selectedDevice!}
+                                        telemetryKeys={telemetryKeys}
+                                        onSave={(data) => handleSave(data)}
+                                        onCancel={handleCancelForm}
+                                        isSaving={isSaving}
+                                        scheduleNumber={nextScheduleNumber}
+                                />
+                            </Card>
+                        </AccordionContent>
+                     )}
                 </AccordionItem>
             </Accordion>
         </div>
@@ -661,5 +664,3 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
-
-    
