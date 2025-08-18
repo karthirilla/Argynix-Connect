@@ -451,7 +451,7 @@ export default function OfflineSchedulerPage() {
   const handleDelete = async (schedule: Schedule) => {
     if (!selectedDevice) return;
 
-    const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, deleted: true, enabled: false };
+    const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, enabled: false, deleted: true };
     delete (updatedSchedule as any).key;
 
     setIsSaving(true);
@@ -558,10 +558,10 @@ export default function OfflineSchedulerPage() {
     
     const visibleSchedules = schedules.filter(s => !s.deleted);
     const hasDeletedSchedules = schedules.some(s => s.deleted);
-    const hasVisibleSchedules = visibleSchedules.length > 0;
     
     // Combine visible schedules with any reused schedule that's being edited
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
+    const hasVisibleSchedules = visibleSchedules.length > 0
 
     return (
         <div className="space-y-4">
@@ -683,7 +683,7 @@ export default function OfflineSchedulerPage() {
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Offline Command Scheduler</CardTitle>
-          <CardDescription>Queue commands to be sent to a device the next time it comes online. The command will set a server-side attribute to a specific value at a scheduled time.</CardDescription>
+          <CardDescription>Schedules are stored on the device and run without an internet connection.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
