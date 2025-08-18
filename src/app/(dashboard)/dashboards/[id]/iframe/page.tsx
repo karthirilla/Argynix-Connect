@@ -2,12 +2,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { AppHeader } from '@/components/dashboard/header';
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -16,7 +17,6 @@ export default function DashboardIframePage() {
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,24 +66,11 @@ export default function DashboardIframePage() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background">
-       <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0">
-         <Button onClick={() => router.back()} variant="outline" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back</span>
-            </Button>
-            <h1 className="font-semibold text-lg">Dashboard</h1>
-            <div className="ml-auto">
-                <Button variant="outline" size="icon" disabled={isLoading} onClick={handlePrint}>
-                    <Printer className="h-4 w-4" />
-                    <span className="sr-only">Print / Save as PDF</span>
-                </Button>
-            </div>
-       </header>
+       <AppHeader onPrint={handlePrint} isIframePage={true} />
        <main className="flex-1 relative">
             {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
             {iframeSrc && (
                 <iframe
-                ref={iframeRef}
                 src={iframeSrc}
                 title="ThingsBoard Dashboard"
                 className="w-full h-full border-0"
