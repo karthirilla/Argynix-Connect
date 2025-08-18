@@ -96,8 +96,8 @@ export default function HomePage() {
                         inactive: tbDevices.length - activeDevices,
                     });
                 } catch (e: any) {
-                     console.error("Could not fetch device stats.", e);
-                     setDeviceStats(null);
+                     console.error("Could not fetch device stats.", e.message);
+                     setDeviceStats(null); // Set to null on error
                 }
 
                 // Dashboard Stats
@@ -105,8 +105,8 @@ export default function HomePage() {
                     const tbDashboards = await getDashboards(token, instanceUrl, customerId);
                     setDashboardCount(tbDashboards.length);
                 } catch(e: any) {
-                    console.error("Could not fetch dashboard stats.", e);
-                    setDashboardCount(null);
+                    console.error("Could not fetch dashboard stats.", e.message);
+                    setDashboardCount(null); // Set to null on error
                 }
                 
                 // Alarm Stats
@@ -123,13 +123,14 @@ export default function HomePage() {
                     });
                     setAlarmStats(alarms);
                 } catch(e: any) {
-                    console.warn("Could not fetch alarms. User may not have permissions.", e);
-                    setAlarmStats(null);
+                    // This is expected for some user roles, so we console.warn
+                    console.warn("Could not fetch alarms. User may not have permissions.", e.message);
+                    setAlarmStats(null); // Set to null on error
                 }
 
 
-            } catch (e) {
-                console.error(e);
+            } catch (e: any) {
+                console.error("An unexpected error occurred during stats fetching:", e);
                 setError('An unexpected error occurred while fetching overview statistics.');
             } finally {
                 setIsLoading(false);
