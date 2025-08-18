@@ -21,11 +21,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
-  
-  // This layout will now be skipped for the iframe page, which has its own layout.
-  if (pathname.includes('/iframe')) {
-    return <>{children}</>;
-  }
 
   useEffect(() => {
     const checkAuthAndFetchUser = async () => {
@@ -34,7 +29,7 @@ export default function DashboardLayout({
 
         if (!token || !instanceUrl) {
             router.replace('/login');
-            setIsAuthenticating(false);
+            // No need to set isAuthenticating to false here, the redirect will handle it.
             return;
         }
 
@@ -60,9 +55,20 @@ export default function DashboardLayout({
         }
     };
     
-    checkAuthAndFetchUser();
+    // Don't run auth check for the iframe page.
+    if (!pathname.includes('/iframe')) {
+        checkAuthAndFetchUser();
+    } else {
+        setIsAuthenticating(false);
+    }
 
   }, [router, pathname]);
+  
+  // This layout will now be skipped for the iframe page, which has its own layout.
+  if (pathname.includes('/iframe')) {
+    return <>{children}</>;
+  }
+
 
   if (isAuthenticating) {
     return (
@@ -78,7 +84,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (!user) {
+  if (!user && !pathname.includes('/iframe')) {
     return null; // Render nothing while redirecting
   }
 
