@@ -47,7 +47,8 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
 }
 
 export async function getUsers(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
-    const url = `/api/users?pageSize=100&page=0`;
+    // A TENANT_ADMIN should use /api/tenant/users. /api/users is for SYS_ADMIN.
+    const url = `/api/tenant/users?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(
         url,
         token,
