@@ -222,13 +222,8 @@ export async function getAlarms(
 }
 
 export async function getTenantProfileInfos(token: string, instanceUrl: string): Promise<ThingsboardTenantProfileInfo[]> {
-    // A tenant admin can't list all profiles, but they can get their own.
-    // So we fetch the user, get their tenantId, then get that tenant's profile info.
-    // This is a workaround for the 403 error.
-    const user = await getUser(token, instanceUrl);
-    if (!user.tenantId) return [];
-
-    const tenantProfileInfo = await fetchThingsboard<ThingsboardTenantProfileInfo>(`/api/tenantProfileInfo/default`, token, instanceUrl);
+    const url = `/api/tenantProfileInfo/default`;
+    const tenantProfileInfo = await fetchThingsboard<ThingsboardTenantProfileInfo>(url, token, instanceUrl);
     
     // Return it as an array to match the expected type
     return tenantProfileInfo ? [tenantProfileInfo] : [];
