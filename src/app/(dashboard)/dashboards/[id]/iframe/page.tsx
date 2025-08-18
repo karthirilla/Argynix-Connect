@@ -23,6 +23,7 @@ export default function DashboardIframePage() {
 
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (instanceUrl) {
+      // We no longer add `?kiosk=true` so the dashboard's own sidebar is available
       setIframeSrc(`${instanceUrl}/dashboard/${id}`);
     } else {
       setError('ThingsBoard instance URL not found in local storage.');
@@ -50,7 +51,7 @@ export default function DashboardIframePage() {
   }
 
   return (
-    <div className="flex-grow h-full w-full relative">
+    <div className="flex-grow h-full w-full relative -m-4 md:-m-8 lg:-m-10">
         {isLoading && <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />}
         {iframeSrc && (
             <iframe
