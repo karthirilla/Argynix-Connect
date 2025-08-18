@@ -5,24 +5,25 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Dashboard } from '@/lib/types';
-import { BarChart, LayoutDashboard, Info, Search } from 'lucide-react';
+import { BarChart, LayoutDashboard, Info, Search, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '../ui/input';
+import { SmartExportModal } from './smart-export-modal';
 
 export default function DashboardsList({ dashboards }: { dashboards: Dashboard[] }) {
-  const [instanceUrl, setInstanceUrl] = useState('');
   const [filter, setFilter] = useState('');
+  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Client-side only: get the instance URL from localStorage
-    const url = localStorage.getItem('tb_instance_url');
-    setInstanceUrl(url || '');
-  }, []);
-  
   const filteredDashboards = dashboards.filter(dashboard => 
     dashboard.name.toLowerCase().includes(filter.toLowerCase()) ||
     dashboard.type.toLowerCase().includes(filter.toLowerCase())
   );
+
+  const handleSmartExportClick = (dashboard: Dashboard) => {
+    setSelectedDashboard(dashboard);
+    setIsModalOpen(true);
+  };
 
   if (dashboards.length === 0) {
     return (
@@ -64,7 +65,10 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
-                {/* Content can be added here in future */}
+                 <Button variant="secondary" size="sm" className="w-full" onClick={() => handleSmartExportClick(dashboard)}>
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Smart Export
+                </Button>
             </CardContent>
             <CardFooter className="grid grid-cols-2 gap-2">
                <Button asChild variant="outline" className="w-full">
@@ -87,6 +91,13 @@ export default function DashboardsList({ dashboards }: { dashboards: Dashboard[]
             <div className="text-center text-muted-foreground py-10 col-span-full">
                 No dashboards match your filter.
             </div>
+        )}
+        {selectedDashboard && (
+            <SmartExportModal 
+                dashboard={selectedDashboard}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         )}
     </div>
   );

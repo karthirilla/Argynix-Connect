@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -43,7 +44,7 @@ export function SmartExportModal({ dashboard, isOpen, onClose }: SmartExportModa
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Argynix instance URL not found.',
+        description: 'ThingsBoard instance URL not found.',
       });
       return;
     }

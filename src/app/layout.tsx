@@ -2,7 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Argynix-Connect',
+  title: 'TBConnect',
   description: 'Your custom interface for ThingsBoard',
 };
 
