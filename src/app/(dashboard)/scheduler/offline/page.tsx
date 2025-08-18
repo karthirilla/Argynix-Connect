@@ -476,7 +476,7 @@ export default function OfflineSchedulerPage() {
 
     return (
         <div className="space-y-4">
-            {schedules.length === 0 && !editingKey && (
+            {schedules.length === 0 && editingKey !== "new-schedule" && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -488,14 +488,17 @@ export default function OfflineSchedulerPage() {
                  {schedules.map(schedule => (
                     <AccordionItem value={schedule.key} key={schedule.key}>
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                             <div className="flex items-center p-4">
+                             <div className="flex items-center p-2 pr-4">
                                 <AccordionTrigger asChild>
-                                    <div className="flex-grow cursor-pointer">
-                                        <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
-                                        <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
+                                    <div className="flex flex-1 items-center gap-4 p-2 cursor-pointer rounded-md hover:bg-muted">
+                                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                                        <div className="flex-grow">
+                                            <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
+                                            <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
+                                        </div>
                                     </div>
                                 </AccordionTrigger>
-                                <div className="flex items-center gap-2 pl-4">
+                                <div className="flex items-center gap-2 pl-4 border-l ml-2">
                                     <Switch
                                             checked={schedule.enabled}
                                             onCheckedChange={() => handleToggleEnable(schedule)}
@@ -523,7 +526,7 @@ export default function OfflineSchedulerPage() {
                     <AccordionItem value="new-schedule" className="border-none mt-4">
                          <div className="text-center">
                             <AccordionTrigger asChild>
-                                <Button variant="outline">
+                                <Button variant="outline" onClick={() => setEditingKey(editingKey === "new-schedule" ? null : "new-schedule")}>
                                     <PlusCircle className="mr-2" />
                                     Create New Schedule
                                 </Button>
