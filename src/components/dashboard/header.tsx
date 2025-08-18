@@ -47,6 +47,8 @@ export function AppHeader() {
     if (pathname.startsWith('/audit-logs')) return 'Audit Logs';
     return 'Home';
   }
+
+  const showBackButton = /^\/(devices|assets|dashboards)\/[^/]+/.test(pathname);
   
   return (
     <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
@@ -66,6 +68,12 @@ export function AppHeader() {
             </SheetContent>
         </Sheet>
         <div className="w-full flex-1 flex items-center gap-4">
+            {showBackButton && (
+                 <Button variant="outline" size="icon" onClick={() => router.back()}>
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="sr-only">Back</span>
+                </Button>
+            )}
             <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
         </div>
         <div className="flex items-center gap-2">
