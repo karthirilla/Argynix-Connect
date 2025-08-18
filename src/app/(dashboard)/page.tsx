@@ -76,11 +76,10 @@ export default function HomePage() {
             }
 
             try {
-                // Fetch all data in parallel
-                const [tbDevices, tbDashboards, tbAlarms] = await Promise.all([
+                // Fetch devices and dashboards first
+                const [tbDevices, tbDashboards] = await Promise.all([
                     getDevices(token, instanceUrl, customerId),
                     getDashboards(token, instanceUrl, customerId),
-                    getAlarms(token, instanceUrl)
                 ]);
 
                 // Process devices
@@ -103,18 +102,26 @@ export default function HomePage() {
 
                 // Process dashboards
                 setDashboardCount(tbDashboards.length);
+                
+                // Fetch alarms separately and handle permission errors
+                try {
+                    const tbAlarms = await getAlarms(token, instanceUrl);
+                    const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
+                    tbAlarms.forEach(alarm => {
+                        switch (alarm.severity) {
+                            case 'CRITICAL': alarms.critical++; break;
+                            case 'MAJOR': alarms.major++; break;
+                            case 'MINOR': alarms.minor++; break;
+                            case 'WARNING': alarms.warning++; break;
+                        }
+                    });
+                    setAlarmStats(alarms);
+                } catch(e: any) {
+                    console.warn("Could not fetch alarms. User may not have permissions.", e);
+                    // Set stats to null to indicate data is unavailable
+                    setAlarmStats(null);
+                }
 
-                // Process alarms
-                const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
-                tbAlarms.forEach(alarm => {
-                    switch (alarm.severity) {
-                        case 'CRITICAL': alarms.critical++; break;
-                        case 'MAJOR': alarms.major++; break;
-                        case 'MINOR': alarms.minor++; break;
-                        case 'WARNING': alarms.warning++; break;
-                    }
-                });
-                setAlarmStats(alarms);
 
             } catch (e) {
                 console.error(e);
@@ -181,9 +188,9 @@ export default function HomePage() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
                     <StatsCard
                     title="Critical Alarms"
-                    value={alarmStats?.critical ?? 0}
+                    value={alarmStats?.critical ?? 'N/A'}
                     icon={<Siren className="h-4 w-4 text-muted-foreground" />}
-                    description="High-priority active alarms"
+                    description={alarmStats === null ? "Permission denied" : "High-priority active alarms"}
                     />
                 </div>
             </div>
