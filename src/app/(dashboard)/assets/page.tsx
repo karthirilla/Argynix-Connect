@@ -69,7 +69,7 @@ export default function AssetsPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-0 md:px-4">
-        <div className="rounded-lg border overflow-hidden">
+        <div className="hidden md:block rounded-lg border overflow-hidden">
          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -92,6 +92,20 @@ export default function AssetsPage() {
             </TableBody>
           </Table>
           </div>
+        </div>
+        <div className="md:hidden grid gap-4">
+            {[...Array(5)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <Skeleton className="h-5 w-3/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-9 w-full mt-2" />
+                    </CardContent>
+                </Card>
+            ))}
         </div>
       </div>
     );

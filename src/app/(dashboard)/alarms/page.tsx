@@ -88,7 +88,7 @@ export default function AlarmsPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-0 md:px-4">
-        <div className="rounded-lg border overflow-hidden">
+        <div className="hidden md:block rounded-lg border overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -113,6 +113,21 @@ export default function AlarmsPage() {
               </TableBody>
             </Table>
           </div>
+        </div>
+        <div className="md:hidden grid gap-4">
+            {[...Array(8)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                       <Skeleton className="h-5 w-3/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-full" />
+                    </CardContent>
+                </Card>
+            ))}
         </div>
       </div>
     );

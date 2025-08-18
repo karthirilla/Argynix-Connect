@@ -98,28 +98,30 @@ export default function DevicesPage() {
       <div className="container mx-auto px-0 md:px-4">
         {/* Desktop Skeleton */}
         <div className="hidden md:block rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Device Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Activity</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-[120px]" /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Device Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Activity</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {[...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-[120px]" /></TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            </div>
         </div>
          {/* Mobile Skeleton */}
         <div className="md:hidden grid gap-4">
