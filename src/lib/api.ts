@@ -1,6 +1,7 @@
+
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardTenantProfileInfo } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer } from './types';
 
 async function fetchThingsboard<T>(
   url: string,
@@ -219,12 +220,4 @@ export async function getAlarms(
     instanceUrl
   );
   return result?.data || [];
-}
-
-export async function getTenantProfileInfos(token: string, instanceUrl: string): Promise<ThingsboardTenantProfileInfo[]> {
-    const url = `/api/tenantProfileInfo/default`;
-    const tenantProfileInfo = await fetchThingsboard<ThingsboardTenantProfileInfo>(url, token, instanceUrl);
-    
-    // Return it as an array to match the expected type
-    return tenantProfileInfo ? [tenantProfileInfo] : [];
 }

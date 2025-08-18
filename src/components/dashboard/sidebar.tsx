@@ -26,11 +26,6 @@ const adminNavItems = [
         label: 'Users',
         icon: Users,
     },
-    {
-        href: '/tenant-profiles',
-        label: 'Tenant Profiles',
-        icon: Building2,
-    }
 ]
 
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {

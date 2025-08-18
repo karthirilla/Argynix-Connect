@@ -1,3 +1,4 @@
+
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -137,11 +138,4 @@ export interface Schedule {
   fireTime?: string;
   days?: string[];
   time?: string;
-}
-
-export type ThingsboardTenantProfileInfo = {
-    id: ThingsboardId;
-    name: string;
-    description: string | null;
-    default: boolean;
 }
