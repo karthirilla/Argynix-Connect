@@ -214,8 +214,8 @@ export default function HomePage() {
                  {renderStats()}
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2 grid gap-8">
+            <div className="grid gap-8 lg:grid-cols-5">
+                <div className="lg:col-span-3 grid gap-8">
                      <Card>
                         <CardHeader>
                             <CardTitle>Alarms by Severity</CardTitle>
@@ -309,7 +309,7 @@ export default function HomePage() {
                     </Card>
                 </div>
            
-                <div className="space-y-8">
+                <div className="space-y-8 lg:col-span-2">
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Access</CardTitle>
