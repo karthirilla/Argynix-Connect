@@ -43,6 +43,7 @@ export function AppHeader() {
     if (pathname.startsWith('/devices')) return 'Devices';
     if (pathname.startsWith('/assets')) return 'Assets';
     if (pathname.startsWith('/alarms')) return 'Alarms';
+    if (pathname.startsWith('/scheduler')) return 'Scheduler';
     if (pathname.startsWith('/data-export')) return 'Data Export';
     if (pathname.startsWith('/profile')) return 'User Profile';
     return 'Home';

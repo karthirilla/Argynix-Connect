@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/assets', label: 'Assets', icon: Package },
   { href: '/alarms', label: 'Alarms', icon: Siren },
+  { href: '/scheduler', label: 'Scheduler', icon: CalendarClock },
   { href: '/data-export', label: 'Data Export', icon: Download },
 ];
 
