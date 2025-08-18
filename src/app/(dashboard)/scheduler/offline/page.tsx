@@ -394,11 +394,12 @@ export default function OfflineSchedulerPage() {
     let scheduleKey = keyToSave;
 
     if (!scheduleKey) {
+        // Find the first deleted schedule to reuse it
         const reusedSchedule = schedules.find(s => s.deleted);
         if (reusedSchedule) {
             scheduleKey = reusedSchedule.key;
         } else {
-            const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
+            const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).filter(n => !isNaN(n)).sort((a,b) => a-b);
             let nextIndex = 1;
             for (const index of existingIndexes) {
                 if (index === nextIndex) {
@@ -535,7 +536,7 @@ export default function OfflineSchedulerPage() {
     }
 
     const nextScheduleNumber = (() => {
-        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
+        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).filter(n => !isNaN(n)).sort((a,b) => a-b);
         let nextIndex = 1;
         for (const index of existingIndexes) {
             if (index === nextIndex) {
@@ -552,6 +553,7 @@ export default function OfflineSchedulerPage() {
     const getScheduleToEdit = (key?: string) => {
         if (!key) return undefined;
         const schedule = schedules.find(s => s.key === key);
+        // When we start editing a reused schedule, mark it as not deleted
         return schedule ? { ...schedule, deleted: false } : undefined;
     }
 
@@ -568,11 +570,11 @@ export default function OfflineSchedulerPage() {
             <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
-                    if (schedule.deleted && editingKey !== schedule.key) {
-                        return null; // Don't render deleted schedules unless it's the one we're editing/reusing
+                    if (schedule.deleted) {
+                        return null; // Don't render deleted schedules in the list
                     }
                     return (
-                    <AccordionItem value={schedule.key} key={schedule.key} className={cn("border-b-0 mb-2", schedule.deleted && "hidden")}>
+                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
                         <Card className="overflow-hidden">
                            <div className={cn("flex items-center p-3 hover:bg-muted/50", !schedule.enabled && "opacity-60")}>
                                 <div className="flex-1 text-left">
@@ -602,7 +604,7 @@ export default function OfflineSchedulerPage() {
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
+                                                This action will delete the schedule.
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -633,10 +635,12 @@ export default function OfflineSchedulerPage() {
                 <AccordionItem value="new-schedule" className="border-b-0">
                     {editingKey !== 'new-schedule' && !schedules.find(s=>s.deleted) && (
                          <div className="w-full text-center mt-4">
-                            <Button variant="outline" disabled={isSaving || schedules.filter(s=>!s.deleted).length >= MAX_SCHEDULES} onClick={() => setEditingKey('new-schedule')}>
-                                <PlusCircle className="mr-2" />
-                                Create New Schedule
-                            </Button>
+                            <AccordionTrigger asChild>
+                                <Button variant="outline" disabled={isSaving || schedules.filter(s=>!s.deleted).length >= MAX_SCHEDULES}>
+                                    <PlusCircle className="mr-2" />
+                                    Create New Schedule
+                                </Button>
+                            </AccordionTrigger>
                         </div>
                     )}
                     <AccordionContent>
@@ -717,3 +721,4 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
+
