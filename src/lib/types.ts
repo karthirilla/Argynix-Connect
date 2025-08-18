@@ -1,4 +1,3 @@
-
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -164,3 +163,11 @@ export type ThingsboardAuditLog = {
     actionStatus: 'SUCCESS' | 'FAILURE';
     actionFailureDetails: string | null;
 };
+
+export type ThingsboardRpcRequest = {
+    method: string;
+    params: any;
+    timeout?: number;
+    expirationTime?: number;
+    persistent?: boolean;
+}

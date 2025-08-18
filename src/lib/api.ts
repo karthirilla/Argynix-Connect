@@ -1,4 +1,3 @@
-
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog } from './types';
@@ -230,4 +229,41 @@ export async function getAuditLogs(
     const url = '/api/audit/logs?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC';
     const result = await fetchThingsboard<{ data: ThingsboardAuditLog[] }>(url, token, instanceUrl);
     return result?.data || [];
+}
+
+// RPC
+export async function sendOneWayRpc(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    payload: { method: string, params: any, timeout: number }
+): Promise<void> {
+    const url = `/api/rpc/oneway/${deviceId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+}
+
+export async function scheduleRpc(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    payload: { method: string, params: any, timeout: number },
+    scheduleTime: number
+): Promise<any> {
+    const command = {
+        entityId: { id: deviceId, entityType: 'DEVICE' },
+        type: 'RPC',
+        name: payload.method,
+        additionalInfo: {
+            ...payload,
+            scheduleTime,
+        }
+    };
+    const url = `/api/rule-engine/schedule`;
+    return await fetchThingsboard<any>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(command)
+    });
 }

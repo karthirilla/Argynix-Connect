@@ -1,4 +1,3 @@
-
 // /app/(dashboard)/scheduler/page.tsx
 "use client";
 
@@ -31,11 +30,11 @@ export default function SchedulerPage() {
           </CardHeader>
           <CardContent className="flex-grow">
             <p className="text-sm text-muted-foreground">
-                Use this for real-time operations. Commands will be sent immediately to active devices. Ideal for instant configuration changes, reboots, or data requests.
+                Use this for real-time operations. Commands can be sent immediately or scheduled for a future time to active devices. Ideal for instant configuration changes, reboots, or data requests.
             </p>
           </CardContent>
           <CardFooter>
-            <Button asChild disabled>
+            <Button asChild>
               <Link href="/scheduler/online">
                 Launch Online Scheduler
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -50,20 +49,20 @@ export default function SchedulerPage() {
                     <WifiOff className="h-6 w-6 text-secondary-foreground" />
                 </div>
                 <div>
-                    <CardTitle>Offline Scheduler</CardTitle>
+                    <CardTitle>On-Device Scheduler</CardTitle>
                     <CardDescription>Queue commands for offline devices.</CardDescription>
                 </div>
             </div>
           </CardHeader>
           <CardContent className="flex-grow">
              <p className="text-sm text-muted-foreground">
-                Commands will be queued and sent to devices automatically when they next come online. Perfect for firmware updates or setting changes on intermittently connected devices.
+                Schedules are stored on the device itself and will run even without an internet connection. Perfect for recurring actions on intermittently connected devices.
             </p>
           </CardContent>
           <CardFooter>
             <Button asChild>
                 <Link href="/scheduler/offline">
-                    Launch Offline Scheduler
+                    Launch On-Device Scheduler
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>
