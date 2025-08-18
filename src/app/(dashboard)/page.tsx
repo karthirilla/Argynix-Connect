@@ -77,7 +77,7 @@ export default function HomePage() {
             try {
                 const tbDevices = await getDevices(token, instanceUrl, customerId);
                 const deviceAttributesPromises = tbDevices.map(d => 
-                    getDeviceAttributes(token, instanceUrl, d.id.id).catch(() => []) // Return empty array on error for a single device
+                    getDeviceAttributes(token, instanceUrl, d.id.id).catch(() => []) // Gracefully handle errors for single devices
                 );
                 const allAttributes = await Promise.all(deviceAttributesPromises);
 
@@ -119,7 +119,7 @@ export default function HomePage() {
                 });
                 setAlarmStats(alarms);
             } catch(e: any) {
-                console.warn("Could not fetch alarms. User may not have permissions:", e.message);
+                console.error("Could not fetch alarms. User may not have permissions:", e.message);
                 setAlarmStats(null); // Set to null on error
             }
 
