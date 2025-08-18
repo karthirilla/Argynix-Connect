@@ -469,6 +469,15 @@ export default function OfflineSchedulerPage() {
       }
       return summary;
   }
+  
+  const getNextScheduleIndex = () => {
+    const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10));
+    let nextIndex = 1;
+    while (existingIndexes.includes(nextIndex)) {
+        nextIndex++;
+    }
+    return nextIndex;
+  }
 
   const renderSchedulesList = () => {
     if (isFetchingSchedules) {
@@ -489,12 +498,12 @@ export default function OfflineSchedulerPage() {
                  {schedules.map(schedule => (
                     <AccordionItem value={schedule.key} key={schedule.key}>
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                            <div className="flex items-center p-3 border-b">
-                                <div className="flex-grow">
+                            <div className="flex items-center p-3">
+                                <div className="flex-grow space-y-1">
                                     <p className={cn("font-semibold", !schedule.enabled && "text-muted-foreground line-through")}>{getScheduleSummary(schedule)}</p>
                                     <p className="text-xs text-muted-foreground">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
                                 </div>
-                                <div className="flex items-center gap-2 pl-4 ml-2">
+                                <div className="flex items-center gap-2 pl-4 ml-auto">
                                     <Switch
                                         checked={schedule.enabled}
                                         onCheckedChange={() => handleToggleEnable(schedule)}
@@ -504,12 +513,12 @@ export default function OfflineSchedulerPage() {
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                     <AccordionTrigger>
-                                        <ChevronDown className="h-5 w-5 transition-transform duration-200" />
+                                        <Pencil className="h-4 w-4" />
                                     </AccordionTrigger>
                                 </div>
                             </div>
                             <AccordionContent>
-                               <div className="p-4">
+                               <div className="p-4 border-t">
                                 <h4 className="font-semibold mb-4">Edit Schedule</h4>
                                  <ScheduleForm
                                         device={selectedDevice!}
@@ -537,7 +546,7 @@ export default function OfflineSchedulerPage() {
                      <AccordionItem value="new-schedule" className="border-t mt-4 pt-4">
                         <Card>
                           <CardHeader>
-                             <CardTitle>New Schedule Details</CardTitle>
+                             <CardTitle>Creating Schedule {getNextScheduleIndex()}</CardTitle>
                           </CardHeader>
                          <ScheduleForm
                                  device={selectedDevice!}
@@ -605,5 +614,3 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
-
-    
