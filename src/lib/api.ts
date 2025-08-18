@@ -193,10 +193,11 @@ export async function getDeviceTelemetry(
     deviceId: string,
     keys: string[],
     startTs: number,
-    endTs: number
+    endTs: number,
+    limit: number = 1000,
 ): Promise<any> {
     const encodedKeys = encodeURIComponent(keys.join(','));
-    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodedKeys}&startTs=${startTs}&endTs=${endTs}&limit=10000&agg=NONE`;
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodedKeys}&startTs=${startTs}&endTs=${endTs}&limit=${limit}&agg=NONE`;
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
 

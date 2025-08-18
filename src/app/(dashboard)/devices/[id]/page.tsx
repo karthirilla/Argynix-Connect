@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getDeviceById, getDeviceTelemetry } from '@/lib/api';
+import { getDeviceById, getDeviceTelemetry, getDeviceTelemetryKeys } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,17 +15,19 @@ import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { subDays } from 'date-fns';
 
-type ActivityData = {
+type ChartData = {
   ts: number;
-  date: string;
-  active: number;
+  [key: string]: number | string;
 }
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function DeviceDetailsPage() {
   const params = useParams();
   const id = params.id as string;
   const [device, setDevice] = useState<ThingsboardDevice | null>(null);
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [chartKey, setChartKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,23 +49,40 @@ export default function DeviceDetailsPage() {
       }
 
       try {
-        // Fetch device details and activity data in parallel
-        const [deviceData, telemetry] = await Promise.all([
-           getDeviceById(token, instanceUrl, id),
-           getDeviceTelemetry(token, instanceUrl, id, ['active'], subDays(new Date(), 7).getTime(), new Date().getTime())
-        ]);
-
+        const deviceData = await getDeviceById(token, instanceUrl, id);
         setDevice(deviceData);
         
-        if (telemetry.active && telemetry.active.length > 0) {
-           const formattedData = telemetry.active.map((item: { ts: number, value: boolean }) => ({
-                ts: item.ts,
-                date: new Date(item.ts).toLocaleString(),
-                active: item.value ? 1 : 0
-            })).sort((a: { ts: number }, b: { ts: number }) => a.ts - b.ts);
-            setActivityData(formattedData);
-        }
+        // Fetch telemetry keys and then the data for the first numeric key found
+        const keys = await getDeviceTelemetryKeys(token, instanceUrl, id);
+        
+        if (keys && keys.length > 0) {
+            // Prioritize common keys, then fall back to the first available key
+            const preferredKeys = ['temperature', 'humidity', 'pressure', 'voltage'];
+            let keyToPlot = preferredKeys.find(k => keys.includes(k));
+            if (!keyToPlot) {
+                keyToPlot = keys[0];
+            }
+            
+            const telemetry = await getDeviceTelemetry(token, instanceUrl, id, [keyToPlot], subDays(new Date(), 1).getTime(), new Date().getTime());
+            
+            if (telemetry && telemetry[keyToPlot] && telemetry[keyToPlot].length > 0) {
+                 const isNumeric = typeof telemetry[keyToPlot][0].value === 'number';
 
+                 if (isNumeric) {
+                    const formattedData = telemetry[keyToPlot].map((item: { ts: number, value: any }) => ({
+                        ts: item.ts,
+                        time: new Date(item.ts).toLocaleTimeString(),
+                        [keyToPlot!]: item.value,
+                    })).sort((a: { ts: number }, b: { ts: number }) => a.ts - b.ts);
+                    
+                    setChartData(formattedData);
+                    setChartKey(keyToPlot);
+                 } else {
+                     setChartKey(null); // Data is not numeric, can't plot
+                     setChartData([]);
+                 }
+            }
+        }
       } catch (e: any) {
         setError(e.message || 'Failed to fetch device details.');
         console.error(e);
@@ -162,36 +181,35 @@ export default function DeviceDetailsPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Activity History (Last 7 Days)</CardTitle>
+            <CardTitle>{chartKey ? `${capitalize(chartKey)} History` : 'Telemetry History'} (Last 24 Hours)</CardTitle>
             <CardDescription>
-                Visualization of the device's online (1) and offline (0) status over time.
+                {chartKey ? `Visualization of the device's ${chartKey} over time.` : 'A preview of the latest device telemetry.'}
             </CardDescription>
         </CardHeader>
         <CardContent>
             {isChartLoading ? (
                  <Skeleton className="h-[300px] w-full" />
-            ) : activityData.length > 0 ? (
+            ) : chartData.length > 0 && chartKey ? (
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={activityData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis domain={[0, 1]} ticks={[0, 1]} tickFormatter={(value) => value === 1 ? 'Online' : 'Offline'} fontSize={12} tickLine={false} axisLine={false} />
+                            <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis fontSize={12} tickLine={false} axisLine={false} />
                             <Tooltip
                                 contentStyle={{ fontSize: '12px', borderRadius: '0.5rem' }}
                                 labelStyle={{ fontWeight: 'bold' }}
-                                formatter={(value: number) => [value === 1 ? 'Online' : 'Offline', 'Status']}
                             />
                             <Legend />
-                            <Line type="step" dataKey="active" stroke="#8884d8" strokeWidth={2} dot={false} name="Device Activity" />
+                            <Line type="monotone" dataKey={chartKey} stroke="#8884d8" strokeWidth={2} dot={false} name={capitalize(chartKey)} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center h-[300px] border-2 border-dashed rounded-lg">
                     <ChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold">No Activity Data</h3>
-                    <p className="text-muted-foreground text-sm">No 'active' telemetry data found for this device in the last 7 days.</p>
+                    <h3 className="text-lg font-semibold">No Numeric Telemetry Data Found</h3>
+                    <p className="text-muted-foreground text-sm text-center">This device has not reported any plottable numeric data in the last 24 hours.</p>
                 </div>
             )}
         </CardContent>
