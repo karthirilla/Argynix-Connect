@@ -99,3 +99,15 @@ export type ThingsboardAlarm = {
     ackTs?: number;
     clearTs?: number;
 };
+
+export interface Schedule {
+  key: string;
+  enabled: boolean;
+  deleted?: boolean;
+  attributeKey: string;
+  attributeValue: string;
+  mode: 'particular' | 'recurring';
+  fireTime?: string;
+  days?: string[];
+  time?: string;
+}

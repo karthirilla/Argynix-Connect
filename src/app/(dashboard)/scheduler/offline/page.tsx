@@ -1,4 +1,5 @@
 
+
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -14,7 +15,7 @@ import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemet
 import type { ThingsboardDevice } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, parse, parseISO } from 'date-fns';
+import { format, parse, parseISO, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -22,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,16 +40,16 @@ import {
 type ScheduleMode = 'particular' | 'recurring';
 
 const weekdays = [
-  { id: 'SUNDAY', label: 'S' },
-  { id: 'MONDAY', label: 'M' },
-  { id: 'TUESDAY', label: 'T' },
-  { id: 'WEDNESDAY', label: 'W' },
-  { id: 'THURSDAY', label: 'T' },
-  { id: 'FRIDAY', label: 'F' },
-  { id: 'SATURDAY', label: 'S' },
+  { id: 'SUNDAY', label: 'S', dayIndex: 0 },
+  { id: 'MONDAY', label: 'M', dayIndex: 1 },
+  { id: 'TUESDAY', label: 'T', dayIndex: 2 },
+  { id: 'WEDNESDAY', label: 'W', dayIndex: 3 },
+  { id: 'THURSDAY', label: 'T', dayIndex: 4 },
+  { id: 'FRIDAY', label: 'F', dayIndex: 5 },
+  { id: 'SATURDAY', label: 'S', dayIndex: 6 },
 ];
 
-interface Schedule {
+export interface Schedule {
   key: string; // e.g., offlineSchedule_1
   enabled: boolean;
   deleted?: boolean;
@@ -289,6 +291,107 @@ function ScheduleForm({
     );
 }
 
+const getScheduleSummary = (schedule: Schedule): string => {
+    let summary = `Set ${schedule.attributeKey} to "${schedule.attributeValue}"`;
+    if (schedule.mode === 'particular' && schedule.fireTime) {
+        summary += ` on ${format(parseISO(schedule.fireTime), 'PPP @ p')}`;
+    } else if (schedule.mode === 'recurring' && schedule.days?.length && schedule.time) {
+        const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
+        const time12hr = format(parse(schedule.time, 'HH:mm', new Date()), 'p');
+        summary += ` on ${dayString} @ ${time12hr}`;
+    }
+    return summary;
+}
+
+
+function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
+    const [month, setMonth] = useState(new Date());
+
+    const activeSchedules = schedules.filter(s => s.enabled && !s.deleted);
+
+    const scheduledDays = eachDayOfInterval({
+        start: startOfMonth(month),
+        end: endOfMonth(month)
+    }).filter(day => 
+        activeSchedules.some(schedule => {
+            if (schedule.mode === 'particular' && schedule.fireTime) {
+                return isSameDay(day, parseISO(schedule.fireTime));
+            }
+            if (schedule.mode === 'recurring' && schedule.days) {
+                const scheduleDayIndexes = schedule.days.map(dayName => weekdays.find(wd => wd.id === dayName)!.dayIndex);
+                return scheduleDayIndexes.includes(getDay(day));
+            }
+            return false;
+        })
+    );
+    
+    const dayRenderer = (day: Date, _: any, modifiers: any) => {
+        const schedulesForDay = activeSchedules.filter(schedule => {
+            if (schedule.mode === 'particular' && schedule.fireTime) {
+                return isSameDay(day, parseISO(schedule.fireTime));
+            }
+            if (schedule.mode === 'recurring' && schedule.days) {
+                const scheduleDayIndexes = schedule.days.map(dayName => weekdays.find(wd => wd.id === dayName)!.dayIndex);
+                return scheduleDayIndexes.includes(getDay(day));
+            }
+            return false;
+        });
+
+        const dayNumber = format(day, 'd');
+
+        if (modifiers.outside) {
+             return <div className="text-muted-foreground opacity-50">{dayNumber}</div>;
+        }
+
+        if (schedulesForDay.length > 0) {
+            return (
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                             <div className="relative flex items-center justify-center h-full w-full rounded-md bg-primary/10 text-primary font-bold">
+                                {dayNumber}
+                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary" />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                           <div className="p-1 text-sm space-y-1">
+                                <p className="font-bold text-center">{format(day, 'PPP')}</p>
+                                <ul className="list-disc pl-4">
+                                     {schedulesForDay.map(s => (
+                                        <li key={s.key}>{getScheduleSummary(s)}</li>
+                                    ))}
+                                </ul>
+                           </div>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )
+        }
+        
+        return <div>{dayNumber}</div>;
+    }
+
+    return (
+        <Card className="mt-6">
+            <CardHeader>
+                <CardTitle>Schedule Calendar</CardTitle>
+                <CardDescription>Highlighted days indicate one or more scheduled events. Hover for details.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+                 <Calendar
+                    month={month}
+                    onMonthChange={setMonth}
+                    modifiers={{ scheduled: scheduledDays }}
+                    modifiersClassNames={{ scheduled: 'day-scheduled' }}
+                    components={{
+                        DayContent: dayRenderer
+                    }}
+                 />
+            </CardContent>
+        </Card>
+    );
+};
+
 
 export default function OfflineSchedulerPage() {
   const [devices, setDevices] = useState<ThingsboardDevice[]>([]);
@@ -504,18 +607,6 @@ export default function OfflineSchedulerPage() {
     }
   }
   
-  const getScheduleSummary = (schedule: Schedule): string => {
-    let summary = `Set ${schedule.attributeKey} to "${schedule.attributeValue}"`;
-    if (schedule.mode === 'particular' && schedule.fireTime) {
-        summary += ` on ${format(parseISO(schedule.fireTime), 'PPP @ p')}`;
-    } else if (schedule.mode === 'recurring' && schedule.days?.length && schedule.time) {
-        const dayString = schedule.days.map(d => d.slice(0,2)).join(', ');
-        const time12hr = format(parse(schedule.time, 'HH:mm', new Date()), 'p');
-        summary += ` on ${dayString} @ ${time12hr}`;
-    }
-    return summary;
-  }
-  
   const handleCancelForm = () => {
     setEditingKey(undefined);
   }
@@ -559,6 +650,7 @@ export default function OfflineSchedulerPage() {
     const visibleSchedules = schedules.filter(s => !s.deleted);
     const hasDeletedSchedules = schedules.some(s => s.deleted);
     
+    // Always render all non-deleted schedules. Also render a deleted one if it's the one being edited (reused).
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
     const hasVisibleSchedules = visibleSchedules.length > 0;
 
@@ -568,7 +660,7 @@ export default function OfflineSchedulerPage() {
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
-                    <AlertDescription>This device has no offline schedules. You can create one below.</AlertDescription>
+                    <AlertDescription>This device has no on-device schedules. You can create one below.</AlertDescription>
                 </Alert>
             )}
             
@@ -606,7 +698,7 @@ export default function OfflineSchedulerPage() {
                                                  <AlertDialogHeader>
                                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                  <AlertDialogDescription>
-                                                    This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted.
+                                                   This action will permanently delete the schedule from the UI.
                                                  </AlertDialogDescription>
                                                  </AlertDialogHeader>
                                                  <AlertDialogFooter>
@@ -706,13 +798,14 @@ export default function OfflineSchedulerPage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Select a Device</AlertTitle>
                     <AlertDescription>
-                        Please choose a device from the dropdown to view or manage its offline schedules.
+                        Please choose a device from the dropdown to view or manage its on-device schedules.
                     </AlertDescription>
                 </Alert>
              )}
           </div>
         </CardContent>
       </Card>
+      {selectedDevice && schedules.length > 0 && <ScheduleCalendar schedules={schedules} />}
     </div>
   );
 }
