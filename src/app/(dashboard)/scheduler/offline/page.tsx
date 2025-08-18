@@ -444,8 +444,8 @@ export default function OfflineSchedulerPage() {
   const handleDelete = async (schedule: Schedule) => {
     if (!selectedDevice) return;
 
-    // Soft delete by setting deleted flag
-    const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, deleted: true };
+    // Soft delete by setting deleted flag and disabling
+    const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, deleted: true, enabled: false };
     delete (updatedSchedule as any).key;
 
     setIsSaving(true);
@@ -514,10 +514,6 @@ export default function OfflineSchedulerPage() {
   const handleCancelForm = () => {
     setEditingKey(undefined);
   }
-
-  const handleEditClick = (key: string) => {
-    setEditingKey(key === editingKey ? undefined : key)
-  }
   
 
   const renderSchedulesList = () => {
@@ -542,7 +538,7 @@ export default function OfflineSchedulerPage() {
 
     return (
         <div className="space-y-4">
-            {visibleSchedules.length === 0 && (
+            {visibleSchedules.length === 0 && editingKey !== 'new-schedule' && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -570,7 +566,7 @@ export default function OfflineSchedulerPage() {
                                         disabled={isSaving}
                                     />
                                     <AccordionTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(schedule.key)}>
+                                      <Button variant="ghost" size="icon">
                                           <Pencil className="h-4 w-4" />
                                       </Button>
                                     </AccordionTrigger>
@@ -584,7 +580,7 @@ export default function OfflineSchedulerPage() {
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted.
+                                                This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -613,14 +609,14 @@ export default function OfflineSchedulerPage() {
                  )})}
                  { /* Create New Form Area */ }
                 <AccordionItem value="new-schedule" className="border-b-0">
-                     <AccordionTrigger asChild>
+                    {editingKey !== 'new-schedule' && (
                          <div className="w-full text-center mt-4">
-                            <Button variant="outline" disabled={isSaving || schedules.length >= MAX_SCHEDULES} onClick={() => handleEditClick('new-schedule')}>
+                            <Button variant="outline" disabled={isSaving || schedules.length >= MAX_SCHEDULES} onClick={() => setEditingKey('new-schedule')}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
                         </div>
-                    </AccordionTrigger>
+                    )}
                     <AccordionContent>
                          <Card>
                             <ScheduleForm
