@@ -76,34 +76,40 @@ export default function HomePage() {
             }
 
             try {
-                // Fetch devices and dashboards first
-                const [tbDevices, tbDashboards] = await Promise.all([
-                    getDevices(token, instanceUrl, customerId),
-                    getDashboards(token, instanceUrl, customerId),
-                ]);
+                // Device Stats
+                try {
+                    const tbDevices = await getDevices(token, instanceUrl, customerId);
+                    let activeDevices = 0;
+                    const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
+                        try {
+                            const attributes = await getDeviceAttributes(token, instanceUrl, d.id.id);
+                            const activeAttr = attributes.find(attr => attr.key === 'active');
+                            return activeAttr?.value ? 'Active' : 'Inactive';
+                        } catch {
+                            return 'Inactive';
+                        }
+                    }));
+                    activeDevices = devicesWithStatus.filter(s => s === 'Active').length;
+                    setDeviceStats({
+                        total: tbDevices.length,
+                        active: activeDevices,
+                        inactive: tbDevices.length - activeDevices,
+                    });
+                } catch (e: any) {
+                     console.error("Could not fetch device stats.", e);
+                     setDeviceStats(null);
+                }
 
-                // Process devices
-                let activeDevices = 0;
-                const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
-                    try {
-                        const attributes = await getDeviceAttributes(token, instanceUrl, d.id.id);
-                        const activeAttr = attributes.find(attr => attr.key === 'active');
-                        return activeAttr?.value ? 'Active' : 'Inactive';
-                    } catch {
-                        return 'Inactive'; // Default to inactive on error
-                    }
-                }));
-                activeDevices = devicesWithStatus.filter(s => s === 'Active').length;
-                setDeviceStats({
-                    total: tbDevices.length,
-                    active: activeDevices,
-                    inactive: tbDevices.length - activeDevices,
-                });
-
-                // Process dashboards
-                setDashboardCount(tbDashboards.length);
+                // Dashboard Stats
+                try {
+                    const tbDashboards = await getDashboards(token, instanceUrl, customerId);
+                    setDashboardCount(tbDashboards.length);
+                } catch(e: any) {
+                    console.error("Could not fetch dashboard stats.", e);
+                    setDashboardCount(null);
+                }
                 
-                // Fetch alarms separately and handle permission errors
+                // Alarm Stats
                 try {
                     const tbAlarms = await getAlarms(token, instanceUrl);
                     const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
@@ -118,14 +124,13 @@ export default function HomePage() {
                     setAlarmStats(alarms);
                 } catch(e: any) {
                     console.warn("Could not fetch alarms. User may not have permissions.", e);
-                    // Set stats to null to indicate data is unavailable
                     setAlarmStats(null);
                 }
 
 
             } catch (e) {
                 console.error(e);
-                setError('Failed to fetch overview statistics.');
+                setError('An unexpected error occurred while fetching overview statistics.');
             } finally {
                 setIsLoading(false);
             }
@@ -164,25 +169,25 @@ export default function HomePage() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
                     <StatsCard
                     title="Total Devices"
-                    value={deviceStats?.total ?? 0}
+                    value={deviceStats?.total ?? 'N/A'}
                     icon={<HardDrive className="h-4 w-4 text-muted-foreground" />}
-                    description="All registered devices"
+                    description={deviceStats === null ? "Permission denied" : "All registered devices"}
                     />
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
                     <StatsCard
                     title="Active Devices"
-                    value={deviceStats?.active ?? 0}
+                    value={deviceStats?.active ?? 'N/A'}
                     icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
-                    description="Devices currently online"
+                    description={deviceStats === null ? "Permission denied" : "Devices currently online"}
                     />
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-500">
                     <StatsCard
                     title="Total Dashboards"
-                    value={dashboardCount ?? 0}
+                    value={dashboardCount ?? 'N/A'}
                     icon={<BarChart className="h-4 w-4 text-muted-foreground" />}
-                    description="Available visualization dashboards"
+                    description={dashboardCount === null ? "Permission denied" : "Available visualization dashboards"}
                     />
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-600">
