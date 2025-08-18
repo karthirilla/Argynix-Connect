@@ -48,11 +48,11 @@ export default function DashboardLayout({
     return null; // Render nothing while redirecting
   }
   
-  const isIframePage = /^\/dashboards\/[a-zA-Z0-9-]+\/iframe$/.test(pathname);
+  const isIframePage = pathname.includes('/iframe');
 
   return (
     <div className="flex min-h-screen w-full">
-      <AppSidebar />
+      {!isIframePage && <AppSidebar />}
       <div className="flex flex-1 flex-col">
         <AppHeader />
         <main className={cn(

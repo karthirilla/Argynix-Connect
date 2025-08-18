@@ -3,10 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Toaster } from '@/components/ui/toaster';
-
 
 export default function DashboardIframeLayout({
   children,
@@ -45,16 +42,12 @@ export default function DashboardIframeLayout({
     return null; // Render nothing while redirecting
   }
   
+  // This layout is intentionally minimal. It doesn't render its own header or sidebar,
+  // as it relies on the parent layout to provide the main application shell.
+  // Its primary purpose is to ensure the iframe content area has no padding.
   return (
-    <div className="flex min-h-screen w-full">
-      {/* No AppSidebar here */}
-      <div className="flex flex-1 flex-col">
-        <AppHeader />
-        <main className="flex-1 bg-background/50 p-0">
-          {children}
-        </main>
-        <Toaster />
-      </div>
-    </div>
+    <>
+      {children}
+    </>
   );
 }
