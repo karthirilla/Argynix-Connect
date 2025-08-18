@@ -122,9 +122,9 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-2">
         {isIframePage && (
-             <Button onClick={handleExportRequest} disabled={!isIframeReady || isExporting} size="sm">
-                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4"/>}
-                {isExporting ? 'Exporting...' : 'Export as PDF'}
+             <Button onClick={handleExportRequest} disabled={!isIframeReady || isExporting} variant="outline" size="icon">
+                {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Download className="h-4 w-4"/>}
+                <span className="sr-only">Export as PDF</span>
             </Button>
         )}
         <DropdownMenu>
