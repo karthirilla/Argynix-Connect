@@ -559,13 +559,12 @@ export default function OfflineSchedulerPage() {
     const visibleSchedules = schedules.filter(s => !s.deleted);
     const hasDeletedSchedules = schedules.some(s => s.deleted);
     
-    // Combine visible schedules with any reused schedule that's being edited
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
-    const hasVisibleSchedules = visibleSchedules.length > 0
+    const hasVisibleSchedules = visibleSchedules.length > 0;
 
     return (
         <div className="space-y-4">
-            {!hasVisibleSchedules && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
+             {!hasVisibleSchedules && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -607,7 +606,7 @@ export default function OfflineSchedulerPage() {
                                                  <AlertDialogHeader>
                                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                  <AlertDialogDescription>
-                                                    This will delete the schedule.
+                                                    This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted.
                                                  </AlertDialogDescription>
                                                  </AlertDialogHeader>
                                                  <AlertDialogFooter>
@@ -682,7 +681,7 @@ export default function OfflineSchedulerPage() {
     <div className="container mx-auto px-0 md:px-4">
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>Offline Command Scheduler</CardTitle>
+          <CardTitle>On-Device Command Scheduler</CardTitle>
           <CardDescription>Schedules are stored on the device and run without an internet connection.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
