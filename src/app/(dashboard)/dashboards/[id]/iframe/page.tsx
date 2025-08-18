@@ -6,9 +6,6 @@ import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -33,6 +30,8 @@ export default function DashboardIframePage() {
   }, [id]);
 
   const handleIframeLoad = () => {
+    // A slight delay ensures that the content inside the iframe has had time to render,
+    // reducing the visual "flicker" of the skeleton disappearing.
     setTimeout(() => {
       setIsLoading(false);
     }, 1500); 
@@ -51,19 +50,17 @@ export default function DashboardIframePage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-       <div className="flex-grow relative">
-            {isLoading && <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />}
-            {iframeSrc && (
-                <iframe
-                src={iframeSrc}
-                title="ThingsBoard Dashboard"
-                className="w-full h-full border-0 rounded-lg"
-                onLoad={handleIframeLoad}
-                style={{ visibility: isLoading ? 'hidden' : 'visible' }}
-                />
-            )}
-       </div>
+    <div className="flex-grow h-full w-full relative">
+        {isLoading && <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />}
+        {iframeSrc && (
+            <iframe
+            src={iframeSrc}
+            title="ThingsBoard Dashboard"
+            className="w-full h-full border-0 rounded-lg"
+            onLoad={handleIframeLoad}
+            style={{ visibility: isLoading ? 'hidden' : 'visible' }}
+            />
+        )}
     </div>
   );
 }
