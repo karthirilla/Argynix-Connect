@@ -392,17 +392,23 @@ export default function OfflineSchedulerPage() {
     setIsSaving(true);
     
     let scheduleKey = keyToSave;
+
     if (!scheduleKey) {
-        const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
-        let nextIndex = 1;
-        for (const index of existingIndexes) {
-            if (index === nextIndex) {
-                nextIndex++;
-            } else {
-                break;
+        const reusedSchedule = schedules.find(s => s.deleted);
+        if (reusedSchedule) {
+            scheduleKey = reusedSchedule.key;
+        } else {
+            const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).sort((a,b) => a-b);
+            let nextIndex = 1;
+            for (const index of existingIndexes) {
+                if (index === nextIndex) {
+                    nextIndex++;
+                } else {
+                    break;
+                }
             }
+            scheduleKey = `offlineSchedule_${nextIndex}`;
         }
-        scheduleKey = `offlineSchedule_${nextIndex}`;
     }
     
     if(parseInt(scheduleKey.split('_')[1], 10) > MAX_SCHEDULES) {
@@ -415,7 +421,7 @@ export default function OfflineSchedulerPage() {
     
     const newSchedule: Omit<Schedule, 'key'> = {
         enabled: existingSchedule ? existingSchedule.enabled : true,
-        deleted: existingSchedule ? existingSchedule.deleted : false,
+        deleted: false,
         ...scheduleData
     };
 
@@ -444,7 +450,6 @@ export default function OfflineSchedulerPage() {
   const handleDelete = async (schedule: Schedule) => {
     if (!selectedDevice) return;
 
-    // Soft delete by setting deleted flag and disabling
     const updatedSchedule: Omit<Schedule, 'key'> = { ...schedule, deleted: true, enabled: false };
     delete (updatedSchedule as any).key;
 
@@ -474,7 +479,6 @@ export default function OfflineSchedulerPage() {
     if (!selectedDevice) return;
     
     const updatedSchedule = { ...schedule, enabled: !schedule.enabled };
-    // remove key from object before saving
     const { key, ...scheduleToSave } = updatedSchedule;
 
     setIsSaving(true);
@@ -514,6 +518,15 @@ export default function OfflineSchedulerPage() {
   const handleCancelForm = () => {
     setEditingKey(undefined);
   }
+
+  const handleCreateNew = () => {
+      const reusedSchedule = schedules.find(s => s.deleted);
+      if (reusedSchedule) {
+          setEditingKey(reusedSchedule.key);
+      } else {
+          setEditingKey('new-schedule');
+      }
+  }
   
 
   const renderSchedulesList = () => {
@@ -536,9 +549,15 @@ export default function OfflineSchedulerPage() {
 
     const visibleSchedules = schedules.filter(s => !s.deleted);
 
+    const getScheduleToEdit = (key?: string) => {
+        if (!key) return undefined;
+        const schedule = schedules.find(s => s.key === key);
+        return schedule ? { ...schedule, deleted: false } : undefined;
+    }
+
     return (
         <div className="space-y-4">
-            {visibleSchedules.length === 0 && editingKey !== 'new-schedule' && (
+            {visibleSchedules.length === 0 && editingKey !== 'new-schedule' && !schedules.find(s=>s.deleted) && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
@@ -547,10 +566,13 @@ export default function OfflineSchedulerPage() {
             )}
 
             <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
-                 {visibleSchedules.map(schedule => {
+                 {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
+                    if (schedule.deleted && editingKey !== schedule.key) {
+                        return null; // Don't render deleted schedules unless it's the one we're editing/reusing
+                    }
                     return (
-                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
+                    <AccordionItem value={schedule.key} key={schedule.key} className={cn("border-b-0 mb-2", schedule.deleted && "hidden")}>
                         <Card className="overflow-hidden">
                            <div className={cn("flex items-center p-3 hover:bg-muted/50", !schedule.enabled && "opacity-60")}>
                                 <div className="flex-1 text-left">
@@ -559,7 +581,7 @@ export default function OfflineSchedulerPage() {
                                        {getScheduleSummary(schedule)}
                                      </div>
                                 </div>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-2">
                                     <Switch
                                         checked={schedule.enabled}
                                         onCheckedChange={() => handleToggleEnable(schedule)}
@@ -580,7 +602,7 @@ export default function OfflineSchedulerPage() {
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This will permanently delete the schedule from view. This action cannot be undone.
+                                                This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -598,7 +620,7 @@ export default function OfflineSchedulerPage() {
                                         telemetryKeys={telemetryKeys}
                                         onSave={(data) => handleSave(data, schedule.key)}
                                         onCancel={handleCancelForm}
-                                        existingSchedule={schedule}
+                                        existingSchedule={getScheduleToEdit(schedule.key)}
                                         isSaving={isSaving}
                                         scheduleNumber={scheduleNum}
                                  />
@@ -609,9 +631,9 @@ export default function OfflineSchedulerPage() {
                  )})}
                  { /* Create New Form Area */ }
                 <AccordionItem value="new-schedule" className="border-b-0">
-                    {editingKey !== 'new-schedule' && (
+                    {editingKey !== 'new-schedule' && !schedules.find(s=>s.deleted) && (
                          <div className="w-full text-center mt-4">
-                            <Button variant="outline" disabled={isSaving || schedules.length >= MAX_SCHEDULES} onClick={() => setEditingKey('new-schedule')}>
+                            <Button variant="outline" disabled={isSaving || schedules.filter(s=>!s.deleted).length >= MAX_SCHEDULES} onClick={() => setEditingKey('new-schedule')}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
@@ -630,6 +652,14 @@ export default function OfflineSchedulerPage() {
                         </Card>
                     </AccordionContent>
                 </AccordionItem>
+                 {schedules.find(s=>s.deleted) && editingKey !== 'new-schedule' && (
+                     <div className="w-full text-center mt-4">
+                        <Button variant="outline" disabled={isSaving || schedules.filter(s=>!s.deleted).length >= MAX_SCHEDULES} onClick={handleCreateNew}>
+                            <PlusCircle className="mr-2" />
+                             Create / Reuse Schedule
+                        </Button>
+                     </div>
+                 )}
             </Accordion>
         </div>
     )
@@ -687,5 +717,3 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
-
-    
