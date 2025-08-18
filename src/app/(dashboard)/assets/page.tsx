@@ -16,6 +16,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Eye } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<AppAsset[]>([]);
@@ -59,8 +61,9 @@ export default function AssetsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto">
-        <div className="rounded-lg border">
+      <div className="container mx-auto px-0 md:px-4">
+        <div className="rounded-lg border overflow-hidden">
+         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -81,6 +84,7 @@ export default function AssetsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
       </div>
     );
@@ -95,36 +99,60 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Label</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="container mx-auto px-0 md:px-4">
+        {/* Mobile View */}
+        <div className="md:hidden grid gap-4">
             {assets.map((asset) => (
-              <TableRow key={asset.id}>
-                <TableCell className="font-medium">{asset.name}</TableCell>
-                <TableCell>{asset.type}</TableCell>
-                <TableCell>{asset.label}</TableCell>
-                <TableCell className="text-right">
-                  <Button asChild variant="outline" size="sm" disabled>
-                    <Link href={`/assets/${asset.id}`}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Details
-                    </Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
+                <Card key={asset.id}>
+                    <CardHeader>
+                        <CardTitle className="text-base">{asset.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <div><strong>Type:</strong> {asset.type}</div>
+                        <div><strong>Label:</strong> {asset.label}</div>
+                        <Button asChild variant="outline" size="sm" disabled className="w-full mt-2">
+                            <Link href={`/assets/${asset.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Asset Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Label</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {assets.map((asset) => (
+                    <TableRow key={asset.id}>
+                        <TableCell className="font-medium">{asset.name}</TableCell>
+                        <TableCell>{asset.type}</TableCell>
+                        <TableCell>{asset.label}</TableCell>
+                        <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm" disabled>
+                            <Link href={`/assets/${asset.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                            </Link>
+                        </Button>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            </div>
+        </div>
     </div>
   );
 }

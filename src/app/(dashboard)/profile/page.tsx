@@ -45,13 +45,13 @@ export default function ProfilePage() {
     if (!value) return null;
     return (
         <div className="flex items-start space-x-4">
-            <Icon className="h-5 w-5 text-muted-foreground mt-1" />
+            <Icon className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
             <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">{label}</p>
                 {isBadge ? (
                      <Badge variant="secondary">{value || 'N/A'}</Badge>
                 ) : (
-                    <p className="text-base font-semibold">{value || 'N/A'}</p>
+                    <p className="text-base font-semibold break-words">{value || 'N/A'}</p>
                 )}
             </div>
         </div>
@@ -60,7 +60,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-       <div className="container mx-auto">
+       <div className="container mx-auto px-0 md:px-4">
         <Card>
             <CardHeader>
                 <div className="flex items-center space-x-4">
@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-        <div className="container mx-auto">
+        <div className="container mx-auto px-0 md:px-4">
              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
   
   if (!user) {
       return (
-          <div className="container mx-auto text-center">
+          <div className="container mx-auto text-center px-0 md:px-4">
               <p>User not found.</p>
           </div>
       )
@@ -114,12 +114,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-0 md:px-4">
       <Card>
         <CardHeader>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <User className="h-16 w-16 text-primary rounded-full bg-primary/10 p-4" />
-                 <div>
+                 <div className="text-center sm:text-left">
                     <CardTitle className="text-3xl">{user.firstName || ''} {user.lastName || 'User'}</CardTitle>
                     <CardDescription>{user.email}</CardDescription>
                  </div>

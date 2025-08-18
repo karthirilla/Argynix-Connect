@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { BarChart, HardDrive, Download, Package, Siren, Home } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
+import { SheetHeader, SheetTitle } from '../ui/sheet';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, exact: true },
@@ -20,7 +21,10 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
 
   const navContent = (
-    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+    <nav className={cn(
+        "grid items-start text-sm font-medium",
+        isMobile ? "px-2" : "px-2 lg:px-4"
+    )}>
       {navItems.map((item) => {
         const isActive = item.exact 
           ? pathname === item.href 
@@ -45,17 +49,17 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
   if (isMobile) {
     return (
-        <div className="flex h-full flex-col gap-2">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                <Link href="/" className="flex items-center gap-2 font-semibold">
+        <>
+            <SheetHeader className="h-14 flex flex-row items-center border-b px-4 lg:h-[60px] lg:px-6">
+                 <Link href="/" className="flex items-center gap-2 font-semibold">
                     <Logo className="h-6 w-6 text-primary" />
-                    <span className="">Argynix-Connect</span>
+                    <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
-            </div>
-            <div className="flex-1">
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto">
                 {navContent}
             </div>
-        </div>
+        </>
     )
   }
 
@@ -68,7 +72,7 @@ export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
             <span className="">Argynix-Connect</span>
           </Link>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           {navContent}
         </div>
       </div>

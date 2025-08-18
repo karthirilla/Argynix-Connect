@@ -363,7 +363,7 @@ export default function DataExportPage() {
   );
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-0 md:px-4">
       {chartData && renderChartForExport()}
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -450,14 +450,14 @@ export default function DataExportPage() {
           
           <div className="space-y-2">
             <Label>Date and Time Range</Label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Popover>
                     <PopoverTrigger asChild>
                     <Button
                         id="date"
                         variant={"outline"}
                         className={cn(
-                        "w-full justify-start text-left font-normal col-span-2",
+                        "w-full justify-start text-left font-normal sm:col-span-2",
                         !dateRange && "text-muted-foreground"
                         )}
                     >
@@ -556,5 +556,3 @@ export default function DataExportPage() {
     </div>
   );
 }
-
-    

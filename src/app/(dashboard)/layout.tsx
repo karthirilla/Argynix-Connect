@@ -1,4 +1,3 @@
-
 // /app/(dashboard)/layout.tsx
 "use client";
 
@@ -53,7 +52,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-      <AppSidebar />
+      {!isIframePage && <AppSidebar />}
       <div className="flex flex-1 flex-col">
         <AppHeader />
         <main className={cn(

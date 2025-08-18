@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
@@ -52,33 +52,31 @@ export function AppHeader() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-        <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[250px] p-0 flex flex-col">
-                 <SheetHeader className="sr-only">
-                    <SheetTitle>Navigation Menu</SheetTitle>
-                    <SheetDescription>Main navigation links for the application.</SheetDescription>
-                 </SheetHeader>
-                 <AppSidebar isMobile />
-              </SheetContent>
-            </Sheet>
-        </div>
+        <Sheet>
+            <SheetTrigger asChild>
+            <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+            >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col w-[250px] p-0">
+                <AppSidebar isMobile />
+            </SheetContent>
+        </Sheet>
       <div className="w-full flex-1 flex items-center gap-4">
         {isIframePage && (
            <Button asChild variant="outline" size="sm">
             <Link href="/dashboards">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboards
+              Back
             </Link>
           </Button>
         )}
-        <h1 className="font-semibold text-xl">{getTitle()}</h1>
+        <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -93,7 +91,7 @@ export function AppHeader() {
            <DropdownMenuItem asChild>
              <Link href="/profile">Profile</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem disabled>Support</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
         </DropdownMenuContent>

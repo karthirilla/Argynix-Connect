@@ -1,11 +1,10 @@
-
 // /app/(dashboard)/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, CheckCircle } from 'lucide-react';
 import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
 
@@ -139,7 +138,7 @@ export default function HomePage() {
         }
         
         return (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
                     <StatsCard
                     title="Total Devices"
@@ -177,7 +176,7 @@ export default function HomePage() {
     }
 
     return (
-        <div className="container mx-auto space-y-8">
+        <div className="container mx-auto space-y-8 px-0 md:px-4">
              <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                 <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynix-Connect</h1>
                 <p className="text-muted-foreground max-w-2xl">

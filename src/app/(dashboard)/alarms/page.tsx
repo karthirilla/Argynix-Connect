@@ -1,4 +1,3 @@
-
 // /app/alarms/page.tsx
 "use client";
 
@@ -18,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const severityColors = {
   CRITICAL: 'bg-red-500/20 text-red-700 border-red-500/20 hover:bg-red-500/30',
@@ -78,30 +78,32 @@ export default function AlarmsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto">
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Created Time</TableHead>
-                <TableHead>Originator</TableHead>
-                <TableHead>Alarm Type</TableHead>
-                <TableHead>Severity</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[...Array(8)].map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-[100px] rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-[120px] rounded-full" /></TableCell>
+      <div className="container mx-auto px-0 md:px-4">
+        <div className="rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Created Time</TableHead>
+                  <TableHead>Originator</TableHead>
+                  <TableHead>Alarm Type</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {[...Array(8)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-[100px] rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-[120px] rounded-full" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     );
@@ -109,7 +111,7 @@ export default function AlarmsPage() {
 
   if (error) {
     return (
-        <div className="container mx-auto">
+        <div className="container mx-auto px-0 md:px-4">
              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
@@ -124,39 +126,65 @@ export default function AlarmsPage() {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Created Time</TableHead>
-              <TableHead>Originator</TableHead>
-              <TableHead>Alarm Type</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="container mx-auto px-0 md:px-4">
+        {/* Mobile View */}
+        <div className="md:hidden grid gap-4">
             {alarms.map((alarm) => (
-              <TableRow key={alarm.id}>
-                <TableCell>{new Date(alarm.createdTime).toLocaleString()}</TableCell>
-                <TableCell className="font-medium">{alarm.originatorName}</TableCell>
-                <TableCell>{alarm.name}</TableCell>
-                <TableCell>
-                  <Badge className={cn('capitalize', severityColors[alarm.severity])}>
-                    {alarm.severity.toLowerCase().replace('_', ' ')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={cn('capitalize', statusColors[alarm.status as keyof typeof statusColors])}>
-                     {alarm.status.toLowerCase().replace('_', ' ')}
-                  </Badge>
-                </TableCell>
-              </TableRow>
+                <Card key={alarm.id}>
+                    <CardHeader>
+                        <CardTitle className="text-base">{alarm.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <div><strong>Originator:</strong> {alarm.originatorName}</div>
+                        <div><strong>Time:</strong> {new Date(alarm.createdTime).toLocaleString()}</div>
+                        <div><strong>Severity:</strong> <Badge className={cn('capitalize text-xs', severityColors[alarm.severity])}>
+                                {alarm.severity.toLowerCase().replace('_', ' ')}
+                            </Badge>
+                        </div>
+                        <div><strong>Status:</strong>  <Badge className={cn('capitalize text-xs', statusColors[alarm.status as keyof typeof statusColors])}>
+                                {alarm.status.toLowerCase().replace('_', ' ')}
+                            </Badge>
+                        </div>
+                    </CardContent>
+                </Card>
             ))}
-          </TableBody>
-        </Table>
-      </div>
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Created Time</TableHead>
+                    <TableHead>Originator</TableHead>
+                    <TableHead>Alarm Type</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {alarms.map((alarm) => (
+                    <TableRow key={alarm.id}>
+                        <TableCell>{new Date(alarm.createdTime).toLocaleString()}</TableCell>
+                        <TableCell className="font-medium">{alarm.originatorName}</TableCell>
+                        <TableCell>{alarm.name}</TableCell>
+                        <TableCell>
+                        <Badge className={cn('capitalize', severityColors[alarm.severity])}>
+                            {alarm.severity.toLowerCase().replace('_', ' ')}
+                        </Badge>
+                        </TableCell>
+                        <TableCell>
+                        <Badge className={cn('capitalize', statusColors[alarm.status as keyof typeof statusColors])}>
+                            {alarm.status.toLowerCase().replace('_', ' ')}
+                        </Badge>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            </div>
+        </div>
     </div>
   );
 }
