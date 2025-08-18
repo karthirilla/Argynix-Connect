@@ -1,5 +1,3 @@
-
-
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -332,11 +330,12 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
         })
     );
     
-    const DayContent = (props: { date: Date, activeModifiers: any }) => {
-        const { date, activeModifiers } = props;
-        if (!isValid(date)) {
+    const DayContent = (props: { date: Date; activeModifiers: any }) => {
+        if (!isValid(props.date)) {
           return <></>;
         }
+      
+        const { date, activeModifiers } = props;
       
         const schedulesForDay = activeSchedules.filter((schedule) => {
           if (schedule.mode === 'particular' && schedule.fireTime) {
@@ -398,7 +397,7 @@ function ScheduleCalendar({ schedules }: { schedules: Schedule[] }) {
                     modifiers={{ scheduled: scheduledDays }}
                     modifiersClassNames={{ scheduled: 'day-scheduled' }}
                     components={{
-                        DayContent: DayContent,
+                        DayContent,
                     }}
                  />
             </CardContent>
@@ -510,7 +509,6 @@ export default function OfflineSchedulerPage() {
     
     let scheduleKey = keyToSave;
 
-    // This logic handles creating a new schedule vs updating an existing one
     if (!scheduleKey) {
         const reusedSchedule = schedules.find(s => s.deleted);
         if (reusedSchedule) {
@@ -539,7 +537,7 @@ export default function OfflineSchedulerPage() {
     
     const newSchedule: Omit<Schedule, 'key'> = {
         enabled: existingSchedule ? existingSchedule.enabled : true,
-        deleted: false, // Explicitly set deleted to false when saving/reusing
+        deleted: false,
         ...scheduleData
     };
 
@@ -640,7 +638,20 @@ export default function OfflineSchedulerPage() {
         return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
+    const hasDeletedSchedules = schedules.some(s => s.deleted);
+    const visibleSchedules = schedules.filter(s => !s.deleted);
+
+    const getScheduleToEdit = (key?: string) => {
+        if (!key) return undefined;
+        const schedule = schedules.find(s => s.key === key);
+        if (!schedule) return undefined;
+        const {key: scheduleKey, ...rest} = schedule;
+        return rest;
+    }
+    
+    // Determine the number for the next new schedule
     const nextScheduleNumber = (() => {
+        // Find existing schedule numbers, including deleted ones to find gaps
         const existingIndexes = schedules.map(s => parseInt(s.key.split('_')[1], 10)).filter(n => !isNaN(n)).sort((a,b) => a-b);
         let nextIndex = 1;
         for (const index of existingIndexes) {
@@ -652,97 +663,91 @@ export default function OfflineSchedulerPage() {
         }
         return nextIndex;
     })();
-    
-    const getScheduleToEdit = (key?: string) => {
-        if (!key) return undefined;
-        const schedule = schedules.find(s => s.key === key);
-        if (!schedule) return undefined;
-        const {key: scheduleKey, ...rest} = schedule;
-        return rest;
-    }
-    
-    const visibleSchedules = schedules.filter(s => !s.deleted);
-    const hasDeletedSchedules = schedules.some(s => s.deleted);
-    
+
+    // Schedules to render in the accordion. If we are editing, we need to include the item being edited, even if deleted.
     const schedulesToRender = schedules.filter(s => !s.deleted || s.key === editingKey);
 
     return (
         <div className="space-y-4">
-             {!visibleSchedules.length && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
+            {!visibleSchedules.length && !hasDeletedSchedules && editingKey !== 'new-schedule' && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>No Schedules Found</AlertTitle>
                     <AlertDescription>This device has no on-device schedules. You can create one below.</AlertDescription>
                 </Alert>
             )}
-            
-            <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
-                 {schedulesToRender.map(schedule => {
-                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
-                     return (
-                         <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
-                             <Card className="overflow-hidden">
-                                <div className={cn("flex items-center p-3 hover:bg-muted/50", !schedule.enabled && "opacity-60")}>
-                                     <div className="flex-1 text-left">
-                                         <div className="font-semibold text-sm">
-                                             <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
-                                             {getScheduleSummary(schedule)}
-                                         </div>
-                                     </div>
-                                     <div className="flex items-center gap-2">
-                                         <Switch
-                                             checked={schedule.enabled}
-                                             onCheckedChange={() => handleToggleEnable(schedule)}
-                                             disabled={isSaving}
-                                         />
-                                          <AccordionTrigger asChild>
-                                             <Button variant="ghost" size="icon">
-                                                 <Pencil className="h-4 w-4" />
-                                             </Button>
-                                         </AccordionTrigger>
-                                         <AlertDialog>
-                                             <AlertDialogTrigger asChild>
-                                                 <Button variant="ghost" size="icon" className="text-destructive/80 hover:text-destructive">
-                                                     <Trash2 className="h-4 w-4" />
-                                                 </Button>
-                                             </AlertDialogTrigger>
-                                             <AlertDialogContent>
-                                                 <AlertDialogHeader>
-                                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                 <AlertDialogDescription>
-                                                    This will remove the schedule from the UI, but it can be restored by creating a new schedule.
-                                                 </AlertDialogDescription>
-                                                 </AlertDialogHeader>
-                                                 <AlertDialogFooter>
-                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                 <AlertDialogAction onClick={() => handleDelete(schedule)}>Delete</AlertDialogAction>
-                                                 </AlertDialogFooter>
-                                             </AlertDialogContent>
-                                         </AlertDialog>
-                                     </div>
-                                 </div>
-                                 <AccordionContent>
-                                    <div className="p-4 bg-background border-t">
-                                      <ScheduleForm
-                                             device={selectedDevice!}
-                                             telemetryKeys={telemetryKeys}
-                                             onSave={(data) => handleSave(data, schedule.key)}
-                                             onCancel={handleCancelForm}
-                                             existingSchedule={getScheduleToEdit(schedule.key)}
-                                             isSaving={isSaving}
-                                             scheduleNumber={scheduleNum}
-                                      />
+
+            <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey} className="w-full">
+                {schedulesToRender.map(schedule => {
+                    const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
+                    const isBeingEdited = editingKey === schedule.key;
+                    return (
+                        <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
+                            <Card className={cn("overflow-hidden", isBeingEdited && "ring-2 ring-primary")}>
+                                <AccordionTrigger asChild>
+                                    <div className={cn(
+                                        "flex items-center p-3 cursor-pointer hover:bg-muted/50 transition-colors",
+                                        !schedule.enabled && "opacity-60",
+                                        isBeingEdited && "bg-muted/50"
+                                    )}>
+                                        <div className="flex-1 text-left flex items-center gap-4">
+                                            <ChevronDown className="h-5 w-5 shrink-0 transition-transform duration-200" />
+                                            <div className="font-semibold text-sm">
+                                                <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
+                                                {getScheduleSummary(schedule)}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 mr-2">
+                                            <Switch
+                                                checked={schedule.enabled}
+                                                onCheckedChange={() => handleToggleEnable(schedule)}
+                                                disabled={isSaving}
+                                                onClick={(e) => e.stopPropagation()} // Prevent trigger
+                                            />
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="text-destructive/80 hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will remove the schedule from the UI. The attribute will remain on the server but will be marked as deleted and disabled.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(schedule)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     </div>
-                                 </AccordionContent>
-                             </Card>
-                         </AccordionItem>
-                      )
-                 })}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="p-4 bg-background/50 border-t">
+                                        <ScheduleForm
+                                            device={selectedDevice!}
+                                            telemetryKeys={telemetryKeys}
+                                            onSave={(data) => handleSave(data, schedule.key)}
+                                            onCancel={handleCancelForm}
+                                            existingSchedule={getScheduleToEdit(schedule.key)}
+                                            isSaving={isSaving}
+                                            scheduleNumber={scheduleNum}
+                                        />
+                                    </div>
+                                </AccordionContent>
+                            </Card>
+                        </AccordionItem>
+                    )
+                })}
                  
                 {/* Create New Form Area */}
                 <AccordionItem value="new-schedule" className="border-b-0">
                     <AccordionContent>
-                         <Card>
+                         <Card className="ring-2 ring-primary">
                             <ScheduleForm
                                 device={selectedDevice!}
                                 telemetryKeys={telemetryKeys}
