@@ -75,66 +75,58 @@ export default function HomePage() {
                 return;
             }
 
+            // Device Stats
             try {
-                // Device Stats
-                try {
-                    const tbDevices = await getDevices(token, instanceUrl, customerId);
-                    let activeDevices = 0;
-                    const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
-                        try {
-                            const attributes = await getDeviceAttributes(token, instanceUrl, d.id.id);
-                            const activeAttr = attributes.find(attr => attr.key === 'active');
-                            return activeAttr?.value ? 'Active' : 'Inactive';
-                        } catch {
-                            return 'Inactive';
-                        }
-                    }));
-                    activeDevices = devicesWithStatus.filter(s => s === 'Active').length;
-                    setDeviceStats({
-                        total: tbDevices.length,
-                        active: activeDevices,
-                        inactive: tbDevices.length - activeDevices,
-                    });
-                } catch (e: any) {
-                     console.error("Could not fetch device stats.", e.message);
-                     setDeviceStats(null); // Set to null on error
-                }
+                const tbDevices = await getDevices(token, instanceUrl, customerId);
+                const deviceAttributesPromises = tbDevices.map(d => 
+                    getDeviceAttributes(token, instanceUrl, d.id.id).catch(() => []) // Return empty array on error for a single device
+                );
+                const allAttributes = await Promise.all(deviceAttributesPromises);
 
-                // Dashboard Stats
-                try {
-                    const tbDashboards = await getDashboards(token, instanceUrl, customerId);
-                    setDashboardCount(tbDashboards.length);
-                } catch(e: any) {
-                    console.error("Could not fetch dashboard stats.", e.message);
-                    setDashboardCount(null); // Set to null on error
-                }
+                const activeDevices = allAttributes.filter(attributes => {
+                    const activeAttr = attributes.find(attr => attr.key === 'active');
+                    return activeAttr?.value === true;
+                }).length;
                 
-                // Alarm Stats
-                try {
-                    const tbAlarms = await getAlarms(token, instanceUrl);
-                    const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
-                    tbAlarms.forEach(alarm => {
-                        switch (alarm.severity) {
-                            case 'CRITICAL': alarms.critical++; break;
-                            case 'MAJOR': alarms.major++; break;
-                            case 'MINOR': alarms.minor++; break;
-                            case 'WARNING': alarms.warning++; break;
-                        }
-                    });
-                    setAlarmStats(alarms);
-                } catch(e: any) {
-                    // This is expected for some user roles, so we console.warn
-                    console.warn("Could not fetch alarms. User may not have permissions.", e.message);
-                    setAlarmStats(null); // Set to null on error
-                }
-
-
+                setDeviceStats({
+                    total: tbDevices.length,
+                    active: activeDevices,
+                    inactive: tbDevices.length - activeDevices,
+                });
             } catch (e: any) {
-                console.error("An unexpected error occurred during stats fetching:", e);
-                setError('An unexpected error occurred while fetching overview statistics.');
-            } finally {
-                setIsLoading(false);
+                 console.error("Could not fetch device stats.", e.message);
+                 setDeviceStats(null); // Set to null on error
             }
+
+            // Dashboard Stats
+            try {
+                const tbDashboards = await getDashboards(token, instanceUrl, customerId);
+                setDashboardCount(tbDashboards.length);
+            } catch(e: any) {
+                console.error("Could not fetch dashboard stats.", e.message);
+                setDashboardCount(null); // Set to null on error
+            }
+            
+            // Alarm Stats
+            try {
+                const tbAlarms = await getAlarms(token, instanceUrl);
+                const alarms = { critical: 0, major: 0, minor: 0, warning: 0 };
+                tbAlarms.forEach(alarm => {
+                    switch (alarm.severity) {
+                        case 'CRITICAL': alarms.critical++; break;
+                        case 'MAJOR': alarms.major++; break;
+                        case 'MINOR': alarms.minor++; break;
+                        case 'WARNING': alarms.warning++; break;
+                    }
+                });
+                setAlarmStats(alarms);
+            } catch(e: any) {
+                // This is expected for some user roles, so we console.warn
+                console.warn("Could not fetch alarms. User may not have permissions.", e.message);
+                setAlarmStats(null); // Set to null on error
+            }
+
+            setIsLoading(false);
         };
 
         fetchAllStats();
@@ -149,21 +141,7 @@ export default function HomePage() {
             )
         }
         
-        if (error) {
-             return (
-                <Card className="col-span-1 md:col-span-2 lg:col-span-4">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                         <CardTitle className="text-sm font-medium text-destructive">
-                            Error
-                         </CardTitle>
-                         <AlertCircle className="h-4 w-4 text-destructive" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-destructive">{error}</p>
-                    </CardContent>
-                </Card>
-             )
-        }
+        // Don't show a global error, just let cards show N/A
         
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
