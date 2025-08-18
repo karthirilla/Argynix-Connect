@@ -52,12 +52,6 @@ export function AppHeader() {
     return 'Home';
   }
   
-  const isIframePage = pathname.includes('/iframe');
-
-  if (isIframePage) {
-      return null; // The IFrame page now has its own header controls.
-  }
-
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
         <Sheet>
