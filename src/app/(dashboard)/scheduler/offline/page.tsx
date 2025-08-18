@@ -285,7 +285,7 @@ export default function OfflineSchedulerPage() {
   
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
-  const [editingKey, setEditingKey] = useState<string | null>(null); // This will hold the key of the item being edited or 'new-schedule'
+  const [editingKey, setEditingKey] = useState<string | undefined>(undefined); // This will hold the key of the item being edited or 'new-schedule'
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -324,7 +324,7 @@ export default function OfflineSchedulerPage() {
     if (!deviceId) return;
     setIsFetchingSchedules(true);
     setIsKeysLoading(true);
-    setEditingKey(null);
+    setEditingKey(undefined);
     try {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -367,7 +367,7 @@ export default function OfflineSchedulerPage() {
     setSelectedDevice(device || null);
     setSchedules([]);
     setTelemetryKeys([]);
-    setEditingKey(null);
+    setEditingKey(undefined);
     if(deviceId) {
         fetchDeviceData(deviceId);
     }
@@ -421,7 +421,7 @@ export default function OfflineSchedulerPage() {
         toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the schedule.' });
     } finally {
         setIsSaving(false);
-        setEditingKey(null);
+        setEditingKey(undefined);
     }
   };
 
@@ -492,7 +492,7 @@ export default function OfflineSchedulerPage() {
   }
   
   const handleCancelForm = () => {
-    setEditingKey(null);
+    setEditingKey(undefined);
   }
 
   const renderSchedulesList = () => {
@@ -523,13 +523,13 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || undefined} onValueChange={setEditingKey}>
+            <Accordion type="single" collapsible value={editingKey} onValueChange={setEditingKey}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
-                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
+                    <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0 mb-2">
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                           <div className="flex items-center p-3">
+                           <div className="flex items-center p-3 hover:bg-muted/50">
                                 <div className="flex-1 text-left">
                                      <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
                                        <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
@@ -543,9 +543,9 @@ export default function OfflineSchedulerPage() {
                                         disabled={isSaving}
                                     />
                                     <AccordionTrigger asChild>
-                                       <Button variant="ghost" size="icon">
+                                        <Button variant="ghost" size="icon">
                                             <Pencil className="h-4 w-4" />
-                                       </Button>
+                                        </Button>
                                     </AccordionTrigger>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -570,17 +570,16 @@ export default function OfflineSchedulerPage() {
                  )})}
 
                 {/* Create New Form */}
+                {schedules.length < MAX_SCHEDULES && (
                 <AccordionItem value="new-schedule" className="border-b-0">
-                    {schedules.length < MAX_SCHEDULES && (
-                         <AccordionTrigger asChild>
-                             <div className="text-center mt-6">
-                                <Button variant="outline" disabled={isSaving || !!editingKey}>
-                                    <PlusCircle className="mr-2" />
-                                    Create New Schedule
-                                </Button>
-                            </div>
-                        </AccordionTrigger>
-                    )}
+                    <AccordionTrigger disabled={isSaving || !!editingKey}>
+                         <div className="w-full text-center mt-4">
+                            <Button variant="outline">
+                                <PlusCircle className="mr-2" />
+                                Create New Schedule
+                            </Button>
+                        </div>
+                    </AccordionTrigger>
                     <AccordionContent>
                         <Card>
                                 <ScheduleForm
@@ -594,6 +593,7 @@ export default function OfflineSchedulerPage() {
                         </Card>
                     </AccordionContent>
                 </AccordionItem>
+                )}
             </Accordion>
         </div>
     )
