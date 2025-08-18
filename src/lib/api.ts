@@ -187,6 +187,19 @@ export async function getDeviceTelemetryKeys(
     return await fetchThingsboard<string[]>(url, token, instanceUrl);
 }
 
+export async function getDeviceTelemetry(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    keys: string[],
+    startTs: number,
+    endTs: number
+): Promise<any> {
+    const encodedKeys = encodeURIComponent(keys.join(','));
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodedKeys}&startTs=${startTs}&endTs=${endTs}&limit=10000&agg=NONE`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
 export async function getAssets(
     token: string,
     instanceUrl: string,
