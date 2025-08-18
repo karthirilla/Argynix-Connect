@@ -18,7 +18,6 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
-// The header is now simpler and no longer needs to manage print logic.
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,8 +47,9 @@ export function AppHeader() {
     return 'Home';
   }
 
-  const showBackButton = /^\/(devices|assets|dashboards)\/[^/]+/.test(pathname);
-  
+  const showBackButton = /^\/(devices|assets|dashboards)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
+  const showPrintButton = pathname.includes('/iframe');
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
         <Sheet>
@@ -77,6 +77,12 @@ export function AppHeader() {
             <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
         </div>
         <div className="flex items-center gap-2">
+            {showPrintButton && (
+                <Button variant="outline" size="icon" onClick={() => window.print()}>
+                    <Printer className="h-5 w-5" />
+                    <span className="sr-only">Print</span>
+                </Button>
+            )}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
