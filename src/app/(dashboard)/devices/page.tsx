@@ -17,8 +17,11 @@ import { cn } from '@/lib/utils';
 import { getDevices, getDeviceAttributes } from '@/lib/api';
 import type { Device as AppDevice, ThingsboardDevice } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Eye, HardDrive } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<AppDevice[]>([]);
@@ -85,8 +88,8 @@ export default function DevicesPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-0 md:px-4">
-        <div className="rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* Desktop Skeleton */}
+        <div className="hidden md:block rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -102,25 +105,56 @@ export default function DevicesPage() {
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-[120px] float-right" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-[120px]" /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+        </div>
+         {/* Mobile Skeleton */}
+        <div className="md:hidden grid gap-4">
+             {[...Array(5)].map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-4 w-full" />
+                         <Skeleton className="h-9 w-full mt-2" />
+                    </CardContent>
+                </Card>
+            ))}
         </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-center text-red-500">{error}</div>;
+     return (
+        <div className="container mx-auto px-0 md:px-4">
+             <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        </div>
+    );
   }
   
   if (devices.length === 0) {
-    return <div className="text-center text-muted-foreground">No devices found.</div>;
+    return (
+         <div className="container mx-auto px-0 md:px-4 text-center">
+            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold">No Devices Found</h3>
+                <p className="text-muted-foreground">This user has no devices assigned.</p>
+            </div>
+        </div>
+    );
   }
 
   return (
@@ -131,10 +165,12 @@ export default function DevicesPage() {
             <Card key={device.id}>
                 <CardHeader>
                     <CardTitle className="text-base">{device.name}</CardTitle>
+                    <CardDescription>{device.type}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    <div><strong>Type:</strong> {device.type}</div>
-                    <div><strong>Status:</strong>  <Badge
+                    <div>
+                        <strong>Status:</strong>{' '}
+                        <Badge
                         variant={device.status === 'Active' ? 'default' : 'secondary'}
                         className={cn('text-xs',
                             device.status === 'Active' && 'bg-green-500/20 text-green-700 border-green-500/20',
@@ -142,7 +178,7 @@ export default function DevicesPage() {
                         )}
                         >
                         {device.status}
-                    </Badge>
+                        </Badge>
                     </div>
                     <div><strong>Last Activity:</strong> {device.lastActivity}</div>
                      <Button asChild variant="outline" size="sm" className="w-full mt-2">
@@ -178,6 +214,7 @@ export default function DevicesPage() {
                     <Badge
                         variant={device.status === 'Active' ? 'default' : 'secondary'}
                         className={cn(
+                            'text-xs',
                             device.status === 'Active' && 'bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30',
                             device.status === 'Inactive' && 'bg-gray-500/20 text-gray-700 border-gray-500/20 hover:bg-gray-500/30'
                         )}
