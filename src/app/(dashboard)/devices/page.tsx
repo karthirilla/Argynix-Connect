@@ -14,10 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { getDevices, getDeviceAttributes } from '@/lib/api';
+import { getDevices, getDeviceAttributes, getUser } from '@/lib/api';
 import type { Device as AppDevice, ThingsboardDevice } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, HardDrive, Search } from 'lucide-react';
+import { Eye, HardDrive, PlusCircle, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -29,28 +29,37 @@ export default function DevicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
-      const instanceUrl = localStorage.getItem('tb_instance_url');
+      const storedInstanceUrl = localStorage.getItem('tb_instance_url');
       const customerId = localStorage.getItem('tb_customer_id');
 
-      if (!token || !instanceUrl) {
+      if (!token || !storedInstanceUrl) {
         setError('Authentication details not found.');
         setIsLoading(false);
         return;
       }
+      
+      setInstanceUrl(storedInstanceUrl);
 
       try {
-        const tbDevices: ThingsboardDevice[] = await getDevices(token, instanceUrl, customerId);
+        const [tbDevices, userData] = await Promise.all([
+          getDevices(token, storedInstanceUrl, customerId),
+          getUser(token, storedInstanceUrl)
+        ]);
+
+        setUserRole(userData.authority);
         
         const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
             let status = 'Inactive';
             let lastActivity = 'N/A';
             
             try {
-                const attributes = await getDeviceAttributes(token, instanceUrl, d.id.id);
+                const attributes = await getDeviceAttributes(token, storedInstanceUrl, d.id.id);
                 const activeAttr = attributes.find(attr => attr.key === 'active');
                 const lastActivityAttr = attributes.find(attr => attr.key === 'lastActivityTime');
 
@@ -77,7 +86,7 @@ export default function DevicesPage() {
         setDevices(devicesWithStatus);
 
       } catch (e) {
-        setError('Failed to fetch devices.');
+        setError('Failed to fetch devices or user data.');
         console.error(e);
       } finally {
         setIsLoading(false);
@@ -92,6 +101,8 @@ export default function DevicesPage() {
     device.type.toLowerCase().includes(filter.toLowerCase()) ||
     (device.label && device.label.toLowerCase().includes(filter.toLowerCase()))
   );
+
+  const isAdmin = userRole === 'SYS_ADMIN' || userRole === 'TENANT_ADMIN';
 
   if (isLoading) {
     return (
@@ -155,13 +166,21 @@ export default function DevicesPage() {
     );
   }
   
-  if (devices.length === 0) {
+  if (devices.length === 0 && !isLoading) {
     return (
          <div className="container mx-auto px-0 md:px-4 text-center">
             <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                 <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-xl font-semibold">No Devices Found</h3>
                 <p className="text-muted-foreground">This user has no devices assigned.</p>
+                 {isAdmin && instanceUrl && (
+                    <Button asChild className="mt-4">
+                        <Link href={`${instanceUrl}/devices`} target="_blank">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Device in ThingsBoard
+                        </Link>
+                    </Button>
+                )}
             </div>
         </div>
     );
@@ -169,7 +188,7 @@ export default function DevicesPage() {
 
   return (
     <div className="container mx-auto px-0 md:px-4 space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-4">
             <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -179,6 +198,14 @@ export default function DevicesPage() {
                 className="pl-10"
                 />
             </div>
+            {isAdmin && instanceUrl && (
+                 <Button asChild>
+                    <Link href={`${instanceUrl}/devices`} target="_blank">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Device
+                    </Link>
+                </Button>
+            )}
         </div>
 
        {/* Mobile View */}
