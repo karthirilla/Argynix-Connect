@@ -40,9 +40,9 @@ export default function DashboardLayout({
             setUser(userData);
             
             // Redirect non-admins away from admin page
-            const isAdminPage = pathname.startsWith('/admin');
+            const isUsersPage = pathname.startsWith('/users');
             const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
-            if(isAdminPage && !userIsAdmin) {
+            if(isUsersPage && !userIsAdmin) {
                 router.replace('/');
             }
 

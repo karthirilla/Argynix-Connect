@@ -1,4 +1,4 @@
-// /app/admin/page.tsx
+// /app/users/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -19,7 +19,7 @@ const defaultPermissions: UserPermissions = {
     userDisabled: false,
 };
 
-export default function AdminPage() {
+export default function UsersPage() {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

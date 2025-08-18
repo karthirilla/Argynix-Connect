@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, ShieldCheck } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -21,9 +21,9 @@ const navItems = [
 ];
 
 const adminNavItem = {
-    href: '/admin',
-    label: 'Admin',
-    icon: ShieldCheck,
+    href: '/users',
+    label: 'Users',
+    icon: Users,
 };
 
 export function AppSidebar({ isMobile = false }: { isMobile?: boolean }) {
