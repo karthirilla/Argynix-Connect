@@ -5,14 +5,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, CircleUser, Download, FileImage, FileType, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CircleUser, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -21,7 +18,6 @@ export default function DashboardIframePage() {
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -50,88 +46,21 @@ export default function DashboardIframePage() {
     // A small delay to allow complex widgets to render before we consider it "loaded"
     setTimeout(() => {
       setIsLoading(false);
-      toast({
-        title: "Dashboard Ready",
-        description: "You can now export the dashboard.",
-      });
-    }, 2500); 
+    }, 1500); 
   };
   
-  const handleExport = async (format: 'pdf' | 'png' | 'jpeg') => {
-    setIsExporting(true);
+  const handlePrint = () => {
     toast({
-        title: "Exporting...",
-        description: `Generating ${format.toUpperCase()} file. Please wait.`,
+        title: "Opening Print Dialog",
+        description: `Please use your browser's print options to "Save as PDF".`,
     });
-
-    try {
-        const dashboardElement = document.getElementById('dashboard-container');
-        if (!dashboardElement) {
-            throw new Error("Could not find dashboard element to capture.");
-        }
-
-        const canvas = await html2canvas(dashboardElement, {
-            useCORS: true, // Important for iframes
-            scale: 2, // Higher scale for better quality
-            allowTaint: true,
-        });
-
-        const imgData = canvas.toDataURL(`image/${format}`, 1.0);
-        const fileName = `dashboard-${id}.${format}`;
-
-        if (format === 'pdf') {
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: 'a4',
-            });
-            
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
-
-            const finalWidth = canvasWidth * ratio * 0.95; // 5% margin
-            const finalHeight = canvasHeight * ratio * 0.95;
-
-            const x = (pdfWidth - finalWidth) / 2;
-            const y = (pdfHeight - finalHeight) / 2;
-
-            pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
-            pdf.save(fileName);
-        } else {
-             const link = document.createElement('a');
-             link.href = imgData;
-             link.download = fileName;
-             document.body.appendChild(link);
-             link.click();
-             document.body.removeChild(link);
-        }
-        
-         toast({
-            title: "Export Successful",
-            description: `Your dashboard has been saved as a ${format.toUpperCase()} file.`,
-        });
-
-    } catch (err: any) {
-        console.error("Export failed", err);
-        toast({
-            variant: 'destructive',
-            title: 'Export Failed',
-            description: err.message || 'An unexpected error occurred during export.',
-        });
-    } finally {
-        setIsExporting(false);
-    }
+    window.print();
   }
-
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
-
 
   if (error) {
     return (
@@ -147,7 +76,7 @@ export default function DashboardIframePage() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background">
-       <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+       <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 print:hidden">
             <Button onClick={() => router.back()} variant="outline" size="icon" className="h-8 w-8">
                 <ArrowLeft className="h-4 w-4" />
                 <span className="sr-only">Back</span>
@@ -156,30 +85,10 @@ export default function DashboardIframePage() {
                  <h1 className="font-semibold text-lg md:text-xl">Dashboard</h1>
             </div>
              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" disabled={isLoading || isExporting}>
-                            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                            <span className="sr-only">Export Dashboard</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Export Dashboard</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                            <FileType className="mr-2 h-4 w-4"/>
-                            <span>Save as PDF</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleExport('png')}>
-                            <FileImage className="mr-2 h-4 w-4"/>
-                            <span>Save as PNG</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleExport('jpeg')}>
-                             <FileImage className="mr-2 h-4 w-4"/>
-                            <span>Save as JPEG</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button variant="outline" size="icon" onClick={handlePrint} disabled={isLoading}>
+                    <Printer className="h-4 w-4" />
+                    <span className="sr-only">Print / Save as PDF</span>
+                </Button>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
