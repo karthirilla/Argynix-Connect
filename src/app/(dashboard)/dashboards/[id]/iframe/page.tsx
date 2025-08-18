@@ -6,6 +6,9 @@ import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -46,22 +49,32 @@ export default function DashboardIframePage() {
   }
 
   return (
-    <div className="h-full w-full relative">
-        {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
-        {iframeSrc && (
-            <iframe
-                src={iframeSrc}
-                title="ThingsBoard Dashboard"
-                className="w-full h-full border-0"
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                }}
-            />
-        )}
+    <div className="h-full w-full flex flex-col">
+        <div className="p-4 border-b">
+             <Button asChild variant="outline" size="sm">
+                <Link href="/dashboards">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboards
+                </Link>
+            </Button>
+        </div>
+        <div className="flex-1 relative">
+            {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
+            {iframeSrc && (
+                <iframe
+                    src={iframeSrc}
+                    title="ThingsBoard Dashboard"
+                    className="w-full h-full border-0"
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                    }}
+                />
+            )}
+        </div>
     </div>
   );
 }

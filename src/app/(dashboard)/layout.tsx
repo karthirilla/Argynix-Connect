@@ -19,10 +19,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
-  
-  // Check if the current page is the iframe page
-  const isIframePage = /^\/dashboards\/[a-zA-Z0-9-]+\/iframe$/.test(pathname);
-
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
@@ -51,15 +47,18 @@ export default function DashboardLayout({
   if (!isAuthenticated) {
     return null; // Render nothing while redirecting
   }
+  
+  const isIframePage = /^\/dashboards\/[a-zA-Z0-9-]+\/iframe$/.test(pathname);
 
   return (
     <div className="flex min-h-screen w-full">
-      {!isIframePage && <AppSidebar />}
+      <AppSidebar />
       <div className="flex flex-1 flex-col">
-        {!isIframePage && <AppHeader />}
+        <AppHeader />
         <main className={cn(
           "flex-1 bg-background/50",
-          !isIframePage && "p-4 md:p-8 lg:p-10"
+           // The iframe page needs no padding to fill the space
+          isIframePage ? "p-0" : "p-4 md:p-8 lg:p-10"
         )}>
           {children}
         </main>
