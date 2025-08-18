@@ -285,7 +285,7 @@ export default function OfflineSchedulerPage() {
   
   const [telemetryKeys, setTelemetryKeys] = useState<string[]>([]);
   const [isKeysLoading, setIsKeysLoading] = useState(false);
-  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null); // This will hold the key of the item being edited or 'new-schedule'
   const [isCreating, setIsCreating] = useState(false);
 
 
@@ -497,10 +497,11 @@ export default function OfflineSchedulerPage() {
   
   const handleCreateNewClick = () => {
     setIsCreating(true);
-    setEditingKey(null); // Ensure no other item is being edited
+    setEditingKey('new-schedule');
   }
   
-  const handleCancelCreate = () => {
+  const handleCancelForm = () => {
+    setEditingKey(null);
     setIsCreating(false);
   }
 
@@ -532,33 +533,25 @@ export default function OfflineSchedulerPage() {
                 </Alert>
             )}
 
-            <Accordion type="single" collapsible value={editingKey || (isCreating ? 'new-schedule' : '')} onValueChange={(value) => {
-                if (value === 'new-schedule') {
-                    setIsCreating(true);
-                    setEditingKey(null);
-                } else if (value) {
-                    setIsCreating(false);
-                    setEditingKey(value);
-                } else {
-                    setIsCreating(false);
-                    setEditingKey(null);
-                }
-            }}>
+            <Accordion type="single" collapsible value={editingKey || ''} onValueChange={setEditingKey}>
                  {schedules.map(schedule => {
                     const scheduleNum = parseInt(schedule.key.split('_')[1], 10);
                     return (
                     <AccordionItem value={schedule.key} key={schedule.key} className="border-b-0">
                         <Card className={cn("overflow-hidden", !schedule.enabled && "bg-muted/50")}>
-                           <AccordionTrigger className="p-3 hover:no-underline">
-                           <div className="flex items-center w-full">
-                               <div className="flex-1 text-left">
-                                   <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
-                                      <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
-                                      {getScheduleSummary(schedule)}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground ml-10">Status: {schedule.enabled ? "Enabled" : "Disabled"}</p>
-                               </div>
-                                <div className="flex items-center gap-2 pl-4 ml-auto" onClick={e => e.stopPropagation()}>
+                           <div className="flex items-center p-3">
+                               <AccordionTrigger asChild>
+                                   <div className="flex-1 text-left cursor-pointer flex items-center">
+                                       <div className={cn("font-semibold text-sm", !schedule.enabled && "text-muted-foreground line-through")}>
+                                          <Badge variant="secondary" className="mr-2">#{scheduleNum}</Badge>
+                                          {getScheduleSummary(schedule)}
+                                        </div>
+                                        <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
+                                                <Pencil className="h-4 w-4" />
+                                        </div>
+                                   </div>
+                               </AccordionTrigger>
+                                <div className="flex items-center gap-2 pl-4 ml-auto">
                                     <Switch
                                         checked={schedule.enabled}
                                         onCheckedChange={() => handleToggleEnable(schedule)}
@@ -567,19 +560,15 @@ export default function OfflineSchedulerPage() {
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(schedule.key)} disabled={isSaving}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
-                                    <div className="p-2 transition-transform duration-200 group-data-[state=open]:rotate-180">
-                                            <Pencil className="h-4 w-4" />
-                                    </div>
                                 </div>
                             </div>
-                           </AccordionTrigger>
                             <AccordionContent>
                                <div className="p-4 bg-background border-t">
                                  <ScheduleForm
                                         device={selectedDevice!}
                                         telemetryKeys={telemetryKeys}
                                         onSave={(data) => handleSave(data, schedule.key)}
-                                        onCancel={() => setEditingKey(null)}
+                                        onCancel={handleCancelForm}
                                         existingSchedule={schedule}
                                         isSaving={isSaving}
                                         scheduleNumber={scheduleNum}
@@ -594,7 +583,7 @@ export default function OfflineSchedulerPage() {
                 <AccordionItem value="new-schedule" className="border-b-0">
                     {!isCreating && schedules.length < MAX_SCHEDULES && (
                         <div className="text-center mt-6">
-                            <Button variant="outline" onClick={handleCreateNewClick} disabled={isSaving}>
+                            <Button variant="outline" onClick={handleCreateNewClick} disabled={isSaving || editingKey !== null}>
                                 <PlusCircle className="mr-2" />
                                 Create New Schedule
                             </Button>
@@ -607,7 +596,7 @@ export default function OfflineSchedulerPage() {
                                     device={selectedDevice!}
                                     telemetryKeys={telemetryKeys}
                                     onSave={(data) => handleSave(data)}
-                                    onCancel={handleCancelCreate}
+                                    onCancel={handleCancelForm}
                                     isSaving={isSaving}
                                     scheduleNumber={nextScheduleNumber}
                             />
@@ -672,3 +661,5 @@ export default function OfflineSchedulerPage() {
     </div>
   );
 }
+
+    
