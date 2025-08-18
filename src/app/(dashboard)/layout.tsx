@@ -83,7 +83,7 @@ export default function DashboardLayout({
     <div className="flex min-h-screen w-full">
       {!isIframePage && <AppSidebar />}
       <div className="flex flex-1 flex-col">
-        {!isIframePage && <AppHeader />}
+        <AppHeader />
         <main className={cn(
             "flex-1 bg-background/50",
             !isIframePage && "p-4 md:p-8 lg:p-10"

@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, ArrowLeft } from 'lucide-react';
+import { CircleUser, Menu, Download, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,51 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 
+// This is a global event bus to communicate between a page and this header
+const eventBus = {
+  subscribe: (event: string, callback: EventListener) => {
+    document.addEventListener(event, callback);
+  },
+  unsubscribe: (event: string, callback: EventListener) => {
+    document.removeEventListener(event, callback);
+  },
+  dispatch: (event: string, data?: any) => {
+    document.dispatchEvent(new CustomEvent(event, { detail: data }));
+  }
+};
+
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const [username, setUsername] = useState<string | null>(null);
+  const [isIframePage, setIsIframePage] = useState(false);
+  const [isIframeReady, setIsIframeReady] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
     setUsername(storedUser);
-  }, []);
+    setIsIframePage(pathname.includes('/iframe'));
+
+    const handleIframeReady = () => setIsIframeReady(true);
+    const handleExportStart = () => setIsExporting(true);
+    const handleExportEnd = () => setIsExporting(false);
+
+    if(pathname.includes('/iframe')) {
+        eventBus.subscribe('iframe:ready', handleIframeReady);
+        eventBus.subscribe('export:start', handleExportStart);
+        eventBus.subscribe('export:end', handleExportEnd);
+    }
+    
+    return () => {
+        if(pathname.includes('/iframe')) {
+            eventBus.unsubscribe('iframe:ready', handleIframeReady);
+            eventBus.unsubscribe('export:start', handleExportStart);
+            eventBus.unsubscribe('export:end', handleExportEnd);
+        }
+    }
+
+  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('tb_auth_token');
@@ -37,9 +73,13 @@ export function AppHeader() {
     router.push('/login');
   };
 
+  const handleExportRequest = () => {
+    eventBus.dispatch('export:request');
+  };
+
   const getTitle = () => {
+    if (pathname.includes('/iframe')) return 'View Dashboard';
     if (pathname === '/') return 'Home';
-    if (pathname.startsWith('/dashboards/(.)/iframe')) return 'View Dashboard';
     if (pathname.startsWith('/dashboards')) return 'Dashboards';
     if (pathname.startsWith('/devices')) return 'Devices';
     if (pathname.startsWith('/assets')) return 'Assets';
@@ -73,6 +113,12 @@ export function AppHeader() {
         <h1 className="font-semibold text-lg md:text-xl">{getTitle()}</h1>
       </div>
       <div className="flex items-center gap-2">
+        {isIframePage && (
+             <Button onClick={handleExportRequest} disabled={!isIframeReady || isExporting} size="sm">
+                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4"/>}
+                {isExporting ? 'Exporting...' : 'Export as PDF'}
+            </Button>
+        )}
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
