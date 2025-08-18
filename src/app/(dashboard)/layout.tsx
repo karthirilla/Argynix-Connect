@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,8 +17,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  
+  const isIframePage = pathname.includes('/iframe');
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
@@ -53,7 +56,10 @@ export default function DashboardLayout({
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10">
+        <main className={cn(
+            "flex-1 bg-background/50",
+            !isIframePage && "p-4 md:p-8 lg:p-10"
+          )}>
           {children}
         </main>
         <Toaster />

@@ -1,3 +1,4 @@
+
 // /app/dashboards/[id]/iframe/page.tsx
 "use client";
 
@@ -6,9 +7,6 @@ import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -48,13 +46,9 @@ export default function DashboardIframePage() {
         </div>
     );
   }
-  
-  // Note: The "Back to Dashboards" button is now part of the AppHeader via the layout,
-  // but we can keep a contextual one here if needed, or rely on the header navigation.
-  // For a true full-screen experience, we'll render just the iframe.
 
   return (
-    <div className="h-full w-full relative">
+    <div className="h-full w-full">
         {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
         {iframeSrc && (
             <iframe
