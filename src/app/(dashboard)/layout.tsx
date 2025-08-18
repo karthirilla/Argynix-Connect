@@ -21,7 +21,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
-  const isIframePage = pathname.includes('/iframe');
 
   useEffect(() => {
     const checkAuthAndFetchUser = async () => {
@@ -74,11 +73,6 @@ export default function DashboardLayout({
         </div>
     );
   }
-
-  // Handle the IFrame page separately to provide a custom layout
-  if (isIframePage) {
-     return <>{children}</>;
-  }
   
   if (!user) {
     return null; // Render nothing while redirecting
@@ -89,7 +83,7 @@ export default function DashboardLayout({
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10">
+        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10 flex flex-col">
           {children}
         </main>
         <Toaster />

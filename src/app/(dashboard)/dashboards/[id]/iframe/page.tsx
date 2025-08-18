@@ -6,6 +6,9 @@ import { useParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function DashboardIframePage() {
   const params = useParams();
@@ -23,7 +26,6 @@ export default function DashboardIframePage() {
 
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (instanceUrl) {
-      // Removed "?kiosk=true" to show the native ThingsBoard UI
       setIframeSrc(`${instanceUrl}/dashboard/${id}`);
     } else {
       setError('ThingsBoard instance URL not found in local storage.');
@@ -31,7 +33,6 @@ export default function DashboardIframePage() {
   }, [id]);
 
   const handleIframeLoad = () => {
-    // A small delay to allow complex widgets to render before we consider it "loaded"
     setTimeout(() => {
       setIsLoading(false);
     }, 1500); 
@@ -39,7 +40,7 @@ export default function DashboardIframePage() {
   
   if (error) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center p-4">
+      <div className="flex h-full w-full items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error Loading Dashboard</AlertTitle>
@@ -50,19 +51,19 @@ export default function DashboardIframePage() {
   }
 
   return (
-    <div className="h-screen w-screen bg-background">
-       <main id="dashboard-container" className="h-full w-full relative">
-            {isLoading && <Skeleton className="absolute inset-0 w-full h-full" />}
+    <div className="flex flex-col h-full w-full">
+       <div className="flex-grow relative">
+            {isLoading && <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />}
             {iframeSrc && (
                 <iframe
                 src={iframeSrc}
                 title="ThingsBoard Dashboard"
-                className="w-full h-full border-0"
+                className="w-full h-full border-0 rounded-lg"
                 onLoad={handleIframeLoad}
                 style={{ visibility: isLoading ? 'hidden' : 'visible' }}
                 />
             )}
-       </main>
+       </div>
     </div>
   );
 }
