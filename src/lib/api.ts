@@ -26,6 +26,10 @@ async function fetchThingsboard<T>(
   options: RequestInit = {},
   isRetry: boolean = false // Prevent infinite retry loops
 ): Promise<T> {
+  if (!instanceUrl || instanceUrl === 'http://your-thingsboard-instance.com') {
+      throw new Error('ThingsBoard instance URL is not configured. Please set NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL in your environment file.');
+  }
+
   try {
       new URL(instanceUrl);
   } catch (e) {
