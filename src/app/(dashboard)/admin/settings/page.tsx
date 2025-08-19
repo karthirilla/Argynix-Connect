@@ -100,7 +100,11 @@ export default function AdminSettingsPage() {
       }
 
     } catch (e: any) {
-      setError(e.message || 'Failed to fetch admin settings. Ensure you have admin permissions.');
+        if (e.message && e.message.includes('permission')) {
+             setError('You do not have sufficient permissions to view these settings. Please ensure your user account has the appropriate admin rights in your ThingsBoard instance.');
+        } else {
+            setError(e.message || 'Failed to fetch admin settings.');
+        }
     } finally {
       setIsLoading(false);
     }
