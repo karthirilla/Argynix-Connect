@@ -4,30 +4,41 @@ import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, Thingsb
 
 async function fetchThingsboard<T>(
   url: string,
-  token: string,
+  token: string | null, // Token can be null for noauth requests
   instanceUrl: string,
   options: RequestInit = {}
 ): Promise<T> {
   // Ensure the URL is correctly formed to prevent fetch errors
   const finalUrl = new URL(url, instanceUrl).toString();
   
+  const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+  };
+  
+  if (token) {
+      headers['X-Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(finalUrl, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
     // Attempt to get more detailed error message from ThingsBoard
-    const errorBody = await response.text();
+    let errorBody = "An unknown error occurred.";
+    try {
+        const errorJson = await response.json();
+        errorBody = errorJson.message || JSON.stringify(errorJson);
+    } catch(e) {
+        errorBody = await response.text();
+    }
     console.error("ThingsBoard API Error:", errorBody);
     throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
-  // Handle cases where response might be empty (e.g., for 204 No Content on delete)
+  // Handle cases where response might be empty (e.g., for 204 No Content on delete/logout)
   if (response.status === 204 || response.headers.get('content-length') === '0') {
       return null as T;
   }
@@ -40,6 +51,20 @@ async function fetchThingsboard<T>(
     throw new Error("Invalid JSON response from server.");
   }
 }
+
+export async function logout(token: string, instanceUrl: string): Promise<void> {
+    const url = '/api/auth/logout';
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
+}
+
+export async function changePassword(token: string, instanceUrl: string, currentPassword: string, newPassword: string): Promise<void> {
+    const url = '/api/auth/changePassword';
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword })
+    });
+}
+
 
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';

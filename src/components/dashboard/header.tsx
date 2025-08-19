@@ -17,10 +17,13 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { logout } from '@/lib/api';
 
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
   const [username, setUsername] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -30,7 +33,23 @@ export function AppHeader() {
     setUsername(storedUser);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem('tb_auth_token');
+    const instanceUrl = localStorage.getItem('tb_instance_url');
+    
+    if (token && instanceUrl) {
+        try {
+            await logout(token, instanceUrl);
+        } catch (error) {
+            console.error("Logout API call failed, clearing session anyway.", error);
+            toast({
+                variant: 'destructive',
+                title: 'Logout Error',
+                description: 'Could not contact server to logout, session cleared locally.'
+            })
+        }
+    }
+    
     localStorage.clear();
     window.location.href = '/login';
   };

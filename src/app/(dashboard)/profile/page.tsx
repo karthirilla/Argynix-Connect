@@ -2,19 +2,44 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getUser } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { getUser, changePassword } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, User, Building, Clock, KeyRound, MapPin, Phone } from 'lucide-react';
+import { AlertCircle, User, Building, Clock, KeyRound, MapPin, Phone, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { ThingsboardUser } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required.'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters.'),
+  confirmPassword: z.string()
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "New passwords don't match.",
+  path: ['confirmPassword']
+});
+
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export default function ProfilePage() {
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' }
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +65,24 @@ export default function ProfilePage() {
 
     fetchData();
   }, []);
+
+  const onPasswordSubmit = async (data: PasswordFormValues) => {
+    const token = localStorage.getItem('tb_auth_token');
+    const instanceUrl = localStorage.getItem('tb_instance_url');
+    if (!token || !instanceUrl) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Authentication details missing.' });
+      return;
+    }
+    
+    try {
+        await changePassword(token, instanceUrl, data.currentPassword, data.newPassword);
+        toast({ title: 'Success', description: 'Your password has been changed successfully.' });
+        setIsPasswordDialogOpen(false);
+        passwordForm.reset();
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to change password.' });
+    }
+  }
 
   const DetailItem = ({ icon: Icon, label, value, isBadge = false }: { icon: React.ElementType, label: string; value: string | undefined | null, isBadge?: boolean }) => {
     if (!value) return null;
@@ -82,6 +125,9 @@ export default function ProfilePage() {
                     </div>
                 ))}
             </CardContent>
+            <CardFooter>
+                <Skeleton className="h-10 w-48" />
+            </CardFooter>
         </Card>
       </div>
     );
@@ -134,6 +180,68 @@ export default function ProfilePage() {
           <DetailItem icon={Building} label="Customer ID" value={user.customerId?.id} />
           <DetailItem icon={Clock} label="Created Time" value={new Date(user.createdTime).toLocaleString()} />
         </CardContent>
+        <CardFooter>
+            <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">Change Password</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Change Your Password</DialogTitle>
+                    </DialogHeader>
+                     <Form {...passwordForm}>
+                        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                             <FormField
+                                control={passwordForm.control}
+                                name="currentPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Current Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={passwordForm.control}
+                                name="newPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>New Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={passwordForm.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm New Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
+                                    {passwordForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save Changes
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        </CardFooter>
       </Card>
     </div>
   );
