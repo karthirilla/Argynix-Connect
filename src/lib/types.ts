@@ -4,6 +4,7 @@ export type Dashboard = {
     id: string;
     name: string;
     type: string;
+    isPublic: boolean;
     deviceCount: number;
 };
   
@@ -66,6 +67,8 @@ export type ThingsboardDashboard = {
     createdTime: number;
     title: string;
     name: string; // For consistency, though API uses title
+    public: boolean;
+    publicId?: string;
     configuration?: any; // To hold dashboard widget configuration
 };
   

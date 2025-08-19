@@ -154,8 +154,26 @@ export async function getDashboardById(
   instanceUrl: string,
   dashboardId: string
 ): Promise<ThingsboardDashboard> {
-  const url = `/api/dashboard/${dashboardId}`;
+  const url = `/api/dashboard/info/${dashboardId}`;
   return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl);
+}
+
+export async function deleteDashboard(
+  token: string,
+  instanceUrl: string,
+  dashboardId: string
+): Promise<void> {
+  const url = `/api/dashboard/${dashboardId}`;
+  await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+export async function makeDashboardPublic(
+  token: string,
+  instanceUrl: string,
+  dashboardId: string
+): Promise<ThingsboardDashboard> {
+    const url = `/api/dashboard/${dashboardId}/public`;
+    return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl, { method: 'POST' });
 }
 
 export async function getDevices(
