@@ -121,6 +121,16 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
 }
 
+export async function deleteUser(token: string, instanceUrl: string, userId: string): Promise<void> {
+    const url = `/api/user/${userId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+export async function setUserCredentialsEnabled(token: string, instanceUrl: string, userId: string, enabled: boolean): Promise<void> {
+    const url = `/api/user/${userId}/userCredentialsEnabled?userCredentialsEnabled=${enabled}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
+}
+
 export async function getCustomers(token: string, instanceUrl: string): Promise<ThingsboardCustomer[]> {
     const url = `/api/customers?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardCustomer[] }>(url, token, instanceUrl);
@@ -136,11 +146,21 @@ export async function getCustomerUsers(token: string, instanceUrl: string, custo
 export async function getUserAttributes(
     token: string,
     instanceUrl: string,
-    userId: string,
-    scope: 'SERVER_SCOPE' | 'SHARED_SCOPE' = 'SHARED_SCOPE'
+    userId: string
   ): Promise<{ key: string, value: any }[]> {
-    const url = `/api/plugins/telemetry/USER/${userId}/values/attributes/${scope}`;
-    return await fetchThingsboard<any>(url, token, instanceUrl);
+    const serverScopeUrl = `/api/plugins/telemetry/USER/${userId}/values/attributes/SERVER_SCOPE`;
+    const sharedScopeUrl = `/api/plugins/telemetry/USER/${userId}/values/attributes/SHARED_SCOPE`;
+    
+    try {
+        const [serverAttributes, sharedAttributes] = await Promise.all([
+            fetchThingsboard<any[]>(serverScopeUrl, token, instanceUrl).catch(() => []),
+            fetchThingsboard<any[]>(sharedScopeUrl, token, instanceUrl).catch(() => [])
+        ]);
+        return [...(serverAttributes || []), ...(sharedAttributes || [])];
+    } catch (e) {
+        console.error("Failed to fetch one or more user attribute scopes", e);
+        return [];
+    }
 }
 
 export async function saveUserAttributes(

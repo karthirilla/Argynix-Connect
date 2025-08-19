@@ -37,11 +37,11 @@ export type Alarm = {
 export interface UserPermissions {
     canExport: boolean;
     canSchedule: boolean;
-    userDisabled: boolean;
 }
 
 export interface AppUser extends ThingsboardUser {
-    permissions: UserPermissions
+    permissions: UserPermissions;
+    userCredentialsEnabled: boolean;
 }
 
 export type AppAuditLog = {
