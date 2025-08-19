@@ -18,7 +18,7 @@ export default function DashboardsPage() {
       setIsLoading(true);
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
-      const customerId = localStorage.getItem('tb_customer_id');
+      
 
       if (!token || !instanceUrl) {
         setError('Authentication details not found.');
@@ -27,12 +27,11 @@ export default function DashboardsPage() {
       }
 
       try {
-        const [tbDashboards, userData] = await Promise.all([
-            getDashboards(token, instanceUrl, customerId),
-            getUser(token, instanceUrl)
-        ]);
-
+        const userData = await getUser(token, instanceUrl);
         setUser(userData);
+        
+        // Pass the correct customer ID (can be null for tenant admins)
+        const tbDashboards = await getDashboards(token, instanceUrl, userData.customerId?.id || null);
 
         const formattedDashboards: AppDashboard[] = tbDashboards.map(d => ({
           id: d.id.id,
@@ -43,8 +42,8 @@ export default function DashboardsPage() {
           deviceCount: 0,
         }));
         setDashboards(formattedDashboards);
-      } catch (e) {
-        setError('Failed to fetch dashboards.');
+      } catch (e: any) {
+        setError(e.message || 'Failed to fetch dashboards.');
         console.error(e);
       } finally {
         setIsLoading(false);

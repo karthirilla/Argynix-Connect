@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ArrowRight, BarChart, HardDrive, Download, Siren, CheckCircle, PieChart } from 'lucide-react';
-import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
+import { getDevices, getDeviceAttributes, getDashboards, getAlarms, getUser } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend, BarChart as RechartsBarChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -120,7 +120,8 @@ function HomePageContent() {
             }
 
             try {
-                const tbDashboards = await getDashboards(token, instanceUrl, customerId);
+                const user = await getUser(token, instanceUrl);
+                const tbDashboards = await getDashboards(token, instanceUrl, user.customerId?.id || null);
                 setDashboardCount(tbDashboards.length);
             } catch(e: any) {
                 console.error("Could not fetch dashboard stats:", e.message);

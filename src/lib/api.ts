@@ -162,7 +162,9 @@ export async function getDashboards(
   instanceUrl: string,
   customerId: string | null
 ): Promise<ThingsboardDashboard[]> {
-  const url = '/api/user/dashboards?pageSize=100&page=0';
+  const url = customerId 
+    ? `/api/customer/${customerId}/dashboards?pageSize=100&page=0`
+    : '/api/user/dashboards?pageSize=100&page=0';
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(url, token, instanceUrl);
   return result?.data || [];
 }
