@@ -1,4 +1,3 @@
-
 // /app/(dashboard)/scheduler/offline/page.tsx
 "use client";
 
@@ -11,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getDevices, getDeviceAttributes, saveDeviceAttributes, getDeviceTelemetryKeys, deleteDeviceAttributes } from '@/lib/api';
-import type { ThingsboardDevice } from '@/lib/types';
+import type { ThingsboardDevice, Schedule } from '@/lib/types';
 import { Loader2, CalendarIcon, Save, Trash2, AlertCircle, PlusCircle, ChevronsUpDown, Pencil, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse, parseISO, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isValid } from 'date-fns';
@@ -47,18 +46,6 @@ const weekdays = [
   { id: 'FRIDAY', label: 'F', dayIndex: 5 },
   { id: 'SATURDAY', label: 'S', dayIndex: 6 },
 ];
-
-export interface Schedule {
-  key: string; // e.g., offlineSchedule_1
-  enabled: boolean;
-  deleted?: boolean;
-  attributeKey: string;
-  attributeValue: string;
-  mode: ScheduleMode;
-  fireTime?: string; 
-  days?: string[];
-  time?: string;
-}
 
 const MAX_SCHEDULES = 30;
 
