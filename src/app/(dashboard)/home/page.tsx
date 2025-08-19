@@ -8,6 +8,7 @@ import { ArrowRight, BarChart, HardDrive, Download, Siren, CheckCircle, PieChart
 import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend, BarChart as RechartsBarChart } from 'recharts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const features = [
   {
