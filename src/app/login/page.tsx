@@ -23,7 +23,7 @@ const LoginForm = dynamic(() => import('@/components/auth/login-form'), {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-background p-4 pt-20 md:items-center md:pt-4">
+    <div className="flex min-h-screen w-full items-start justify-center bg-background p-4 pt-28 md:items-center md:pt-4">
         <div className="w-full max-w-sm mx-auto flex flex-col items-center justify-center gap-8">
           <div className="grid gap-4 text-center animate-in fade-in-50 zoom-in-95 duration-500">
              <Logo className="mx-auto h-16 w-16 text-primary" />
