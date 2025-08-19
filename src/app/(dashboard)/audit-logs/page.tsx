@@ -89,15 +89,23 @@ export default function AuditLogsPage() {
         return;
       }
       
+      if (selectedUserId === 'current' && !currentUser) {
+          // Wait for currentUser to be fetched
+          setIsLoading(false);
+          return;
+      }
+
       try {
-        const userId = selectedUserId === 'all' || selectedUserId === 'current' ? undefined : selectedUserId;
+        const userIdToFetch = selectedUserId === 'all' 
+            ? undefined 
+            : (selectedUserId === 'current' ? currentUser?.id.id : selectedUserId);
         
         const tbLogs: ThingsboardAuditLog[] = await getAuditLogs(
             token, 
             instanceUrl,
             dateRange?.from?.getTime(),
             dateRange?.to?.getTime(),
-            userId || (selectedUserId === 'current' ? currentUser?.id.id : undefined)
+            userIdToFetch
         );
         
         const formattedLogs: AppAuditLog[] = tbLogs.map(l => ({
@@ -125,15 +133,19 @@ export default function AuditLogsPage() {
     const token = localStorage.getItem('tb_auth_token');
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if(token && instanceUrl) {
-        fetchUsers(token, instanceUrl).then(() => {
-            fetchLogs();
-        });
+        fetchUsers(token, instanceUrl);
     } else {
         setError("Authentication details not found.");
         setIsLoading(false);
         setIsFetchingUsers(false);
     }
-  }, [fetchUsers, fetchLogs]);
+  }, [fetchUsers]);
+
+  useEffect(() => {
+      // Trigger fetchLogs whenever the filters change, or when the currentUser is first loaded.
+      fetchLogs();
+  }, [fetchLogs, currentUser]);
+
 
   const filteredLogs = logs.filter(log =>
     log.userName.toLowerCase().includes(filter.toLowerCase()) ||
