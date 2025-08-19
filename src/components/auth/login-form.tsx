@@ -44,10 +44,12 @@ export default function LoginForm() {
     }
 
     try {
+      // Step 1: Login to get the token
       const loginResponse = await fetch(`${instanceUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           username: data.username,
@@ -62,6 +64,7 @@ export default function LoginForm() {
       
       const { token, refreshToken } = await loginResponse.json();
       
+      // Step 2: Use the token to get user details
       const userResponse = await fetch(`${instanceUrl}/api/auth/user`, {
           headers: {
               'X-Authorization': `Bearer ${token}`
@@ -69,19 +72,22 @@ export default function LoginForm() {
       });
 
       if (!userResponse.ok) {
-          throw new Error('Failed to fetch user details after login.');
+          throw new Error('Login successful, but failed to fetch user details.');
       }
       
       const userData = await userResponse.json();
       
+      // Step 3: Store all necessary data in localStorage
       localStorage.setItem('tb_instance_url', instanceUrl);
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
       
+      // Store customerId if it exists and is not the generic "system" one
       if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
+        // Ensure old customer ID is cleared for tenant admins
         localStorage.removeItem('tb_customer_id');
       }
 
@@ -90,12 +96,13 @@ export default function LoginForm() {
         description: "Redirecting to your dashboard...",
       });
       
+      // Step 4: Redirect reliably
       window.location.href = '/';
 
     } catch (error: any) {
         toast({
             variant: "destructive",
-            title: "Error",
+            title: "Login Failed",
             description: error.message || "Could not connect to the ThingsBoard instance. Please check the URL and your connection.",
         });
     } finally {
@@ -117,7 +124,7 @@ export default function LoginForm() {
                     <FormItem>
                         <FormLabel>Username</FormLabel>
                         <FormControl>
-                            <Input placeholder="your-email@example.com" {...field} />
+                            <Input placeholder="your-email@example.com" {...field} autoComplete="username" />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -130,7 +137,7 @@ export default function LoginForm() {
                      <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
