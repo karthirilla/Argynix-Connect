@@ -293,8 +293,22 @@ export async function getAlarms(
 export async function getAuditLogs(
     token: string,
     instanceUrl: string,
+    startTime?: number,
+    endTime?: number,
+    userId?: string
 ): Promise<ThingsboardAuditLog[]> {
-    const url = '/api/audit/logs?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC';
+    const params = new URLSearchParams({
+        pageSize: '100',
+        page: '0',
+        sortProperty: 'createdTime',
+        sortOrder: 'DESC',
+    });
+    if (startTime) params.append('startTime', String(startTime));
+    if (endTime) params.append('endTime', String(endTime));
+
+    const baseUrl = userId ? `/api/audit/logs/user/${userId}` : '/api/audit/logs';
+    const url = `${baseUrl}?${params.toString()}`;
+
     const result = await fetchThingsboard<{ data: ThingsboardAuditLog[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
