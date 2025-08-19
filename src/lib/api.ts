@@ -26,6 +26,12 @@ async function fetchThingsboard<T>(
   options: RequestInit = {},
   isRetry: boolean = false // Prevent infinite retry loops
 ): Promise<T> {
+    try {
+        new URL(instanceUrl);
+    } catch (e) {
+        throw new Error('Invalid ThingsBoard instance URL. Please check your configuration.');
+    }
+
   const finalUrl = new URL(url, instanceUrl).toString();
   
   const headers: HeadersInit = {
