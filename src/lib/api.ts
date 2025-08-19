@@ -26,11 +26,11 @@ async function fetchThingsboard<T>(
   options: RequestInit = {},
   isRetry: boolean = false // Prevent infinite retry loops
 ): Promise<T> {
-    try {
-        new URL(instanceUrl);
-    } catch (e) {
-        throw new Error('Invalid ThingsBoard instance URL. Please check your configuration.');
-    }
+  try {
+      new URL(instanceUrl);
+  } catch (e) {
+      throw new Error('Invalid ThingsBoard instance URL. Please check your configuration.');
+  }
 
   const finalUrl = new URL(url, instanceUrl).toString();
   
@@ -43,10 +43,18 @@ async function fetchThingsboard<T>(
     headers['X-Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(finalUrl, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(finalUrl, {
+      ...options,
+      headers,
+    });
+  } catch (error: any) {
+    // This catches network errors (e.g., server is down, CORS issues)
+    console.error("Network error or CORS issue:", error);
+    throw new Error(`Could not connect to the ThingsBoard instance at ${instanceUrl}. Please check the server status, your network connection, and CORS configuration.`);
+  }
+
 
   // If unauthorized and not a retry, try to refresh the token
   if (response.status === 401 && !isRetry) {
