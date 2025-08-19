@@ -85,11 +85,4 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-  .day-scheduled {
-    @apply text-primary font-bold;
-  }
-  .rdp-day {
-    width: 40px;
-    height: 40px;
-  }
 }
