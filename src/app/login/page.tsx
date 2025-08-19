@@ -1,5 +1,25 @@
-import LoginForm from '@/components/auth/login-form';
+"use client";
+
 import { Logo } from '@/components/icons/logo';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const LoginForm = dynamic(() => import('@/components/auth/login-form'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-4">
+        <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+    </div>
+  )
+});
 
 export default function LoginPage() {
   return (
@@ -8,7 +28,7 @@ export default function LoginPage() {
           <div className="grid gap-4 text-center animate-in fade-in-50 zoom-in-95 duration-500">
              <Logo className="mx-auto h-16 w-16 text-primary" />
              <div>
-                <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
+                <h1 className="text-3xl font-bold text-foreground">TBConnect</h1>
              </div>
           </div>
           <div className="w-full animate-in fade-in-50 zoom-in-95 duration-500 delay-200">

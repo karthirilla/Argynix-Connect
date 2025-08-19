@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +19,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
-  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +38,7 @@ export default function LoginForm() {
       toast({
         variant: "destructive",
         title: "Configuration Error",
-        description: "ThingsBoard instance URL is not configured. Please set it in the .env file.",
+        description: "ThingsBoard instance URL is not configured. Please set it in your .env file.",
       });
       setIsLoading(false);
       return;
@@ -82,11 +80,10 @@ export default function LoginForm() {
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
       
-      // Store customerId if it exists and is not the "all users" placeholder
       if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
-        localStorage.removeItem('tb_customer_id'); // Ensure it's cleared for admins
+        localStorage.removeItem('tb_customer_id');
       }
 
       toast({
@@ -94,7 +91,6 @@ export default function LoginForm() {
         description: "Redirecting to your dashboard...",
       });
       
-      // Use window.location.href for a full page reload to ensure all states are fresh
       window.location.href = '/';
 
     } catch (error: any) {

@@ -32,11 +32,11 @@ export function AppHeader() {
 
   const handleLogout = () => {
     localStorage.clear();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const getTitle = () => {
-    if (pathname === '/') return 'Home';
+    if (pathname.startsWith('/home')) return 'Home';
     if (pathname.startsWith('/dashboards')) return 'Dashboards';
     if (pathname.startsWith('/devices')) return 'Devices';
     if (pathname.startsWith('/assets')) return 'Assets';
@@ -65,7 +65,7 @@ export function AppHeader() {
                 <span className="sr-only">Toggle navigation menu</span>
             </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col w-[250px] p-0">
+            <SheetContent side="left" className="flex flex-col w-[250px] p-0 bg-sidebar border-r-0">
                 <AppSidebar isMobile onLinkClick={() => setIsMobileMenuOpen(false)} />
             </SheetContent>
         </Sheet>

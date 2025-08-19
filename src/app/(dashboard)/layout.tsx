@@ -7,7 +7,6 @@ import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/toaster';
-import { cn } from '@/lib/utils';
 import { getUser } from '@/lib/api';
 import type { ThingsboardUser } from '@/lib/types';
 
@@ -29,7 +28,6 @@ export default function DashboardLayout({
 
         if (!token || !instanceUrl) {
             router.replace('/login');
-            // No need to set isAuthenticating to false here, the redirect will handle it.
             return;
         }
 
@@ -39,18 +37,16 @@ export default function DashboardLayout({
             
             const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
             
-            // Redirect non-admins away from admin pages
             if ((pathname.startsWith('/users') || pathname.startsWith('/audit-logs')) && !userIsAdmin) {
-                 router.replace('/');
+                 router.replace('/home');
             }
 
 
         } catch (e) {
-            // Token might be expired, log out
             console.error('Failed to fetch user, logging out', e);
             localStorage.clear();
             router.replace('/login');
-            return; // Stop further execution
+            return;
         } finally {
             setIsAuthenticating(false);
         }
@@ -63,7 +59,7 @@ export default function DashboardLayout({
 
   if (isAuthenticating) {
     return (
-        <div className="flex h-screen w-screen items-center justify-center">
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
             <div className="flex items-center space-x-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="space-y-2">
@@ -82,9 +78,9 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col bg-background">
         <AppHeader />
-        <main className="flex-1 bg-background/50 p-4 md:p-8 lg:p-10 flex flex-col relative">
+        <main className="flex-1 p-4 md:p-8 lg:p-10 flex flex-col relative overflow-y-auto">
           {children}
         </main>
         <Toaster />

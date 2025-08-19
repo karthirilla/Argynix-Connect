@@ -1,4 +1,4 @@
-// /app/(dashboard)/page.tsx
+// /app/(dashboard)/home/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -56,14 +56,6 @@ interface AlarmStats {
     minor: number;
     warning: number;
     bySeverity: { name: string; value: number }[];
-}
-
-const SEVERITY_COLORS: { [key: string]: string } = {
-    CRITICAL: 'hsl(var(--destructive))',
-    MAJOR: 'hsl(var(--chart-1))',
-    MINOR: 'hsl(var(--chart-4))',
-    WARNING: 'hsl(var(--chart-2))',
-    INDETERMINATE: 'hsl(var(--muted-foreground))',
 }
 
 const PIE_CHART_COLORS = [
