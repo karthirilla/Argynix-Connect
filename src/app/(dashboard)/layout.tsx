@@ -38,7 +38,7 @@ export default function DashboardLayout({
             const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
             
             if ((pathname.startsWith('/users') || pathname.startsWith('/audit-logs')) && !userIsAdmin) {
-                 router.replace('/home');
+                 router.replace('/');
             }
 
 

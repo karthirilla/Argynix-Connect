@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { getUser } from '@/lib/api';
 
 const navItems = [
-  { href: '/home', label: 'Home', icon: Home, exact: true },
+  { href: '/', label: 'Home', icon: Home, exact: true },
   { href: '/dashboards', label: 'Dashboards', icon: BarChart },
   { href: '/devices', label: 'Devices', icon: HardDrive },
   { href: '/assets', label: 'Assets', icon: Package },
@@ -59,7 +59,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
   const renderNavItem = (item: typeof navItems[0]) => {
      const isActive = item.exact 
           ? pathname === item.href 
-          : (pathname.startsWith(item.href) && item.href !== '/home');
+          : (pathname.startsWith(item.href) && item.href !== '/');
     return (
          <Link
             key={item.label}
@@ -90,7 +90,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
     return (
         <>
             <SheetHeader className="h-14 flex flex-row items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
-                 <Link href="/home" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
+                 <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
                     <Logo className="h-6 w-6 text-primary" />
                     <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
@@ -106,7 +106,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
     <div className="hidden border-r border-sidebar-border bg-sidebar md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
-          <Link href="/home" className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6 text-primary" />
             <span className="">Argynix-Connect</span>
           </Link>

@@ -10,7 +10,7 @@ export default function RootPage() {
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
     if (token) {
-      router.replace('/home');
+      router.replace('/');
     } else {
       router.replace('/login');
     }
