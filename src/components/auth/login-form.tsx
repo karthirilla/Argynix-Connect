@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,18 +24,8 @@ function LoginFormBody() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
-
-
-  useEffect(() => {
-    // If user is already logged in, redirect them to the dashboard root
-    const token = localStorage.getItem('tb_auth_token');
-    if (token) {
-      router.replace('/');
-    } else {
-      setIsAuthenticating(false);
-    }
-  }, [router]);
+  // No longer need to check for existing token here, so we can start with false.
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -107,6 +97,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
+      // This more forceful redirect ensures the browser navigates, triggering the layout's auth check.
       window.location.href = '/';
 
     } catch (error: any) {
