@@ -9,19 +9,28 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../ui/dialog';
 
 const loginSchema = z.object({
-  username: z.string().min(1, { message: "Username is required." }),
+  username: z.string().email({ message: "Please enter a valid email address." }).min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+});
+
+
 type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
+  const [isForgotPassDialogOpen, setIsForgotPassDialogOpen] = useState(false);
 
-  const form = useForm<LoginFormValues>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
@@ -29,7 +38,14 @@ export default function LoginForm() {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const forgotPasswordForm = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  const onLoginSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     const instanceUrl = process.env.NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL;
 
@@ -44,7 +60,6 @@ export default function LoginForm() {
     }
 
     try {
-      // Step 1: Login to get the token
       const loginResponse = await fetch(`${instanceUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -64,7 +79,6 @@ export default function LoginForm() {
       
       const { token, refreshToken } = await loginResponse.json();
       
-      // Step 2: Use the token to get user details
       const userResponse = await fetch(`${instanceUrl}/api/auth/user`, {
           headers: {
               'X-Authorization': `Bearer ${token}`
@@ -77,17 +91,14 @@ export default function LoginForm() {
       
       const userData = await userResponse.json();
       
-      // Step 3: Store all necessary data in localStorage
       localStorage.setItem('tb_instance_url', instanceUrl);
       localStorage.setItem('tb_auth_token', token);
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
       
-      // Store customerId if it exists and is not the generic "system" one
       if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
-        // Ensure old customer ID is cleared for tenant admins
         localStorage.removeItem('tb_customer_id');
       }
 
@@ -96,7 +107,6 @@ export default function LoginForm() {
         description: "Redirecting to your dashboard...",
       });
       
-      // Step 4: Redirect reliably
       window.location.href = '/';
 
     } catch (error: any) {
@@ -109,46 +119,133 @@ export default function LoginForm() {
         setIsLoading(false);
     }
   };
+
+  const onForgotPasswordSubmit = async (data: ForgotPasswordFormValues) => {
+    setIsForgotPasswordLoading(true);
+    const instanceUrl = process.env.NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL;
+
+     if (!instanceUrl || instanceUrl === 'http://your-thingsboard-instance.com') {
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: "ThingsBoard instance URL is not configured.",
+      });
+      setIsForgotPasswordLoading(false);
+      return;
+    }
+
+    try {
+        await fetch(`${instanceUrl}/api/noauth/resetPasswordByEmail`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ email: data.email }),
+        });
+
+        // ThingsBoard API returns 200 OK regardless of whether email exists for security reasons
+        toast({
+            title: 'Request Sent',
+            description: 'If an account with that email exists, a password reset link has been sent.',
+        });
+        setIsForgotPassDialogOpen(false); // Close dialog on success
+
+    } catch (error: any) {
+         toast({
+            variant: "destructive",
+            title: "Request Failed",
+            description: "Could not send reset link. Please check the connection and try again.",
+        });
+    } finally {
+        setIsForgotPasswordLoading(false);
+    }
+  }
   
   return (
      <div className="grid gap-6">
-        <Form {...form}>
+        <Form {...loginForm}>
             <form 
-                onSubmit={form.handleSubmit(onSubmit)} 
+                onSubmit={loginForm.handleSubmit(onLoginSubmit)} 
                 className="grid gap-4"
             >
-            <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                            <Input placeholder="your-email@example.com" {...field} autoComplete="username" />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                     <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Connect
-                </Button>
-            </div>
+                <FormField
+                    control={loginForm.control}
+                    name="username"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                                <Input placeholder="your-email@example.com" {...field} autoComplete="username" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                <div className="text-right">
+                    <Dialog open={isForgotPassDialogOpen} onOpenChange={setIsForgotPassDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="link" size="sm" type="button" className="text-sm font-medium px-0">
+                                Forgot Password?
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Reset Your Password</DialogTitle>
+                                <DialogDescription>
+                                    Enter your account's email address and we will send you a password reset link.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <Form {...forgotPasswordForm}>
+                                <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                                     <FormField
+                                        control={forgotPasswordForm.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Email</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="your-email@example.com" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button type="button" variant="outline">Cancel</Button>
+                                        </DialogClose>
+                                        <Button type="submit" disabled={isForgotPasswordLoading}>
+                                            {isForgotPasswordLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Send Reset Link
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </Form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                
+                <div className="mt-2">
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Connect
+                    </Button>
+                </div>
             </form>
         </Form>
      </div>
