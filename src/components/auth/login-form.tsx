@@ -107,7 +107,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
-      router.push('/');
+      window.location.href = '/';
 
     } catch (error: any) {
         toast({
