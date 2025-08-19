@@ -25,13 +25,13 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full items-start justify-center bg-background p-4 pt-36 md:items-center md:pt-4">
         <div className="w-full max-w-sm mx-auto flex flex-col items-center justify-center gap-8">
-          <div className="grid gap-4 text-center animate-in fade-in-50 zoom-in-95 duration-500">
+          <div className="grid gap-4 text-center animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-10 duration-700">
              <Logo className="mx-auto h-16 w-16 text-primary" />
              <div>
                 <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
              </div>
           </div>
-          <div className="w-full animate-in fade-in-50 zoom-in-95 duration-500 delay-200">
+          <div className="w-full animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-10 duration-700 delay-300">
             <LoginForm />
           </div>
         </div>
