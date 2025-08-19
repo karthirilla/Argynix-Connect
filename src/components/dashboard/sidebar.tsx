@@ -92,7 +92,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
             <SheetHeader className="h-14 flex flex-row items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
                  <Link href="/home" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
                     <Logo className="h-6 w-6 text-primary" />
-                    <SheetTitle className="text-base">TBConnect</SheetTitle>
+                    <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto">
@@ -108,7 +108,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
         <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
           <Link href="/home" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6 text-primary" />
-            <span className="">TBConnect</span>
+            <span className="">Argynix-Connect</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto">

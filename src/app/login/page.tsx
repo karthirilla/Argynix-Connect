@@ -28,7 +28,7 @@ export default function LoginPage() {
           <div className="grid gap-4 text-center animate-in fade-in-50 zoom-in-95 duration-500">
              <Logo className="mx-auto h-16 w-16 text-primary" />
              <div>
-                <h1 className="text-3xl font-bold text-foreground">TBConnect</h1>
+                <h1 className="text-3xl font-bold text-foreground">Argynix-Connect</h1>
              </div>
           </div>
           <div className="w-full animate-in fade-in-50 zoom-in-95 duration-500 delay-200">
