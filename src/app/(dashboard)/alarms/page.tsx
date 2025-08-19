@@ -146,7 +146,15 @@ export default function AlarmsPage() {
   }
   
   if (alarms.length === 0) {
-    return <div className="text-center text-muted-foreground">No alarms found.</div>;
+    return (
+        <div className="container mx-auto px-0 md:px-4 text-center">
+            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold">No Alarms Found</h3>
+                <p className="text-muted-foreground">There are no active or recent alarms to display.</p>
+            </div>
+        </div>
+    );
   }
 
   return (
