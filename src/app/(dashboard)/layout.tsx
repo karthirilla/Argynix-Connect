@@ -50,6 +50,7 @@ export default function DashboardLayout({
             console.error('Failed to fetch user, logging out', e);
             localStorage.clear();
             router.replace('/login');
+            return; // Stop further execution
         } finally {
             setIsAuthenticating(false);
         }
