@@ -23,18 +23,12 @@ const features = [
     icon: <HardDrive className="h-8 w-8 text-primary" />,
   },
   {
-    title: 'Assets',
-    description: 'Organize your devices into logical groups.',
-    href: '/assets',
-    icon: <Package className="h-8 w-8 text-primary" />,
-  },
-  {
     title: 'Alarms',
     description: 'View and manage alarms from your devices.',
     href: '/alarms',
     icon: <Siren className="h-8 w-8 text-primary" />,
   },
-  {
+    {
     title: 'Data Export',
     description: 'Export your device data in various formats.',
     href: '/data-export',
@@ -308,7 +302,7 @@ export default function HomePage() {
                             <CardDescription>Navigate to key areas of the application.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
-                           {features.slice(0,4).map((feature, index) => (
+                           {features.map((feature, index) => (
                                 <Link href={feature.href} key={feature.title} className="group">
                                     <div className="flex flex-col items-center text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
                                         <div className="mb-3 shrink-0 rounded-full bg-primary/10 p-3">{feature.icon}</div>
