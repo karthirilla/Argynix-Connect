@@ -4,10 +4,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, BarChart, HardDrive, Package, Siren, Download, CheckCircle, PieChart, AlertTriangle } from 'lucide-react';
+import { ArrowRight, BarChart, HardDrive, Download, Siren, CheckCircle, PieChart } from 'lucide-react';
 import { getDevices, getDeviceAttributes, getDashboards, getAlarms } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend } from 'recharts';
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend, BarChart as RechartsBarChart } from 'recharts';
 
 const features = [
   {
@@ -49,7 +49,15 @@ interface AlarmStats {
     major: number;
     minor: number;
     warning: number;
-    bySeverity: { name: string; value: number }[];
+    bySeverity: { name: string; value: number, fill: string }[];
+}
+
+const SEVERITY_COLORS: { [key: string]: string } = {
+    CRITICAL: 'hsl(var(--destructive))',
+    MAJOR: 'hsl(var(--chart-1))',
+    MINOR: 'hsl(var(--chart-4))',
+    WARNING: 'hsl(var(--chart-2))',
+    INDETERMINATE: 'hsl(var(--muted-foreground))',
 }
 
 const PIE_CHART_COLORS = [
@@ -120,7 +128,7 @@ export default function HomePage() {
             // Fetch Alarm Stats
             try {
                 const tbAlarms = await getAlarms(token, instanceUrl);
-                const alarms = { total: tbAlarms.length, critical: 0, major: 0, minor: 0, warning: 0, bySeverity: [] as {name: string, value: number}[] };
+                const alarms = { total: tbAlarms.length, critical: 0, major: 0, minor: 0, warning: 0, bySeverity: [] as {name: string, value: number, fill: string}[] };
                 const severityCounts: Record<string, number> = {};
 
                 tbAlarms.forEach(alarm => {
@@ -133,7 +141,11 @@ export default function HomePage() {
                     }
                 });
 
-                alarms.bySeverity = Object.entries(severityCounts).map(([name, value]) => ({ name: name.charAt(0) + name.slice(1).toLowerCase(), value }));
+                alarms.bySeverity = Object.entries(severityCounts).map(([name, value]) => ({ 
+                    name: name.charAt(0) + name.slice(1).toLowerCase(), 
+                    value,
+                    fill: SEVERITY_COLORS[name] || SEVERITY_COLORS.INDETERMINATE,
+                }));
 
                 setAlarmStats(alarms);
             } catch(e: any) {
@@ -208,11 +220,11 @@ export default function HomePage() {
                             <CardDescription>Distribution of active alarms.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><StatsCardSkeleton /></div> :
+                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><Skeleton className="h-full w-full" /></div> :
                              (alarmStats && alarmStats.bySeverity.length > 0) ? (
                                 <div className="h-[300px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={alarmStats.bySeverity} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <RechartsBarChart data={alarmStats.bySeverity} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                             <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -224,8 +236,12 @@ export default function HomePage() {
                                                     borderRadius: 'var(--radius)',
                                                 }}
                                             />
-                                            <Bar dataKey="value" name="Count" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
-                                        </BarChart>
+                                            <Bar dataKey="value" name="Count" radius={[4, 4, 0, 0]}>
+                                                {alarmStats.bySeverity.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                ))}
+                                            </Bar>
+                                        </RechartsBarChart>
                                     </ResponsiveContainer>
                                 </div>
                              ) : (
@@ -243,7 +259,7 @@ export default function HomePage() {
                             <CardDescription>Distribution of registered device types.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><StatsCardSkeleton /></div> :
+                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><Skeleton className="h-full w-full" /></div> :
                              (deviceStats && deviceStats.types.length > 0) ? (
                                 <div className="h-[300px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -302,7 +318,7 @@ export default function HomePage() {
                             <CardDescription>Navigate to key areas of the application.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
-                           {features.map((feature, index) => (
+                           {features.map((feature) => (
                                 <Link href={feature.href} key={feature.title} className="group">
                                     <div className="flex flex-col items-center text-center p-4 rounded-lg hover:bg-muted/50 transition-colors">
                                         <div className="mb-3 shrink-0 rounded-full bg-primary/10 p-3">{feature.icon}</div>
