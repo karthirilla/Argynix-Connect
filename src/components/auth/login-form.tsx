@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,8 +24,6 @@ function LoginFormBody() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  // No longer need to check for existing token here, so we can start with false.
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -85,8 +83,6 @@ function LoginFormBody() {
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
       
-      // A customerId is required for most data fetching operations.
-      // The API returns a "generic" customerId for tenant admins.
       if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
@@ -97,7 +93,6 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
-      // This more forceful redirect ensures the browser navigates, triggering the layout's auth check.
       window.location.href = '/';
 
     } catch (error: any) {
@@ -111,22 +106,6 @@ function LoginFormBody() {
     }
   };
   
-  if (isAuthenticating) {
-    return (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-            <Skeleton className="h-10 w-full" />
-        </div>
-    );
-  }
-
   return (
      <div className="grid gap-6">
         <Form {...form}>
@@ -172,6 +151,32 @@ function LoginFormBody() {
   )
 }
 
+function LoginFormSkeleton() {
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+        </div>
+    );
+}
+
 export default function LoginForm() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <LoginFormSkeleton />;
+  }
+
   return <LoginFormBody />;
 }
