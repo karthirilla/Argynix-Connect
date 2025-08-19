@@ -1,19 +1,23 @@
 // /app/devices/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getDeviceById, getDeviceTelemetry, getDeviceTelemetryKeys } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ArrowLeft, Rss } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Rss, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { ThingsboardDevice } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { subHours } from 'date-fns';
+import { subDays, format } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush } from 'recharts';
+import { DateRange } from "react-day-picker"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 
 
 type ActivityStatus = {
@@ -29,51 +33,73 @@ export default function DeviceDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 1),
+    to: new Date(),
+  });
 
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchData = async () => {
+  const fetchDeviceDetails = useCallback(async () => {
       setIsLoading(true);
-      setIsHistoryLoading(true);
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
       
       if (!token || !instanceUrl) {
         setError('Authentication details not found.');
         setIsLoading(false);
-        setIsHistoryLoading(false);
         return;
       }
-
       try {
         const deviceData = await getDeviceById(token, instanceUrl, id);
         setDevice(deviceData);
-        
-        const keys = await getDeviceTelemetryKeys(token, instanceUrl, id);
-        
-        if (keys && keys.length > 0) {
-            const endTs = new Date().getTime();
-            const startTs = subHours(endTs, 24).getTime();
-            const telemetry = await getDeviceTelemetry(token, instanceUrl, id, keys, startTs, endTs, 50000);
-
-            const statusData = processTelemetryForActivityChart(telemetry, startTs, endTs);
-            setActivityStatus(statusData);
-
-        } else {
-            setActivityStatus([]);
-        }
-      } catch (e: any) {
+      } catch(e: any) {
         setError(e.message || 'Failed to fetch device details.');
         console.error(e);
       } finally {
         setIsLoading(false);
-        setIsHistoryLoading(false);
       }
-    };
-
-    fetchData();
   }, [id]);
+
+  const fetchActivityHistory = useCallback(async () => {
+    if (!id || !dateRange?.from || !dateRange?.to) return;
+    setIsHistoryLoading(true);
+
+     const token = localStorage.getItem('tb_auth_token');
+     const instanceUrl = localStorage.getItem('tb_instance_url');
+      
+      if (!token || !instanceUrl) {
+        setError('Authentication details not found.');
+        setIsHistoryLoading(false);
+        return;
+      }
+    
+    try {
+        const keys = await getDeviceTelemetryKeys(token, instanceUrl, id);
+        
+        if (keys && keys.length > 0) {
+            const startTs = dateRange.from.getTime();
+            const endTs = dateRange.to.getTime();
+            const telemetry = await getDeviceTelemetry(token, instanceUrl, id, keys, startTs, endTs, 50000);
+
+            const statusData = processTelemetryForActivityChart(telemetry, startTs, endTs);
+            setActivityStatus(statusData);
+        } else {
+            setActivityStatus([]);
+        }
+    } catch(e: any) {
+        setError(e.message || 'Failed to fetch activity history.');
+        console.error(e);
+    } finally {
+        setIsHistoryLoading(false);
+    }
+
+  }, [id, dateRange]);
+
+
+  useEffect(() => {
+    if (!id) return;
+    fetchDeviceDetails();
+    fetchActivityHistory();
+  }, [id, fetchDeviceDetails, fetchActivityHistory]);
   
   const processTelemetryForActivityChart = (telemetry: any, startTs: number, endTs: number): ActivityStatus[] => {
       const interval = 5 * 60 * 1000; // 5 minutes
@@ -90,7 +116,7 @@ export default function DeviceDetailsPage() {
         const intervalStart = Math.floor(ts / interval) * interval;
         const status: 0 | 1 = telemetryTimestamps.has(intervalStart) ? 1 : 0;
         chartData.push({
-          time: new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          time: new Date(ts).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }),
           status: status,
         });
       }
@@ -187,10 +213,56 @@ export default function DeviceDetailsPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle>Activity Status (Last 24h)</CardTitle>
-            <CardDescription>
-                A visual representation of the device's online/offline status. Drag the handles to zoom.
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-grow">
+                    <CardTitle>Activity Status</CardTitle>
+                    <CardDescription>
+                        A visual representation of the device's online/offline status.
+                    </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="date"
+                                variant={"outline"}
+                                className={cn(
+                                "w-[260px] justify-start text-left font-normal",
+                                !dateRange && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dateRange?.from ? (
+                                dateRange.to ? (
+                                    <>
+                                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                                    {format(dateRange.to, "LLL dd, y")}
+                                    </>
+                                ) : (
+                                    format(dateRange.from, "LLL dd, y")
+                                )
+                                ) : (
+                                <span>Pick a date</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={dateRange?.from}
+                                selected={dateRange}
+                                onSelect={setDateRange}
+                                numberOfMonths={2}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <Button onClick={fetchActivityHistory} disabled={isHistoryLoading}>
+                        {isHistoryLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Fetch Data
+                    </Button>
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
             {isHistoryLoading ? (
@@ -250,7 +322,7 @@ export default function DeviceDetailsPage() {
                 <div className="flex flex-col items-center justify-center h-[350px] border-2 border-dashed rounded-lg">
                     <Rss className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold">No Telemetry Data Found</h3>
-                    <p className="text-muted-foreground text-sm text-center">This device has not reported any telemetry in the last 24 hours.</p>
+                    <p className="text-muted-foreground text-sm text-center">This device has not reported any telemetry in the selected time range.</p>
                 </div>
             )}
         </CardContent>
