@@ -10,6 +10,7 @@ export default function RootPage() {
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
     if (token) {
+      // The dashboard layout is applied to `/`, so we can redirect there directly.
       router.replace('/');
     } else {
       router.replace('/login');
