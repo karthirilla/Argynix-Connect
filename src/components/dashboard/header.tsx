@@ -65,6 +65,7 @@ export function AppHeader() {
     if (pathname.startsWith('/profile')) return 'User Profile';
     if (pathname.startsWith('/users')) return 'User Management';
     if (pathname.startsWith('/audit-logs')) return 'Audit Logs';
+    if (pathname.startsWith('/admin/settings')) return 'Admin Settings';
     return 'Home';
   }
 

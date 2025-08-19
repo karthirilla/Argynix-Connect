@@ -174,3 +174,34 @@ export type ThingsboardRpcRequest = {
     expirationTime?: number;
     persistent?: boolean;
 }
+
+// Admin Settings types
+export type ThingsboardAdminSettings = {
+    key: string;
+    jsonValue: any;
+    id?: ThingsboardId;
+}
+
+export type ThingsboardMailSettings = {
+    host: string;
+    port: number;
+    username: string;
+    password?: string;
+    enableTls: boolean | string;
+    protocol: string;
+    timeout: number;
+    smtpAuth: boolean | string;
+}
+
+export type ThingsboardSecuritySettings = {
+    passwordPolicy: {
+        minimumLength: number;
+        minimumUppercaseLetters: number;
+        minimumLowercaseLetters: number;
+        minimumDigits: number;
+        minimumSpecialCharacters: number;
+        allowWhitespace: boolean;
+        passwordExpirationPeriodDays?: number;
+        passwordReuseFrequencyDays?: number;
+    }
+}

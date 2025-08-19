@@ -1,9 +1,10 @@
+// src/components/dashboard/sidebar.tsx
 
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -30,6 +31,11 @@ const adminNavItems = [
         href: '/audit-logs',
         label: 'Audit Logs',
         icon: History,
+    },
+    {
+        href: '/admin/settings',
+        label: 'Admin Settings',
+        icon: Settings,
     }
 ]
 

@@ -1,7 +1,6 @@
-// /src/lib/types.ts
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -40,6 +39,7 @@ async function fetchThingsboard<T>(
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     ...options.headers,
   };
   
@@ -387,5 +387,40 @@ export async function scheduleRpc(
     return await fetchThingsboard<any>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(command)
+    });
+}
+
+// Admin Settings
+export async function getAdminSettings(token: string, instanceUrl: string, key: string): Promise<ThingsboardAdminSettings> {
+    const url = `/api/admin/settings/${key}`;
+    return await fetchThingsboard<ThingsboardAdminSettings>(url, token, instanceUrl);
+}
+
+export async function saveAdminSettings(token: string, instanceUrl: string, key: string, settings: any): Promise<ThingsboardAdminSettings> {
+    const url = `/api/admin/settings/${key}`;
+    return await fetchThingsboard<ThingsboardAdminSettings>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(settings)
+    });
+}
+
+export async function sendTestMail(token: string, instanceUrl: string, email: string): Promise<void> {
+    const url = `/api/admin/settings/testMail`;
+    await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify({email})
+    });
+}
+
+export async function getSecuritySettings(token: string, instanceUrl: string): Promise<ThingsboardSecuritySettings> {
+    const url = `/api/admin/securitySettings`;
+    return await fetchThingsboard<ThingsboardSecuritySettings>(url, token, instanceUrl);
+}
+
+export async function saveSecuritySettings(token: string, instanceUrl: string, settings: any): Promise<ThingsboardSecuritySettings> {
+    const url = `/api/admin/securitySettings`;
+    return await fetchThingsboard<ThingsboardSecuritySettings>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(settings)
     });
 }
