@@ -93,6 +93,7 @@ function LoginFormBody() {
         title: "Login Successful",
         description: "Redirecting to your dashboard...",
       });
+      
       window.location.href = '/';
 
     } catch (error: any) {
