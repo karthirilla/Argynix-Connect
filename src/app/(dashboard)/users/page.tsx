@@ -163,8 +163,8 @@ export default function UsersPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {users.map(user => (
                 <Card key={user.id.id} className={cn(
-                    'relative',
-                    user.permissions.userDisabled && 'bg-muted/50',
+                    'relative transition-all',
+                    user.permissions.userDisabled && 'bg-muted/50 opacity-70',
                     isSaving === user.id.id && 'pointer-events-none'
                 )}>
                     {isSaving === user.id.id && (
@@ -173,17 +173,17 @@ export default function UsersPage() {
                         </div>
                     )}
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                           <UserIcon className="h-5 w-5"/> {user.firstName} {user.lastName}
+                        <CardTitle className="flex items-center gap-3 text-lg">
+                           <UserIcon className="h-5 w-5 text-muted-foreground"/> {user.firstName || 'No'} {user.lastName || 'Name'}
                         </CardTitle>
                         <CardDescription>
                             {user.email} <Badge variant="outline" className="ml-2">{user.authority.replace('_', ' ')}</Badge>
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-4">
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor={`export-${user.id.id}`}>Can Export Data</Label>
+                                <Label htmlFor={`export-${user.id.id}`} className="font-normal text-sm">Can Export Data</Label>
                                 <Switch
                                     id={`export-${user.id.id}`}
                                     checked={user.permissions.canExport}
@@ -192,7 +192,7 @@ export default function UsersPage() {
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <Label htmlFor={`schedule-${user.id.id}`}>Can Use Scheduler</Label>
+                                <Label htmlFor={`schedule-${user.id.id}`} className="font-normal text-sm">Can Use Scheduler</Label>
                                 <Switch
                                     id={`schedule-${user.id.id}`}
                                     checked={user.permissions.canSchedule}
@@ -202,8 +202,8 @@ export default function UsersPage() {
                             </div>
                         </div>
                         <Separator />
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor={`disable-${user.id.id}`} className={user.permissions.userDisabled ? 'text-destructive' : ''}>
+                        <div className="flex items-center justify-between space-x-2">
+                            <Label htmlFor={`disable-${user.id.id}`} className={cn("font-medium", user.permissions.userDisabled && 'text-destructive')}>
                                 {user.permissions.userDisabled ? 'User Disabled' : 'Disable User'}
                             </Label>
                             <Switch
