@@ -73,7 +73,7 @@ function LoginFormBody() {
       });
 
       if (!userResponse.ok) {
-          throw new Error('Failed to fetch user details');
+          throw new Error('Failed to fetch user details after login.');
       }
       
       const userData = await userResponse.json();
@@ -83,10 +83,11 @@ function LoginFormBody() {
       localStorage.setItem('tb_refresh_token', refreshToken);
       localStorage.setItem('tb_user', data.username);
       
+      // Store customerId if it exists and is not the "all users" placeholder
       if (userData.customerId && userData.customerId.id && userData.customerId.id !== '13814000-1dd2-11b2-8080-808080808080') {
         localStorage.setItem('tb_customer_id', userData.customerId.id);
       } else {
-        localStorage.removeItem('tb_customer_id');
+        localStorage.removeItem('tb_customer_id'); // Ensure it's cleared for admins
       }
 
       toast({
@@ -94,6 +95,7 @@ function LoginFormBody() {
         description: "Redirecting to your dashboard...",
       });
       
+      // Use window.location.href for a full page reload to ensure all states are fresh
       window.location.href = '/';
 
     } catch (error: any) {
