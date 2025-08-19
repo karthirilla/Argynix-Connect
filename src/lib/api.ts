@@ -1,23 +1,40 @@
+// /src/lib/types.ts
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog } from './types';
 
+// Helper function to get a new token using the refresh token
+async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
+  try {
+    const response = await fetch(`${instanceUrl}/api/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Token refresh failed", error);
+    return null;
+  }
+}
+
 async function fetchThingsboard<T>(
   url: string,
-  token: string | null, // Token can be null for noauth requests
+  token: string | null,
   instanceUrl: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isRetry: boolean = false // Prevent infinite retry loops
 ): Promise<T> {
-  // Ensure the URL is correctly formed to prevent fetch errors
   const finalUrl = new URL(url, instanceUrl).toString();
   
   const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
+    'Content-Type': 'application/json',
+    ...options.headers,
   };
   
   if (token) {
-      headers['X-Authorization'] = `Bearer ${token}`;
+    headers['X-Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(finalUrl, {
@@ -25,22 +42,38 @@ async function fetchThingsboard<T>(
     headers,
   });
 
+  // If unauthorized and not a retry, try to refresh the token
+  if (response.status === 401 && !isRetry) {
+    const refreshToken = localStorage.getItem('tb_refresh_token');
+    if (refreshToken) {
+      const newTokens = await getNewToken(instanceUrl, refreshToken);
+      if (newTokens) {
+        localStorage.setItem('tb_auth_token', newTokens.token);
+        localStorage.setItem('tb_refresh_token', newTokens.refreshToken);
+        // Retry the original request with the new token
+        return fetchThingsboard<T>(url, newTokens.token, instanceUrl, options, true);
+      }
+    }
+    // If refresh fails or no refresh token, logout
+    localStorage.clear();
+    window.location.href = '/login';
+    throw new Error('Session expired. Please log in again.');
+  }
+
   if (!response.ok) {
-    // Attempt to get more detailed error message from ThingsBoard
     let errorBody = "An unknown error occurred.";
     try {
-        const errorJson = await response.json();
-        errorBody = errorJson.message || JSON.stringify(errorJson);
+      const errorJson = await response.json();
+      errorBody = errorJson.message || JSON.stringify(errorJson);
     } catch(e) {
-        errorBody = await response.text();
+      errorBody = await response.text();
     }
     console.error("ThingsBoard API Error:", errorBody);
     throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
-  // Handle cases where response might be empty (e.g., for 204 No Content on delete/logout)
   if (response.status === 204 || response.headers.get('content-length') === '0') {
-      return null as T;
+    return null as T;
   }
 
   const text = await response.text();
@@ -65,7 +98,6 @@ export async function changePassword(token: string, instanceUrl: string, current
     });
 }
 
-
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
@@ -83,7 +115,6 @@ export async function getCustomerUsers(token: string, instanceUrl: string, custo
     return result?.data || [];
 }
 
-
 export async function getUserAttributes(
     token: string,
     instanceUrl: string,
@@ -93,7 +124,6 @@ export async function getUserAttributes(
     const url = `/api/plugins/telemetry/USER/${userId}/values/attributes/${scope}`;
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
-
 
 export async function saveUserAttributes(
     token: string,
@@ -109,20 +139,13 @@ export async function saveUserAttributes(
     });
 }
 
-
 export async function getDashboards(
   token: string,
   instanceUrl: string,
   customerId: string | null
 ): Promise<ThingsboardDashboard[]> {
-  // This endpoint works for users to get their assigned dashboards.
   const url = '/api/user/dashboards?pageSize=100&page=0';
-
-  const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(
-    url,
-    token,
-    instanceUrl
-  );
+  const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(url, token, instanceUrl);
   return result?.data || [];
 }
 
@@ -135,27 +158,18 @@ export async function getDashboardById(
   return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl);
 }
 
-
 export async function getDevices(
   token:string,
   instanceUrl: string,
   customerId: string | null
 ): Promise<ThingsboardDevice[]> {
     let url: string;
-    
-    // Use different endpoints based on whether the user is a tenant admin or customer user.
     if (customerId) {
         url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
     } else {
-        // This is the endpoint for tenant admins to get all devices.
         url = `/api/tenant/devices?pageSize=100&page=0`;
     }
-    
-    const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(
-        url,
-        token,
-        instanceUrl
-    );
+    const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
 
@@ -202,7 +216,6 @@ export async function deleteDeviceAttributes(
     });
 }
 
-
 export async function getDeviceTelemetryKeys(
     token: string,
     instanceUrl: string,
@@ -232,18 +245,12 @@ export async function getAssets(
     customerId: string | null
   ): Promise<ThingsboardAsset[]> {
     let url: string;
-      
     if (customerId) {
         url = `/api/customer/${customerId}/assets?pageSize=100&page=0`;
     } else {
         url = `/api/tenant/assets?pageSize=100&page=0`;
     }
-      
-    const result = await fetchThingsboard<{ data: ThingsboardAsset[] }>(
-        url,
-        token,
-        instanceUrl
-    );
+    const result = await fetchThingsboard<{ data: ThingsboardAsset[] }>(url, token, instanceUrl);
     return result?.data || [];
   }
 
@@ -261,14 +268,9 @@ export async function getAlarms(
   instanceUrl: string
 ): Promise<ThingsboardAlarm[]> {
   const url = '/api/alarms?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC';
-  const result = await fetchThingsboard<{ data: ThingsboardAlarm[] }>(
-    url,
-    token,
-    instanceUrl
-  );
+  const result = await fetchThingsboard<{ data: ThingsboardAlarm[] }>(url, token, instanceUrl);
   return result?.data || [];
 }
-
 
 export async function getAuditLogs(
     token: string,
