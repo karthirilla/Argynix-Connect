@@ -203,7 +203,7 @@ export default function HomePage() {
     return (
         <div className="container mx-auto space-y-8 px-0 md:px-4">
              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynic-Connect</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynix-Connect</h1>
                 <p className="text-muted-foreground max-w-2xl">
                     Your central hub for managing ThingsBoard instances. Get a quick overview of your system, visualize data, and manage all your IoT assets and devices from one place.
                 </p>
