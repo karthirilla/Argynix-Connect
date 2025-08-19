@@ -37,11 +37,11 @@ function LoginFormBody() {
     setIsLoading(true);
     const instanceUrl = process.env.NEXT_PUBLIC_THINGSBOARD_INSTANCE_URL;
 
-    if (!instanceUrl) {
+    if (!instanceUrl || instanceUrl === 'http://your-thingsboard-instance.com') {
       toast({
         variant: "destructive",
         title: "Configuration Error",
-        description: "ThingsBoard instance URL is not configured.",
+        description: "ThingsBoard instance URL is not configured. Please set it in the .env file.",
       });
       setIsLoading(false);
       return;
