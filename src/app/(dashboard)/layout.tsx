@@ -2,13 +2,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/toaster';
-import { getUser } from '@/lib/api';
-import type { ThingsboardUser } from '@/lib/types';
 
 
 export default function DashboardLayout({
@@ -17,45 +15,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAuthAndFetchUser = async () => {
-        const token = localStorage.getItem('tb_auth_token');
-        const instanceUrl = localStorage.getItem('tb_instance_url');
-
-        if (!token || !instanceUrl) {
-            router.replace('/login');
-            return;
-        }
-
-        try {
-            const userData = await getUser(token, instanceUrl);
-            setUser(userData);
-            
-            const userIsAdmin = userData.authority === 'SYS_ADMIN' || userData.authority === 'TENANT_ADMIN';
-            
-            if ((pathname.startsWith('/users') || pathname.startsWith('/audit-logs')) && !userIsAdmin) {
-                 router.replace('/');
-            }
-
-
-        } catch (e) {
-            console.error('Failed to fetch user, logging out', e);
-            localStorage.clear();
-            router.replace('/login');
-            return;
-        } finally {
-            setIsAuthenticating(false);
-        }
-    };
-    
-    checkAuthAndFetchUser();
-    
-  }, [router, pathname]);
-  
+    const token = localStorage.getItem('tb_auth_token');
+    if (token) {
+      setIsAuthenticated(true);
+    } else {
+      router.replace('/login');
+    }
+    setIsAuthenticating(false);
+  }, [router]);
 
   if (isAuthenticating) {
     return (
@@ -71,7 +42,7 @@ export default function DashboardLayout({
     );
   }
   
-  if (!user) {
+  if (!isAuthenticated) {
     return null; // Render nothing while redirecting
   }
 
