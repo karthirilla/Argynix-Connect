@@ -1,7 +1,7 @@
 
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -526,25 +526,6 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
 }
 
 // Calculated Fields
-export async function getCalculatedFieldsByEntityId(token: string, instanceUrl: string, entityType: 'DEVICE' | 'ASSET', entityId: string): Promise<CalculatedField[]> {
-    const url = `/api/v2/calculated-fields/info?entityType=${entityType}&entityId=${entityId}&pageSize=100&page=0`;
-    const result = await fetchThingsboard<{ data: CalculatedField[] }>(url, token, instanceUrl);
-    return result?.data || [];
-}
-
-export async function saveCalculatedField(token: string, instanceUrl: string, field: Omit<CalculatedField, 'createdTime'>): Promise<CalculatedField> {
-    const url = `/api/calculated-field`;
-    return await fetchThingsboard<CalculatedField>(url, token, instanceUrl, {
-        method: 'POST',
-        body: JSON.stringify(field),
-    });
-}
-
-export async function deleteCalculatedField(token: string, instanceUrl: string, fieldId: string): Promise<void> {
-    const url = `/api/calculated-field/${fieldId}`;
-    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
-}
-
 export async function testScript(script: string, telemetryJson: string): Promise<any> {
     const url = `/api/ruleChain/testScript`;
     const token = localStorage.getItem('tb_auth_token');

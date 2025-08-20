@@ -218,14 +218,6 @@ export type ThingsboardSecuritySettings = {
     }
 }
 
-export interface CalculatedField {
-    id?: ThingsboardId;
-    createdTime?: number;
-    entityId: ThingsboardId;
-    name: string;
-    script: string;
-}
-
 export interface ThingsboardJob {
     id: ThingsboardId;
     createdTime: number;
