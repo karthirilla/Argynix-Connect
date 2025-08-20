@@ -182,9 +182,11 @@ export async function getDashboards(
   instanceUrl: string,
   customerId: string | null
 ): Promise<ThingsboardDashboard[]> {
-  const url = customerId 
+  // Check if the customerId is the special "Public" id and treat it as null if so.
+  const isPublicCustomer = customerId === '13814000-1dd2-11b2-8080-808080808080';
+  const url = customerId && !isPublicCustomer
     ? `/api/customer/${customerId}/dashboards?pageSize=100&page=0`
-    : '/api/user/dashboards?pageSize=100&page=0';
+    : '/api/tenant/dashboards?pageSize=100&page=0'; // Fallback for admins/public
   const result = await fetchThingsboard<{ data: ThingsboardDashboard[] }>(url, token, instanceUrl);
   return result?.data || [];
 }

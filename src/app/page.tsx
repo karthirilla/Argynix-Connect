@@ -121,7 +121,7 @@ function HomePageContent() {
 
             try {
                 const user = await getUser(token, instanceUrl);
-                const tbDashboards = await getDashboards(token, instanceUrl, user.customerId?.id || null);
+                const tbDashboards = await getDashboards(token, instanceUrl, user.customerId?.id);
                 setDashboardCount(tbDashboards.length);
             } catch(e: any) {
                 console.error("Could not fetch dashboard stats:", e.message);

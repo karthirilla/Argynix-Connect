@@ -31,7 +31,7 @@ export default function DashboardsPage() {
         setUser(userData);
         
         // Pass the correct customer ID (can be null for tenant admins)
-        const tbDashboards = await getDashboards(token, instanceUrl, userData.customerId?.id || null);
+        const tbDashboards = await getDashboards(token, instanceUrl, userData.customerId?.id);
 
         const formattedDashboards: AppDashboard[] = tbDashboards.map(d => ({
           id: d.id.id,
