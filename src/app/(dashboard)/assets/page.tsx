@@ -49,8 +49,8 @@ export default function AssetsPage() {
         
         setAssets(formattedAssets);
 
-      } catch (e) {
-        setError('Failed to fetch assets.');
+      } catch (e: any) {
+        setError(e.message || 'Failed to fetch assets.');
         console.error(e);
       } finally {
         setIsLoading(false);
