@@ -40,9 +40,20 @@ const securitySettingsSchema = z.object({
 });
 type SecuritySettingsFormValues = z.infer<typeof securitySettingsSchema>;
 
+const PermissionError = ({ featureName }: { featureName: string }) => (
+    <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Permission Denied</AlertTitle>
+        <AlertDescription>
+            You do not have sufficient permissions to manage {featureName}. Please contact your system administrator.
+        </AlertDescription>
+    </Alert>
+);
+
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [securityError, setSecurityError] = useState<string | null>(null);
+  const [mailError, setMailError] = useState<string | null>(null);
   const [isMailSaving, setIsMailSaving] = useState(false);
   const [isSecuritySaving, setIsSecuritySaving] = useState(false);
   const [isTestingMail, setIsTestingMail] = useState(false);
@@ -67,28 +78,16 @@ export default function AdminSettingsPage() {
     const token = localStorage.getItem('tb_auth_token');
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (!token || !instanceUrl) {
-      setError('Authentication details not found.');
+      setMailError('Authentication details not found.');
+      setSecurityError('Authentication details not found.');
       setIsLoading(false);
       return;
     }
 
+    // Fetch security settings
     try {
-      const [mailSettings, securitySettings] = await Promise.all([
-        getAdminSettings(token, instanceUrl, 'mail'),
-        getSecuritySettings(token, instanceUrl),
-      ]);
-
-      if (mailSettings) {
-        mailForm.reset({
-            ...mailSettings,
-            port: mailSettings.port || 25,
-            timeout: mailSettings.timeout || 10000,
-            smtpAuth: mailSettings.smtpAuth === 'true' || mailSettings.smtpAuth === true,
-            enableTls: mailSettings.enableTls === 'true' || mailSettings.enableTls === true,
-        });
-      }
-
-      if (securitySettings?.passwordPolicy) {
+        const securitySettings = await getSecuritySettings(token, instanceUrl);
+        if (securitySettings?.passwordPolicy) {
           securityForm.reset({
               passwordPolicy_minimumLength: securitySettings.passwordPolicy.minimumLength,
               passwordPolicy_minimumUppercaseLetters: securitySettings.passwordPolicy.minimumUppercaseLetters,
@@ -97,17 +96,36 @@ export default function AdminSettingsPage() {
               passwordPolicy_minimumSpecialCharacters: securitySettings.passwordPolicy.minimumSpecialCharacters,
               passwordPolicy_allowWhitespace: securitySettings.passwordPolicy.allowWhitespace,
           });
-      }
+        }
+    } catch(e: any) {
+        if (e.message && e.message.includes('permission')) {
+             setSecurityError('permission_denied');
+        } else {
+            setSecurityError(e.message || 'Failed to fetch security settings.');
+        }
+    }
 
+    // Fetch mail settings
+    try {
+        const mailSettings = await getAdminSettings(token, instanceUrl, 'mail');
+        if (mailSettings) {
+            mailForm.reset({
+                ...mailSettings,
+                port: mailSettings.port || 25,
+                timeout: mailSettings.timeout || 10000,
+                smtpAuth: mailSettings.smtpAuth === 'true' || mailSettings.smtpAuth === true,
+                enableTls: mailSettings.enableTls === 'true' || mailSettings.enableTls === true,
+            });
+        }
     } catch (e: any) {
         if (e.message && e.message.includes('permission')) {
-             setError('You do not have sufficient permissions to view these settings. Please ensure your user account has the appropriate admin rights in your ThingsBoard instance.');
+            setMailError('permission_denied');
         } else {
-            setError(e.message || 'Failed to fetch admin settings.');
+            setMailError(e.message || 'Failed to fetch mail settings.');
         }
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   }, [mailForm, securityForm]);
 
   useEffect(() => {
@@ -187,18 +205,6 @@ export default function AdminSettingsPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-0 md:px-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-0 md:px-4 space-y-8">
         <div>
@@ -214,23 +220,31 @@ export default function AdminSettingsPage() {
                         <CardTitle className="flex items-center gap-2"><ShieldCheck/> Security Settings</CardTitle>
                         <CardDescription>Configure system security policies, including password requirements.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm font-medium">Password Policy</p>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 pl-4 border-l-2">
-                            <FormField control={securityForm.control} name="passwordPolicy_minimumLength" render={({ field }) => (<FormItem><FormLabel>Min Length</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={securityForm.control} name="passwordPolicy_minimumUppercaseLetters" render={({ field }) => (<FormItem><FormLabel>Min Uppercase</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={securityForm.control} name="passwordPolicy_minimumLowercaseLetters" render={({ field }) => (<FormItem><FormLabel>Min Lowercase</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={securityForm.control} name="passwordPolicy_minimumDigits" render={({ field }) => (<FormItem><FormLabel>Min Digits</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={securityForm.control} name="passwordPolicy_minimumSpecialCharacters" render={({ field }) => (<FormItem><FormLabel>Min Special Chars</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={securityForm.control} name="passwordPolicy_allowWhitespace" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>Allow Whitespace</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="submit" disabled={isSecuritySaving}>
-                            {isSecuritySaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
-                            Save Security Settings
-                        </Button>
-                    </CardFooter>
+                    {securityError ? (
+                         <CardContent>
+                            <PermissionError featureName="Security Settings" />
+                         </CardContent>
+                    ) : (
+                    <>
+                        <CardContent className="space-y-4">
+                            <p className="text-sm font-medium">Password Policy</p>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 pl-4 border-l-2">
+                                <FormField control={securityForm.control} name="passwordPolicy_minimumLength" render={({ field }) => (<FormItem><FormLabel>Min Length</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={securityForm.control} name="passwordPolicy_minimumUppercaseLetters" render={({ field }) => (<FormItem><FormLabel>Min Uppercase</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={securityForm.control} name="passwordPolicy_minimumLowercaseLetters" render={({ field }) => (<FormItem><FormLabel>Min Lowercase</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={securityForm.control} name="passwordPolicy_minimumDigits" render={({ field }) => (<FormItem><FormLabel>Min Digits</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={securityForm.control} name="passwordPolicy_minimumSpecialCharacters" render={({ field }) => (<FormItem><FormLabel>Min Special Chars</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={securityForm.control} name="passwordPolicy_allowWhitespace" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>Allow Whitespace</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="submit" disabled={isSecuritySaving}>
+                                {isSecuritySaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
+                                Save Security Settings
+                            </Button>
+                        </CardFooter>
+                    </>
+                    )}
                 </Card>
             </form>
         </Form>
@@ -243,32 +257,40 @@ export default function AdminSettingsPage() {
                         <CardTitle className="flex items-center gap-2"><Mail /> Mail Server Settings</CardTitle>
                         <CardDescription>Configure the SMTP server for sending emails, such as password resets.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormField control={mailForm.control} name="host" render={({ field }) => (<FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="smtp.example.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={mailForm.control} name="port" render={({ field }) => (<FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                         </div>
-                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormField control={mailForm.control} name="username" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={mailForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                         </div>
-                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <FormField control={mailForm.control} name="protocol" render={({ field }) => (<FormItem><FormLabel>Protocol</FormLabel><FormControl><Input placeholder="smtp" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={mailForm.control} name="timeout" render={({ field }) => (<FormItem><FormLabel>Timeout (ms)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={mailForm.control} name="smtpAuth" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>SMTP Auth</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-                            <FormField control={mailForm.control} name="enableTls" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>Enable STARTTLS</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-                         </div>
-                    </CardContent>
-                    <CardFooter className="justify-between">
-                        <Button type="submit" disabled={isMailSaving}>
-                             {isMailSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
-                            Save Mail Settings
-                        </Button>
-                        <Button type="button" variant="outline" onClick={handleSendTestMail} disabled={isTestingMail || isMailSaving}>
-                            {isTestingMail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                           Send Test Email
-                        </Button>
-                    </CardFooter>
+                     {mailError ? (
+                         <CardContent>
+                            <PermissionError featureName="Mail Settings" />
+                         </CardContent>
+                    ) : (
+                    <>
+                        <CardContent className="space-y-6">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <FormField control={mailForm.control} name="host" render={({ field }) => (<FormItem><FormLabel>SMTP Host</FormLabel><FormControl><Input placeholder="smtp.example.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={mailForm.control} name="port" render={({ field }) => (<FormItem><FormLabel>SMTP Port</FormLabel><FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <FormField control={mailForm.control} name="username" render={({ field }) => (<FormItem><FormLabel>Username</FormLabel><FormControl><Input placeholder="user@example.com" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={mailForm.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                            </div>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <FormField control={mailForm.control} name="protocol" render={({ field }) => (<FormItem><FormLabel>Protocol</FormLabel><FormControl><Input placeholder="smtp" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={mailForm.control} name="timeout" render={({ field }) => (<FormItem><FormLabel>Timeout (ms)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={mailForm.control} name="smtpAuth" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>SMTP Auth</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                                <FormField control={mailForm.control} name="enableTls" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-auto"><FormLabel>Enable STARTTLS</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="justify-between">
+                            <Button type="submit" disabled={isMailSaving}>
+                                {isMailSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
+                                Save Mail Settings
+                            </Button>
+                            <Button type="button" variant="outline" onClick={handleSendTestMail} disabled={isTestingMail || isMailSaving}>
+                                {isTestingMail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Send Test Email
+                            </Button>
+                        </CardFooter>
+                    </>
+                     )}
                 </Card>
             </form>
         </Form>
