@@ -14,8 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { getDevices, getUser, deleteDevice, getDeviceAttributes } from '@/lib/api';
-import type { Device as AppDevice, ThingsboardUser, ThingsboardDevice } from '@/lib/types';
+import { getDevices, getUser, deleteDevice, getDeviceAttributes, getCustomers } from '@/lib/api';
+import type { Device as AppDevice, ThingsboardUser, ThingsboardDevice, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye, HardDrive, PlusCircle, Search, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function DevicesPage() {
@@ -41,7 +42,9 @@ export default function DevicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
+  const [textFilter, setTextFilter] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('all');
+  const [customers, setCustomers] = useState<ThingsboardCustomer[]>([]);
   const [currentUser, setCurrentUser] = useState<ThingsboardUser | null>(null);
   const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -62,13 +65,17 @@ export default function DevicesPage() {
       setInstanceUrl(storedInstanceUrl);
 
       try {
-        const [devicesData, userData] = await Promise.all([
+        const [devicesData, userData, customersData] = await Promise.all([
           getDevices(token, storedInstanceUrl, localStorage.getItem('tb_customer_id')),
-          getUser(token, storedInstanceUrl)
+          getUser(token, storedInstanceUrl),
+          getCustomers(token, storedInstanceUrl)
         ]);
         
         setCurrentUser(userData);
+        setCustomers(customersData);
         
+        const customerMap = new Map(customersData.map(c => [c.id.id, c.title]));
+
         const devicesWithStatus = await Promise.all(devicesData.map(async (d: ThingsboardDevice) => {
             let status = 'Inactive';
             let lastActivity = 'N/A';
@@ -95,6 +102,8 @@ export default function DevicesPage() {
                 label: d.label,
                 status: status as 'Active' | 'Inactive',
                 lastActivity: lastActivity,
+                customerId: d.customerId?.id,
+                customerName: d.customerId ? customerMap.get(d.customerId.id) : undefined,
             };
         }));
 
@@ -128,11 +137,16 @@ export default function DevicesPage() {
       }
   }
   
-  const filteredDevices = devices.filter(device => 
-    device.name.toLowerCase().includes(filter.toLowerCase()) ||
-    device.type.toLowerCase().includes(filter.toLowerCase()) ||
-    (device.label && device.label.toLowerCase().includes(filter.toLowerCase()))
-  );
+  const filteredDevices = devices.filter(device => {
+    const matchesText = textFilter === '' ||
+        device.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+        device.type.toLowerCase().includes(textFilter.toLowerCase()) ||
+        (device.label && device.label.toLowerCase().includes(textFilter.toLowerCase()));
+    
+    const matchesCustomer = customerFilter === 'all' || device.customerId === customerFilter;
+
+    return matchesText && matchesCustomer;
+  });
 
   const isAdmin = currentUser?.authority === 'SYS_ADMIN' || currentUser?.authority === 'TENANT_ADMIN';
 
@@ -149,6 +163,7 @@ export default function DevicesPage() {
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Last Activity</TableHead>
+                     {isAdmin && <TableHead>Customer</TableHead>}
                     <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -159,6 +174,7 @@ export default function DevicesPage() {
                         <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-[80px] rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                        {isAdmin && <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>}
                         <TableCell className="text-right"><Skeleton className="h-9 w-[200px]" /></TableCell>
                     </TableRow>
                     ))}
@@ -220,15 +236,30 @@ export default function DevicesPage() {
 
   return (
     <div className="container mx-auto px-0 md:px-4 space-y-4">
-        <div className="flex justify-between items-center gap-4">
-            <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                placeholder="Filter by name, type, or label..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="pl-10"
-                />
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                 <div className="relative w-full sm:w-auto sm:max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                    placeholder="Filter by name, type, or label..."
+                    value={textFilter}
+                    onChange={(e) => setTextFilter(e.target.value)}
+                    className="pl-10"
+                    />
+                </div>
+                 {isAdmin && (
+                    <Select onValueChange={setCustomerFilter} value={customerFilter}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="Filter by customer..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Customers</SelectItem>
+                            {customers.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080').map(c => (
+                                <SelectItem key={c.id.id} value={c.id.id}>{c.title}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 )}
             </div>
             {isAdmin && instanceUrl && (
                  <Button asChild>
@@ -250,6 +281,7 @@ export default function DevicesPage() {
                     <CardDescription>{device.type}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
+                    {isAdmin && device.customerName && <div><strong>Customer:</strong> {device.customerName}</div>}
                     <div>
                         <strong>Status:</strong>{' '}
                         <Badge
@@ -292,6 +324,7 @@ export default function DevicesPage() {
                 <TableRow>
                 <TableHead>Device Name</TableHead>
                 <TableHead>Type</TableHead>
+                 {isAdmin && <TableHead>Customer</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead>Last Activity</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -303,6 +336,7 @@ export default function DevicesPage() {
                     {isProcessing[device.id] && <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                     <TableCell className="font-medium">{device.name}</TableCell>
                     <TableCell>{device.type}</TableCell>
+                     {isAdmin && <TableCell>{device.customerName || 'N/A'}</TableCell>}
                     <TableCell>
                     <Badge
                         variant={device.status === 'Active' ? 'default' : 'secondary'}

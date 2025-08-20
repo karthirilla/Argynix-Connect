@@ -13,8 +13,10 @@ export type Device = {
     name: string;
     type: string;
     label: string | null;
-    status: 'Active' | 'Inactive'; // This might need to be derived or is part of a different API call
-    lastActivity: string; // This might need to be derived or is part of a different API call
+    status: 'Active' | 'Inactive';
+    lastActivity: string;
+    customerId?: string;
+    customerName?: string;
 };
 
 export type Asset = {
