@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { getCustomers, getCustomerUsers, getTenantAdmins, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail, getAllUsersBySysAdmin } from '@/lib/api';
+import { getCustomers, getTenantUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail, getAllUsersBySysAdmin } from '@/lib/api';
 import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -184,22 +184,19 @@ export default function UsersPage() {
             
             if (currentUserData.authority === 'SYS_ADMIN') {
                 allUsers = await getAllUsersBySysAdmin(token, instanceUrl);
+
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
-                const [customersData, tenantAdminsData] = await Promise.all([
+                const [customersData, tenantUsersData] = await Promise.all([
                     getCustomers(token, instanceUrl),
-                    getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id),
+                    getTenantUsers(token, instanceUrl, currentUserData.tenantId.id),
                 ]);
                 setCustomers(customersData);
-                allUsers.push(...tenantAdminsData);
-                
-                const customerUsersPromises = customersData
-                    .filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080')
-                    .map(customer => getCustomerUsers(token, instanceUrl, customer.id.id));
+                allUsers.push(...tenantUsersData);
 
-                const customerUsersNested = await Promise.all(customerUsersPromises);
-                allUsers.push(...customerUsersNested.flat());
             } else {
-                // For CUSTOMER_USER, we don't fetch anyone else. The check later will show permission denied.
+                // This is for CUSTOMER_USER, they can't view this page.
+                setIsLoading(false);
+                return;
             }
             
             const otherUsers = allUsers.filter(u => u.id.id !== currentUserData.id.id);

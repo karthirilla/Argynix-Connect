@@ -1,3 +1,4 @@
+
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant } from './types';
@@ -157,13 +158,7 @@ export async function sendActivationMail(token: string, instanceUrl: string, ema
     });
 }
 
-export async function getTenants(token: string, instanceUrl: string): Promise<ThingsboardTenant[]> {
-    const url = `/api/tenants?pageSize=1000&page=0`;
-    const result = await fetchThingsboard<{ data: ThingsboardTenant[] }>(url, token, instanceUrl);
-    return result?.data || [];
-}
-
-export async function getTenantAdmins(token: string, instanceUrl: string, tenantId: string): Promise<ThingsboardUser[]> {
+export async function getTenantUsers(token: string, instanceUrl: string, tenantId: string): Promise<ThingsboardUser[]> {
     const url = `/api/tenant/${tenantId}/users?pageSize=1000&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
     return result?.data || [];
@@ -610,3 +605,5 @@ export async function getTenantUsageInfo(token: string, instanceUrl: string): Pr
     const url = `/api/usage`;
     return await fetchThingsboard<ThingsboardUsageInfo>(url, token, instanceUrl);
 }
+
+    
