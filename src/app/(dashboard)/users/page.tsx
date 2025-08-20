@@ -183,11 +183,8 @@ export default function UsersPage() {
             let allUsers: ThingsboardUser[] = [];
             
             if (currentUserData.authority === 'SYS_ADMIN') {
-                // SYS_ADMIN fetches all users and cannot invite new ones in this UI.
                 allUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
-                // TENANT_ADMIN fetches users and customers within their tenant.
                 const [customersData, tenantAdminsData] = await Promise.all([
                     getCustomers(token, instanceUrl),
                     getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id),
@@ -202,19 +199,15 @@ export default function UsersPage() {
                 const customerUsersNested = await Promise.all(customerUsersPromises);
                 allUsers.push(...customerUsersNested.flat());
             } else {
-                 // CUSTOMER_USER doesn't have permission to see this page.
-                setIsLoading(false);
-                return;
+                // For CUSTOMER_USER, we don't fetch anyone else. The check later will show permission denied.
             }
             
-            // Filter out the current user from the list
             const otherUsers = allUsers.filter(u => u.id.id !== currentUserData.id.id);
 
             const usersWithPermissions = await Promise.all(
                 otherUsers.map(async (user) => {
                     try {
                         const attributes = await getUserAttributes(token, instanceUrl, user.id.id);
-                        
                         const permissions: UserPermissions = { ...defaultPermissions };
                         let userEnabled = true;
 
@@ -351,7 +344,7 @@ export default function UsersPage() {
         );
     }
     
-    if (currentUser?.authority === 'CUSTOMER_USER') {
+    if (!currentUser || (currentUser.authority !== 'TENANT_ADMIN' && currentUser.authority !== 'SYS_ADMIN')) {
         return (
              <div className="container mx-auto px-0 md:px-4">
                 <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
@@ -486,3 +479,5 @@ export default function UsersPage() {
         </div>
     );
 }
+
+    
