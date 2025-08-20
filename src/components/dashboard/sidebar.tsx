@@ -31,7 +31,6 @@ const navItems = [
 const adminNavItems = [
     { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
     { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
-    { href: '/admin/notifications', label: 'Notification Settings', icon: BellRing, requiredAuth: ['TENANT_ADMIN', 'SYS_ADMIN'] }
 ];
 
 

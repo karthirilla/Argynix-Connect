@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -13,14 +14,14 @@ import {
   getUnreadNotificationsCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  deleteNotification
+  deleteNotification,
+  getUser
 } from '@/lib/api';
-import type { ThingsboardNotification } from '@/lib/types';
-import { Bell, Loader2, Trash2, CheckCheck, Eye, Info } from 'lucide-react';
+import type { ThingsboardNotification, ThingsboardUser } from '@/lib/types';
+import { Bell, Loader2, Trash2, CheckCheck, Eye, Info, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
-import { Separator } from '../ui/separator';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
@@ -45,56 +46,62 @@ export function Notifications() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<ThingsboardNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState<ThingsboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const { toast } = useToast();
 
   const token = useMemo(() => typeof window !== 'undefined' ? localStorage.getItem('tb_auth_token') : null, []);
   const instanceUrl = useMemo(() => typeof window !== 'undefined' ? localStorage.getItem('tb_instance_url') : null, []);
+  
+  const isAdmin = currentUser?.authority === 'TENANT_ADMIN' || currentUser?.authority === 'SYS_ADMIN';
 
-  const fetchNotifications = async () => {
+  const fetchInitialData = useCallback(async () => {
     if (!token || !instanceUrl) return;
     setIsLoading(true);
     try {
-        const [notifsResponse, countResponse] = await Promise.all([
+        const [user, notifsResponse, countResponse] = await Promise.all([
+            getUser(token, instanceUrl),
             getNotifications(token, instanceUrl),
             getUnreadNotificationsCount(token, instanceUrl),
         ]);
+        setCurrentUser(user);
         setNotifications(notifsResponse.data);
         setUnreadCount(countResponse.count);
     } catch (e: any) {
-        // Silently fail, as this is not a critical component
         console.error("Failed to fetch notifications:", e.message);
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [token, instanceUrl]);
+
 
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications();
+      fetchInitialData();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchInitialData]);
   
+  const fetchCount = useCallback(async () => {
+    if (!token || !instanceUrl) return;
+    try {
+        const countResponse = await getUnreadNotificationsCount(token, instanceUrl);
+        setUnreadCount(countResponse.count);
+    } catch {}
+  }, [token, instanceUrl]);
+
   useEffect(() => {
-    const fetchCount = async () => {
-        if (!token || !instanceUrl) return;
-        try {
-            const countResponse = await getUnreadNotificationsCount(token, instanceUrl);
-            setUnreadCount(countResponse.count);
-        } catch {}
-    };
     fetchCount();
     const interval = setInterval(fetchCount, 30000); // Poll for new count every 30s
     return () => clearInterval(interval);
-  }, [token, instanceUrl])
+  }, [fetchCount])
 
   const handleMarkAsRead = async (id: string) => {
     if (!token || !instanceUrl) return;
     setIsProcessing(id);
     try {
       await markNotificationAsRead(token, instanceUrl, id);
-      fetchNotifications();
+      fetchInitialData();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to mark as read.' });
     } finally {
@@ -107,7 +114,7 @@ export function Notifications() {
     setIsProcessing('all');
     try {
       await markAllNotificationsAsRead(token, instanceUrl);
-      fetchNotifications();
+      fetchInitialData();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to mark all as read.' });
     } finally {
@@ -120,7 +127,7 @@ export function Notifications() {
     setIsProcessing(id);
     try {
       await deleteNotification(token, instanceUrl, id);
-      fetchNotifications();
+      fetchInitialData();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete notification.' });
     } finally {
@@ -144,12 +151,19 @@ export function Notifications() {
         <Card className="border-0">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle>Notifications</CardTitle>
-                {notifications.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={handleMarkAllRead} disabled={isProcessing === 'all'}>
-                        {isProcessing === 'all' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                        Mark all as read
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {notifications.length > 0 && unreadCount > 0 && (
+                        <Button variant="link" size="sm" onClick={handleMarkAllRead} disabled={isProcessing === 'all'} className="p-0 h-auto">
+                            {isProcessing === 'all' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Mark all as read
+                        </Button>
+                    )}
+                    {isAdmin && (
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                            <Link href="/admin/notifications"><Settings className="h-4 w-4"/></Link>
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent className="max-h-[50vh] overflow-y-auto">
                 {isLoading ? (
