@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, ChevronsLeft, ChevronsRight, Moon, Sun } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -14,6 +14,7 @@ import type { ThingsboardUser } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { useTheme } from 'next-themes';
 
 
 const navItems = [
@@ -51,6 +52,7 @@ export function AppSidebar({
   const pathname = usePathname();
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { setTheme, theme } = useTheme();
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -160,6 +162,37 @@ export function AppSidebar({
 
   const finalContent = isLoading ? renderNavSkeleton() : navContent;
 
+  const ThemeToggle = () => (
+     <Button
+        variant="ghost"
+        size="icon"
+        className={cn("h-9", isCollapsed ? 'w-full' : 'w-full justify-start px-3')}
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        >
+        <div className={cn("flex items-center gap-3")}>
+             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className={cn(isCollapsed && "hidden")}>Toggle Theme</span>
+        </div>
+        <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
+
+  const CollapseToggle = () => (
+    <Button
+        variant="ghost"
+        size="icon"
+        className={cn("h-9", isCollapsed ? 'w-full' : 'w-full justify-start px-3')}
+        onClick={() => setIsCollapsed?.(!isCollapsed)}
+    >
+        <div className={cn("flex items-center gap-3")}>
+            {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
+             <span className={cn(isCollapsed && "hidden")}>Collapse</span>
+        </div>
+        <span className="sr-only">Toggle Sidebar</span>
+    </Button>
+  )
+
   if (isMobile) {
     return (
         <>
@@ -170,6 +203,9 @@ export function AppSidebar({
                 </Link>
             </SheetHeader>
             {finalContent}
+            <div className="mt-auto p-2 border-t border-sidebar-border space-y-1">
+                <ThemeToggle />
+            </div>
         </>
     )
   }
@@ -186,17 +222,9 @@ export function AppSidebar({
           </Link>
         </div>
         {finalContent}
-        <div className="mt-auto p-4 border-t border-sidebar-border">
-            <Button
-              variant="ghost"
-              className={cn("h-9 w-full", isCollapsed ? "justify-center px-0" : "justify-start px-3")}
-              onClick={() => setIsCollapsed?.(!isCollapsed)}
-            >
-              <div className={cn("flex items-center gap-3")}>
-                {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
-              </div>
-              <span className="sr-only">Toggle Sidebar</span>
-            </Button>
+        <div className="mt-auto p-2 border-t border-sidebar-border space-y-1">
+            <ThemeToggle />
+            <CollapseToggle />
         </div>
     </div>
   );
