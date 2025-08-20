@@ -101,7 +101,7 @@ export function Notifications() {
     setIsProcessing(id);
     try {
       await markNotificationAsRead(token, instanceUrl, id);
-      fetchInitialData();
+      await fetchInitialData(); // Refetch all data
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to mark as read.' });
     } finally {
@@ -114,7 +114,7 @@ export function Notifications() {
     setIsProcessing('all');
     try {
       await markAllNotificationsAsRead(token, instanceUrl);
-      fetchInitialData();
+      await fetchInitialData(); // Refetch all data
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to mark all as read.' });
     } finally {
@@ -127,7 +127,7 @@ export function Notifications() {
     setIsProcessing(id);
     try {
       await deleteNotification(token, instanceUrl, id);
-      fetchInitialData();
+      await fetchInitialData(); // Refetch all data
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete notification.' });
     } finally {
@@ -145,6 +145,7 @@ export function Notifications() {
               {unreadCount}
             </span>
           )}
+           <span className="sr-only">Open notifications</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 md:w-96 p-0" align="end">
