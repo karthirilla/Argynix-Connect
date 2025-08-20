@@ -47,11 +47,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <AppSidebar />
-      <div className="flex flex-1 flex-col bg-muted/40">
+      <div className="flex flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 md:p-8 lg:p-10 flex flex-col relative overflow-y-auto">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-auto">
           {children}
         </main>
         <Toaster />
