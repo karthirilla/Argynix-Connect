@@ -213,3 +213,11 @@ export type ThingsboardSecuritySettings = {
         passwordReuseFrequencyDays?: number;
     }
 }
+
+export interface CalculatedField {
+    id?: ThingsboardId;
+    createdTime?: number;
+    entityId: ThingsboardId;
+    name: string;
+    script: string;
+}

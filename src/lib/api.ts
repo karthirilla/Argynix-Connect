@@ -1,6 +1,6 @@
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -471,5 +471,39 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
     return await fetchThingsboard<ThingsboardSecuritySettings>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(settings)
+    });
+}
+
+// Calculated Fields
+export async function getCalculatedFieldsByEntityId(token: string, instanceUrl: string, entityType: 'DEVICE' | 'ASSET', entityId: string): Promise<CalculatedField[]> {
+    const url = `/api/${entityType.toLowerCase()}/${entityId}/calculatedFields?pageSize=100&page=0`;
+    const result = await fetchThingsboard<{ data: CalculatedField[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
+export async function saveCalculatedField(token: string, instanceUrl: string, field: Omit<CalculatedField, 'createdTime'>): Promise<CalculatedField> {
+    const url = `/api/calculatedField`;
+    return await fetchThingsboard<CalculatedField>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(field),
+    });
+}
+
+export async function deleteCalculatedField(token: string, instanceUrl: string, fieldId: string): Promise<void> {
+    const url = `/api/calculatedField/${fieldId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+export async function testScript(script: string, telemetryJson: string): Promise<any> {
+    const url = `/api/calculatedField/testScript`;
+    const token = localStorage.getItem('tb_auth_token');
+    const instanceUrl = localStorage.getItem('tb_instance_url');
+    if (!token || !instanceUrl) throw new Error("Authentication details not found");
+
+    const telemetry = JSON.parse(telemetryJson);
+
+    return await fetchThingsboard<any>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify({ script, telemetry }),
     });
 }
