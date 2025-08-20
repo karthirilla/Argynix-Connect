@@ -163,6 +163,8 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
+    const isTenantAdmin = useMemo(() => currentUser?.authority === 'TENANT_ADMIN', [currentUser]);
+
     const fetchUsersAndPermissions = async () => {
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -175,18 +177,22 @@ export default function UsersPage() {
 
         setIsLoading(true);
         try {
-            const [customersData, currentUserData] = await Promise.all([
-                getCustomers(token, instanceUrl),
-                getUser(token, instanceUrl)
-            ]);
-            
-            setCustomers(customersData);
+            const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
+            
+            // If user is not a Tenant Admin, no need to fetch other users.
+            if(currentUserData.authority !== 'TENANT_ADMIN') {
+                setIsLoading(false);
+                return;
+            }
+
+            const customersData = await getCustomers(token, instanceUrl);
+            setCustomers(customersData);
             
             let allUsers: ThingsboardUser[] = [];
             
             // Fetch Tenant Admins if current user is one
-            if(currentUserData.authority === 'TENANT_ADMIN' && currentUserData.tenantId) {
+            if(currentUserData.tenantId) {
                 const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
                 // Exclude the current user from the list of managed users
                 allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
@@ -307,8 +313,6 @@ export default function UsersPage() {
         }
     }
 
-    const isTenantAdmin = useMemo(() => currentUser?.authority === 'TENANT_ADMIN', [currentUser]);
-
     if (isLoading) {
         return (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -336,6 +340,16 @@ export default function UsersPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        );
+    }
+    
+    if (!isTenantAdmin) {
+        return (
+            <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Permission Denied</AlertTitle>
+                <AlertDescription>You do not have permission to manage users.</AlertDescription>
             </Alert>
         );
     }
