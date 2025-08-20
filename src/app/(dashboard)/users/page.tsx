@@ -7,14 +7,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCustomers, getCustomerUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser } from '@/lib/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { getCustomers, getCustomerUsers, getTenantAdmins, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail } from '@/lib/api';
 import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, User as UserIcon, Trash2, PlusCircle } from 'lucide-react';
+import { Loader2, User as UserIcon, Trash2, PlusCircle, MailQuestion } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -36,6 +36,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const defaultPermissions: UserPermissions = {
     canExport: true,
@@ -182,9 +183,17 @@ export default function UsersPage() {
             setCustomers(customersData);
             setCurrentUser(currentUserData);
             
-            const allUsers: ThingsboardUser[] = [];
+            let allUsers: ThingsboardUser[] = [];
+            
+            // Fetch Tenant Admins if current user is one
+            if(currentUserData.authority === 'TENANT_ADMIN' && currentUserData.tenantId) {
+                const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
+                // Exclude the current user from the list of managed users
+                allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
+            }
+            
+            // Fetch Customer Users
             for (const customer of customersData) {
-                // Don't fetch users for the "Public" psuedo-customer
                  if (customer.id.id !== '13814000-1dd2-11b2-8080-808080808080') {
                     const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
                     allUsers.push(...customerUsers);
@@ -277,13 +286,27 @@ export default function UsersPage() {
             await deleteUser(token, instanceUrl, userId);
             toast({ title: 'Success', description: 'User has been deleted.' });
             await fetchUsersAndPermissions(); // Refresh list
-        } catch (e: any) {
+        } catch (e: any)
+        {
             toast({ variant: 'destructive', title: 'Delete Failed', description: e.message || 'Could not delete user.' });
         } finally {
             setIsSaving(null);
         }
     }
     
+    const handleResendActivation = async (email: string) => {
+         const token = localStorage.getItem('tb_auth_token');
+        const instanceUrl = localStorage.getItem('tb_instance_url');
+        if (!token || !instanceUrl) return;
+        
+        try {
+            await sendActivationMail(token, instanceUrl, email);
+            toast({ title: 'Activation Email Sent', description: `A new activation link has been sent to ${email}.` });
+        } catch (e: any) {
+             toast({ variant: 'destructive', title: 'Failed to send email', description: e.message || 'Could not send activation email.' });
+        }
+    }
+
     const isTenantAdmin = useMemo(() => currentUser?.authority === 'TENANT_ADMIN', [currentUser]);
 
     if (isLoading) {
@@ -321,9 +344,9 @@ export default function UsersPage() {
         return (
              <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
                 <UserIcon className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-2xl font-semibold">No Customer Users Found</h3>
+                <h3 className="text-2xl font-semibold">No Other Users Found</h3>
                 <p className="text-muted-foreground text-center max-w-md mt-2">
-                    There are no users assigned to any customers for this tenant.
+                    There are no other users for this tenant.
                 </p>
                 {isTenantAdmin && <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>}
             </div>
@@ -335,7 +358,7 @@ export default function UsersPage() {
             <div className="flex justify-between items-center">
                  <div>
                     <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-                    <p className="text-muted-foreground">Manage permissions and access for customer users.</p>
+                    <p className="text-muted-foreground">Manage permissions and access for all users.</p>
                 </div>
                  {isTenantAdmin && <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />}
             </div>
@@ -356,45 +379,62 @@ export default function UsersPage() {
                             <UserIcon className="h-5 w-5 text-muted-foreground"/> {user.firstName || 'No'} {user.lastName || 'Name'}
                             </CardTitle>
                             <CardDescription>
-                                {user.email} <Badge variant="outline" className="ml-2">{user.authority.replace('_', ' ')}</Badge>
+                                {user.email} <Badge variant={user.authority === 'TENANT_ADMIN' ? 'default' : 'outline'} className="ml-2">{user.authority.replace('_', ' ')}</Badge>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4 flex-grow">
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor={`export-${user.id.id}`} className="font-normal text-sm">Can Export Data</Label>
-                                    <Switch
-                                        id={`export-${user.id.id}`}
-                                        checked={user.permissions.canExport}
-                                        onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canExport', checked)}
-                                        disabled={!user.userCredentialsEnabled || !!isSaving}
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor={`schedule-${user.id.id}`} className="font-normal text-sm">Can Use Scheduler</Label>
-                                    <Switch
-                                        id={`schedule-${user.id.id}`}
-                                        checked={user.permissions.canSchedule}
-                                        onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canSchedule', checked)}
-                                        disabled={!user.userCredentialsEnabled || !!isSaving}
-                                    />
-                                </div>
+                             <div className="space-y-3">
+                                {user.authority === 'CUSTOMER_USER' ? (
+                                    <>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor={`export-${user.id.id}`} className="font-normal text-sm">Can Export Data</Label>
+                                            <Switch
+                                                id={`export-${user.id.id}`}
+                                                checked={user.permissions.canExport}
+                                                onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canExport', checked)}
+                                                disabled={!user.userCredentialsEnabled || !!isSaving}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor={`schedule-${user.id.id}`} className="font-normal text-sm">Can Use Scheduler</Label>
+                                            <Switch
+                                                id={`schedule-${user.id.id}`}
+                                                checked={user.permissions.canSchedule}
+                                                onCheckedChange={(checked) => handlePermissionChange(user.id.id, 'canSchedule', checked)}
+                                                disabled={!user.userCredentialsEnabled || !!isSaving}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground text-center p-4 bg-muted rounded-md">
+                                        Tenant Admins have all permissions.
+                                    </div>
+                                )}
                             </div>
                             <Separator />
                             <div className="flex items-center justify-between space-x-2">
                                 <Label htmlFor={`disable-${user.id.id}`} className={cn("font-medium", !user.userCredentialsEnabled && 'text-destructive')}>
                                     {user.userCredentialsEnabled ? 'Disable User' : 'User Disabled'}
                                 </Label>
-                                <Switch
-                                    id={`disable-${user.id.id}`}
-                                    checked={!user.userCredentialsEnabled}
-                                    onCheckedChange={(checked) => handleCredentialsToggle(user.id.id, !checked)}
-                                    className="data-[state=checked]:bg-destructive"
-                                    disabled={!!isSaving}
-                                />
+                                <div className="flex items-center gap-2">
+                                    {!user.userCredentialsEnabled && (
+                                         <TooltipProvider>
+                                            <Tooltip><TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleResendActivation(user.email)}><MailQuestion className="h-4 w-4" /></Button>
+                                            </TooltipTrigger><TooltipContent><p>Resend activation email</p></TooltipContent></Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                    <Switch
+                                        id={`disable-${user.id.id}`}
+                                        checked={!user.userCredentialsEnabled}
+                                        onCheckedChange={(checked) => handleCredentialsToggle(user.id.id, !checked)}
+                                        className="data-[state=checked]:bg-destructive"
+                                        disabled={!!isSaving}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
-                        <CardContent className="pt-2">
+                        <CardFooter>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" className="w-full" disabled={!!isSaving}>
@@ -414,7 +454,7 @@ export default function UsersPage() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                        </CardContent>
+                        </CardFooter>
                     </Card>
                 ))}
             </div>
