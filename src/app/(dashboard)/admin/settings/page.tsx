@@ -98,7 +98,7 @@ export default function AdminSettingsPage() {
           });
         }
     } catch(e: any) {
-        if (e.message && e.message.includes('permission')) {
+        if (e.message && e.message.toLowerCase().includes('permission')) {
              setSecurityError('permission_denied');
         } else {
             setSecurityError(e.message || 'Failed to fetch security settings.');
@@ -118,7 +118,7 @@ export default function AdminSettingsPage() {
             });
         }
     } catch (e: any) {
-        if (e.message && e.message.includes('permission')) {
+        if (e.message && e.message.toLowerCase().includes('permission')) {
             setMailError('permission_denied');
         } else {
             setMailError(e.message || 'Failed to fetch mail settings.');
@@ -222,7 +222,15 @@ export default function AdminSettingsPage() {
                     </CardHeader>
                     {securityError ? (
                          <CardContent>
-                            <PermissionError featureName="Security Settings" />
+                            {securityError === 'permission_denied' ? (
+                                <PermissionError featureName="Security Settings" />
+                            ) : (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Error</AlertTitle>
+                                    <AlertDescription>{securityError}</AlertDescription>
+                                </Alert>
+                            )}
                          </CardContent>
                     ) : (
                     <>
@@ -259,7 +267,15 @@ export default function AdminSettingsPage() {
                     </CardHeader>
                      {mailError ? (
                          <CardContent>
-                            <PermissionError featureName="Mail Settings" />
+                            {mailError === 'permission_denied' ? (
+                                <PermissionError featureName="Mail Settings" />
+                            ) : (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Error</AlertTitle>
+                                    <AlertDescription>{mailError}</AlertDescription>
+                                </Alert>
+                            )}
                          </CardContent>
                     ) : (
                     <>
