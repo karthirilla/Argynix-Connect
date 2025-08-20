@@ -187,10 +187,10 @@ export function AppSidebar({
           </Link>
         </div>
         {finalContent}
-        <div className="mt-auto p-4">
+        <div className="mt-auto p-4 border-t border-sidebar-border">
             <Button 
               variant="ghost" 
-              size="icon" 
+              size={isCollapsed ? "icon" : "default"} 
               className="w-full justify-center" 
               onClick={() => setIsCollapsed?.(!isCollapsed)}
             >

@@ -16,6 +16,7 @@ import { AppHeader } from '@/components/dashboard/header';
 import { Toaster } from '@/components/ui/toaster';
 import { Progress } from '@/components/ui/progress';
 import type { ThingsboardUsageInfo } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 
 const features = [
@@ -321,6 +322,7 @@ export default function RootPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
@@ -351,11 +353,21 @@ export default function RootPage() {
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <AppSidebar />
-      <div className="flex flex-col relative h-screen">
+    <div 
+      className={cn(
+        "grid min-h-screen w-full transition-[grid-template-columns] duration-300 ease-in-out",
+        isSidebarCollapsed 
+          ? "md:grid-cols-[72px_1fr]" 
+          : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
+      )}
+    >
+      <AppSidebar 
+        isCollapsed={isSidebarCollapsed} 
+        setIsCollapsed={setIsSidebarCollapsed}
+      />
+      <div className="flex flex-col h-screen">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10">
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
           <HomePageContent />
         </main>
         <Toaster />
