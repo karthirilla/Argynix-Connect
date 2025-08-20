@@ -230,5 +230,6 @@ export interface EntityData {
   latest: {
     ENTITY_FIELD: { [key: string]: { value: any, ts: number } };
     ATTRIBUTE: { [key: string]: { value: any, ts: number } };
+    TIMESERIES: { [key: string]: { value: any, ts: number } };
   };
 }

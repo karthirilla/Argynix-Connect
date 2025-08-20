@@ -270,54 +270,27 @@ export async function makeDashboardPublic(
     return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl, { method: 'POST' });
 }
 
-export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<EntityData[]> {
+export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<{data: EntityData[]}> {
     const url = '/api/entitiesQuery/find';
-    const result = await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
+    return await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(query)
     });
-    return result?.data || [];
 }
 
 export async function getDevices(
   token:string,
   instanceUrl: string,
   customerId: string | null
-): Promise<EntityData[]> {
-    const rootEntityInfo = customerId 
-        ? { entityType: "CUSTOMER", id: customerId }
-        : { entityType: "TENANT", id: (await getUser(token, instanceUrl)).tenantId.id };
-
-    const query = {
-        entityFilter: {
-            type: "relationsQuery",
-            rootEntity: rootEntityInfo,
-            direction: "FROM",
-            filters: [{
-                relationType: "Contains",
-                entityTypes: ["DEVICE"]
-            }]
-        },
-        entityFields: [
-            { type: "ENTITY_FIELD", key: "name" },
-            { type: "ENTITY_FIELD", key: "type" },
-            { type: "ENTITY_FIELD", key: "label" }
-        ],
-        latestValues: [
-            { type: "ATTRIBUTE", key: "active" },
-            { type: "ATTRIBUTE", key: "lastActivityTime" }
-        ],
-        pageLink: {
-            page: 0,
-            pageSize: 100,
-            sortOrder: {
-                key: { type: "ENTITY_FIELD", key: "createdTime" },
-                direction: "DESC"
-            }
-        }
-    };
-
-    return findEntityDataByQuery(token, instanceUrl, query);
+): Promise<ThingsboardDevice[]> {
+    let url: string;
+    if (customerId) {
+        url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
+    } else {
+        url = `/api/tenant/devices?pageSize=100&page=0`;
+    }
+    const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(url, token, instanceUrl);
+    return result?.data || [];
 }
 
 export async function getDeviceById(
@@ -552,7 +525,7 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
 
 // Calculated Fields
 export async function getCalculatedFieldsByEntityId(token: string, instanceUrl: string, entityType: 'DEVICE' | 'ASSET', entityId: string): Promise<CalculatedField[]> {
-    const url = `/api/${entityType}/${entityId}/calculatedFields?pageSize=100&page=0`;
+    const url = `/api/${entityType.toUpperCase()}/${entityId}/calculatedFields?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: CalculatedField[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
