@@ -1,3 +1,4 @@
+
 // /app/(dashboard)/admin/settings/page.tsx
 "use client";
 
@@ -62,6 +63,12 @@ export default function AdminSettingsPage() {
   const mailForm = useForm<MailSettingsFormValues>({
     resolver: zodResolver(mailSettingsSchema),
     defaultValues: {
+      host: '',
+      port: 25,
+      username: '',
+      password: '',
+      protocol: 'smtp',
+      timeout: 10000,
       enableTls: false,
       smtpAuth: false
     },
@@ -70,6 +77,11 @@ export default function AdminSettingsPage() {
   const securityForm = useForm<SecuritySettingsFormValues>({
     resolver: zodResolver(securitySettingsSchema),
     defaultValues: {
+      passwordPolicy_minimumLength: 6,
+      passwordPolicy_minimumUppercaseLetters: 0,
+      passwordPolicy_minimumLowercaseLetters: 0,
+      passwordPolicy_minimumDigits: 0,
+      passwordPolicy_minimumSpecialCharacters: 0,
       passwordPolicy_allowWhitespace: false,
     }
   });
