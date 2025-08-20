@@ -364,7 +364,7 @@ export default function NotificationSettingsPage() {
               <CardContent className="space-y-2 text-sm flex-grow">
                   <p className="font-medium">Triggers on:</p>
                   <ul className="list-disc pl-5 text-muted-foreground">
-                      <li>Alarm Severities: {rule.triggerConfig.alarmSeverities.join(', ') || 'Any'}</li>
+                      <li>Alarm Severities: {rule.triggerConfig.alarmSeverities?.join(', ') || 'Any'}</li>
                       <li>Alarm Statuses: {rule.triggerConfig.notifyOn.alarmStatus?.join(', ').replace(/_/g, ' ') || 'Any'}</li>
                       <li>Alarm Types: {rule.triggerConfig.alarmTypes?.join(', ') || 'Any'}</li>
                   </ul>
