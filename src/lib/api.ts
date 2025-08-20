@@ -1,6 +1,7 @@
+
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, EntityData } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -270,14 +271,6 @@ export async function makeDashboardPublic(
     return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl, { method: 'POST' });
 }
 
-export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<{data: EntityData[]}> {
-    const url = '/api/entitiesQuery/find';
-    return await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
-        method: 'POST',
-        body: JSON.stringify(query)
-    });
-}
-
 export async function getDevices(
   token:string,
   instanceUrl: string,
@@ -525,13 +518,13 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
 
 // Calculated Fields
 export async function getCalculatedFieldsByEntityId(token: string, instanceUrl: string, entityType: 'DEVICE' | 'ASSET', entityId: string): Promise<CalculatedField[]> {
-    const url = `/api/${entityType.toUpperCase()}/${entityId}/calculatedFields?pageSize=100&page=0`;
+    const url = `/api/${entityType.toLowerCase()}/calculated-fields/info?entityType=${entityType}&entityId=${entityId}&pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: CalculatedField[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
 
 export async function saveCalculatedField(token: string, instanceUrl: string, field: Omit<CalculatedField, 'createdTime'>): Promise<CalculatedField> {
-    const url = `/api/calculatedField`;
+    const url = `/api/calculated-field`;
     return await fetchThingsboard<CalculatedField>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(field),
@@ -539,12 +532,12 @@ export async function saveCalculatedField(token: string, instanceUrl: string, fi
 }
 
 export async function deleteCalculatedField(token: string, instanceUrl: string, fieldId: string): Promise<void> {
-    const url = `/api/calculatedField/${fieldId}`;
+    const url = `/api/calculated-field/${fieldId}`;
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
 }
 
 export async function testScript(script: string, telemetryJson: string): Promise<any> {
-    const url = `/api/calculatedField/testScript`;
+    const url = `/api/calculated-field/test`;
     const token = localStorage.getItem('tb_auth_token');
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (!token || !instanceUrl) throw new Error("Authentication details not found");
@@ -553,6 +546,24 @@ export async function testScript(script: string, telemetryJson: string): Promise
 
     return await fetchThingsboard<any>(url, token, instanceUrl, {
         method: 'POST',
-        body: JSON.stringify({ script, telemetry }),
+        body: JSON.stringify({ script, telemetry: {msg: telemetry} }),
     });
+}
+
+
+// Jobs
+export async function getJobs(token: string, instanceUrl: string): Promise<ThingsboardJob[]> {
+    const url = '/api/jobs?pageSize=100&page=0';
+    const result = await fetchThingsboard<{ data: ThingsboardJob[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
+export async function deleteJob(token: string, instanceUrl: string, jobId: string): Promise<void> {
+    const url = `/api/job/${jobId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+export async function cancelJob(token: string, instanceUrl: string, jobId: string): Promise<void> {
+    const url = `/api/job/${jobId}/cancel`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
 }

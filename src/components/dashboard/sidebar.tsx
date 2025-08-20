@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -24,6 +24,7 @@ const navItems = [
   { href: '/data-export', label: 'Data Export', icon: Download, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
   { href: '/customers', label: 'Customers', icon: Building, requiredAuth: ['TENANT_ADMIN'] },
   { href: '/users', label: 'User Management', icon: Users, requiredAuth: ['TENANT_ADMIN'] },
+  { href: '/jobs', label: 'Jobs', icon: ListChecks, requiredAuth: ['TENANT_ADMIN', 'SYS_ADMIN'] },
   { href: '/audit-logs', label: 'Audit Logs', icon: History, requiredAuth: ['TENANT_ADMIN'] },
   { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
 ];

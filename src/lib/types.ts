@@ -1,3 +1,4 @@
+
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -225,13 +226,18 @@ export interface CalculatedField {
     script: string;
 }
 
-
-// From Entity Query Controller
-export interface EntityData {
-  entityId: ThingsboardId;
-  latest: {
-    ENTITY_FIELD: { [key: string]: { value: any, ts: number } };
-    ATTRIBUTE: { [key: string]: { value: any, ts: number } };
-    TIMESERIES: { [key: string]: { value: any, ts: number } };
-  };
+export interface ThingsboardJob {
+    id: ThingsboardId;
+    createdTime: number;
+    type: string; // e.g., 'BULK_IMPORT_DEVICES'
+    status: 'PENDING' | 'EXECUTING' | 'SUCCESS' | 'CANCELLED' | 'FAILED';
+    progress?: {
+        total: number;
+        processed: number;
+    };
+    additionalInfo?: {
+        error?: string;
+        [key: string]: any;
+    };
+    entityId: ThingsboardId | null;
 }
