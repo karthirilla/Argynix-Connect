@@ -429,6 +429,19 @@ export async function getAlarmById(
   return await fetchThingsboard<ThingsboardAlarm>(url, token, instanceUrl);
 }
 
+export async function createAlarm(
+    token: string,
+    instanceUrl: string,
+    alarmData: Omit<Partial<ThingsboardAlarm>, 'id' | 'createdTime' | 'ackTs' | 'clearTs'>
+): Promise<ThingsboardAlarm> {
+    const url = '/api/alarm';
+    return await fetchThingsboard<ThingsboardAlarm>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(alarmData),
+    });
+}
+
+
 export async function ackAlarm(
     token: string,
     instanceUrl: string,
