@@ -527,7 +527,7 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
 
 // Calculated Fields
 export async function getCalculatedFieldsByEntityId(token: string, instanceUrl: string, entityType: 'DEVICE' | 'ASSET', entityId: string): Promise<CalculatedField[]> {
-    const url = `/api/calculated-fields/info?entityType=${entityType}&entityId=${entityId}&pageSize=100&page=0`;
+    const url = `/api/v2/calculated-fields/info?entityType=${entityType}&entityId=${entityId}&pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: CalculatedField[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
