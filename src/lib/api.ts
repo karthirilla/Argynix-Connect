@@ -93,7 +93,7 @@ async function fetchThingsboard<T>(
       console.error("ThingsBoard API Error:", errorBody);
     }
     
-    throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
+    throw new Error(`${errorBody}`);
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {

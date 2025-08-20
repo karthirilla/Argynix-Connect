@@ -60,17 +60,21 @@ export default function AuditLogsPage() {
         setSelectedUserId(currentUserData.id.id);
 
         let tenantUsers: ThingsboardUser[] = [];
-        for (const customer of customers) {
-            const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
-            tenantUsers.push(...customerUsers);
+        if (currentUserData.authority === 'TENANT_ADMIN') {
+            for (const customer of customers) {
+                if (customer.id.id !== '13814000-1dd2-11b2-8080-808080808080') {
+                    const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
+                    tenantUsers.push(...customerUsers);
+                }
+            }
         }
         // Add current user if not already in the list (e.g. tenant admin)
         if (!tenantUsers.some(u => u.id.id === currentUserData.id.id)) {
             tenantUsers.unshift(currentUserData);
         }
         setAllUsers(tenantUsers);
-    } catch(e) {
-        setError("Failed to fetch user list for filtering.");
+    } catch(e: any) {
+        setError(e.message || "Failed to fetch user list for filtering.");
         console.error(e);
     } finally {
         setIsFetchingUsers(false);
@@ -121,8 +125,12 @@ export default function AuditLogsPage() {
         
         setLogs(formattedLogs);
 
-      } catch (e) {
-        setError('Failed to fetch audit logs.');
+      } catch (e: any) {
+        if (typeof e.message === 'string' && e.message.includes('permission')) {
+             setError('You do not have permission to view audit logs.');
+        } else {
+            setError('Failed to fetch audit logs.');
+        }
         console.error(e);
       } finally {
         setIsLoading(false);
@@ -143,7 +151,9 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
       // Trigger fetchLogs whenever the filters change, or when the currentUser is first loaded.
-      fetchLogs();
+      if (currentUser) {
+        fetchLogs();
+      }
   }, [fetchLogs, currentUser]);
 
 
@@ -327,7 +337,7 @@ export default function AuditLogsPage() {
                                 <SelectValue placeholder="Select a user..." />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value={currentUser?.id.id || 'current'}>Current User ({currentUser?.email})</SelectItem>
+                                {currentUser && <SelectItem value={currentUser.id.id}>Current User ({currentUser.email})</SelectItem>}
                                 <SelectItem value="all">All Users</SelectItem>
                                 {allUsers.map(user => (
                                     <SelectItem key={user.id.id} value={user.id.id}>{user.email}</SelectItem>

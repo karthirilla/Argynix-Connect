@@ -56,7 +56,7 @@ export type AppAuditLog = {
     entityName: string | null;
     userName: string;
     actionType: string;
-    actionStatus: string;
+    actionStatus: 'SUCCESS' | 'FAILURE';
     failureDetails: string | null;
 };
 
