@@ -4,15 +4,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowRight, BarChart, HardDrive, Download, Siren, CheckCircle, PieChart } from 'lucide-react';
-import { getDevices, getDeviceAttributes, getDashboards, getAlarms, getUser } from '@/lib/api';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { ArrowRight, BarChart, HardDrive, Download, Siren, CheckCircle, PieChart, Info } from 'lucide-react';
+import { getDevices, getDeviceAttributes, getDashboards, getAlarms, getUser, getTenantUsageInfo } from '@/lib/api';
 import { StatsCard, StatsCardSkeleton } from '@/components/dashboard/stats-card';
 import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, Cell, Legend, BarChart as RechartsBarChart } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Toaster } from '@/components/ui/toaster';
+import { Progress } from '@/components/ui/progress';
+import type { ThingsboardUsageInfo } from '@/lib/types';
+
 
 const features = [
   {
@@ -73,10 +76,25 @@ const PIE_CHART_COLORS = [
   'hsl(var(--chart-5))',
 ];
 
+function UsageBar({ label, value, max }: { label: string, value: number, max: number }) {
+    if (max === 0) return null;
+    const percentage = (value / max) * 100;
+    return (
+        <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{label}</span>
+                <span>{value} / {max}</span>
+            </div>
+            <Progress value={percentage} />
+        </div>
+    )
+}
+
 function HomePageContent() {
     const [deviceStats, setDeviceStats] = useState<DeviceStats | null>(null);
     const [dashboardCount, setDashboardCount] = useState<number | null>(null);
     const [alarmStats, setAlarmStats] = useState<AlarmStats | null>(null);
+    const [usageInfo, setUsageInfo] = useState<ThingsboardUsageInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -123,9 +141,16 @@ function HomePageContent() {
                 const user = await getUser(token, instanceUrl);
                 const tbDashboards = await getDashboards(token, instanceUrl, user.customerId?.id);
                 setDashboardCount(tbDashboards.length);
+
+                if (user.authority === 'TENANT_ADMIN') {
+                    const tenantUsage = await getTenantUsageInfo(token, instanceUrl);
+                    setUsageInfo(tenantUsage);
+                }
+
             } catch(e: any) {
-                console.error("Could not fetch dashboard stats:", e.message);
+                console.error("Could not fetch dashboard or usage stats:", e.message);
                 setDashboardCount(null);
+                setUsageInfo(null);
             }
             
             try {
@@ -330,6 +355,26 @@ function HomePageContent() {
                             ))}
                         </CardContent>
                     </Card>
+
+                    {usageInfo && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Tenant Usage</CardTitle>
+                                <CardDescription>Your current resource usage against limits.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <UsageBar label="Devices" value={usageInfo.devices} max={usageInfo.maxDevices} />
+                                <UsageBar label="Assets" value={usageInfo.assets} max={usageInfo.maxAssets} />
+                                <UsageBar label="Customers" value={usageInfo.customers} max={usageInfo.maxCustomers} />
+                                <UsageBar label="Users" value={usageInfo.users} max={usageInfo.maxUsers} />
+                                <UsageBar label="Dashboards" value={usageInfo.dashboards} max={usageInfo.maxDashboards} />
+                                <UsageBar label="Rule Chains" value={usageInfo.ruleChains} max={usageInfo.maxRuleChains} />
+                            </CardContent>
+                            <CardFooter>
+                                <p className="text-xs text-muted-foreground">This information is for the current tenant.</p>
+                            </CardFooter>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

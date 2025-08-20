@@ -1,4 +1,3 @@
-
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -250,4 +249,30 @@ export interface ThingsboardNotification {
         description: string;
     };
     ruleId: ThingsboardId;
+}
+
+export interface ThingsboardUsageInfo {
+    devices: number;
+    maxDevices: number;
+    assets: number;
+    maxAssets: number;
+    customers: number;
+    maxCustomers: number;
+    users: number;
+    maxUsers: number;
+    dashboards: number;
+    maxDashboards: number;
+    ruleChains: number;
+    maxRuleChains: number;
+    emails: number;
+    maxEmails: number;
+    sms: number;
+    maxSms: number;
+    jsExecutions: number;
+    maxJsExecutions: number;
+    maxDataPoints: number;
+    maxTransportMessages: number;
+    maxReExecutions: number;
+    transportDataPoints: number;
+    reExecutions: number;
 }

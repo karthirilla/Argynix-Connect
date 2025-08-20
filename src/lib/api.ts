@@ -1,7 +1,6 @@
-
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -601,4 +600,11 @@ export async function markAllNotificationsAsRead(token: string, instanceUrl: str
 export async function deleteNotification(token: string, instanceUrl: string, notificationId: string): Promise<void> {
     const url = `/api/notification/${notificationId}`;
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+
+// Usage Info
+export async function getTenantUsageInfo(token: string, instanceUrl: string): Promise<ThingsboardUsageInfo> {
+    const url = `/api/usage`;
+    return await fetchThingsboard<ThingsboardUsageInfo>(url, token, instanceUrl);
 }
