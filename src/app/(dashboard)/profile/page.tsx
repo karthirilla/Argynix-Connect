@@ -82,13 +82,25 @@ export default function ProfilePage() {
       try {
         const userData = await getUser(token, instanceUrl);
         setUser(userData);
+        
+        let additionalInfo = userData.additionalInfo;
+        // Sometimes additionalInfo is a stringified JSON, so we need to parse it.
+        if (typeof additionalInfo === 'string') {
+          try {
+            additionalInfo = JSON.parse(additionalInfo);
+          } catch(e) {
+            console.error("Failed to parse user additionalInfo", e);
+            additionalInfo = {};
+          }
+        }
+
         profileForm.reset({
             email: userData.email,
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
             additionalInfo: {
-                description: userData.additionalInfo?.description || '',
-                mobile: userData.additionalInfo?.mobile || '',
+                description: additionalInfo?.description || '',
+                mobile: additionalInfo?.mobile || '',
             }
         });
       } catch (e: any) {
@@ -116,7 +128,7 @@ export default function ProfilePage() {
             firstName: data.firstName,
             lastName: data.lastName,
             additionalInfo: {
-                ...user.additionalInfo,
+                ...(user.additionalInfo || {}),
                 description: data.additionalInfo?.description,
                 mobile: data.additionalInfo?.mobile,
             }
