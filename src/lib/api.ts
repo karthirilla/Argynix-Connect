@@ -1,7 +1,7 @@
 
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -271,16 +271,12 @@ export async function makeDashboardPublic(
     return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl, { method: 'POST' });
 }
 
-export async function getDevices(
-  token:string,
-  instanceUrl: string,
-  customerId: string | null
-): Promise<ThingsboardDevice[]> {
+export async function getDevices(token: string, instanceUrl: string, customerId: string | null): Promise<ThingsboardDevice[]> {
     let url: string;
     if (customerId) {
-        url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
+        url = `/api/customer/${customerId}/devices?pageSize=1000&page=0`;
     } else {
-        url = `/api/tenant/devices?pageSize=100&page=0`;
+        url = `/api/tenant/devices?pageSize=1000&page=0`;
     }
     const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(url, token, instanceUrl);
     return result?.data || [];
@@ -566,4 +562,30 @@ export async function deleteJob(token: string, instanceUrl: string, jobId: strin
 export async function cancelJob(token: string, instanceUrl: string, jobId: string): Promise<void> {
     const url = `/api/job/${jobId}/cancel`;
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
+}
+
+// Notifications
+export async function getNotifications(token: string, instanceUrl: string, unreadOnly: boolean = false): Promise<{ data: ThingsboardNotification[], hasNext: boolean, totalElements: number }> {
+    const url = `/api/notifications?pageSize=20&page=0&sortProperty=createdTime&sortOrder=DESC&unreadOnly=${unreadOnly}`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
+export async function getUnreadNotificationsCount(token: string, instanceUrl: string): Promise<{ count: number }> {
+    const url = `/api/notifications/unread/count`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
+export async function markNotificationAsRead(token: string, instanceUrl: string, notificationId: string): Promise<void> {
+    const url = `/api/notification/${notificationId}/read`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'PUT' });
+}
+
+export async function markAllNotificationsAsRead(token: string, instanceUrl: string): Promise<void> {
+    const url = `/api/notifications/read`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'PUT' });
+}
+
+export async function deleteNotification(token: string, instanceUrl: string, notificationId: string): Promise<void> {
+    const url = `/api/notification/${notificationId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
 }

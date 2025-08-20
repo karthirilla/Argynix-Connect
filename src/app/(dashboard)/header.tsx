@@ -19,6 +19,7 @@ import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { logout } from '@/lib/api';
+import { Notifications } from '@/components/dashboard/notifications';
 
 export function AppHeader() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export function AppHeader() {
     return 'Home';
   }
 
-  const showBackButton = /^\/(devices|assets|dashboards|customers)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
+  const showBackButton = /^\/(devices|assets|dashboards|alarms)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
   const showPrintButton = pathname.includes('/iframe');
 
   return (
@@ -107,6 +108,7 @@ export function AppHeader() {
                     <span className="sr-only">Print</span>
                 </Button>
             )}
+            <Notifications />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">

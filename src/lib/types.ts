@@ -241,3 +241,21 @@ export interface ThingsboardJob {
     };
     entityId: ThingsboardId | null;
 }
+
+export interface ThingsboardNotification {
+    id: ThingsboardId;
+    createdTime: number;
+    recipientId: ThingsboardId;
+    requestId: ThingsboardId;
+    type: string; // e.g. ALARM, DEVICE_ACTIVITY
+    deliveryMethod: 'WEB';
+    subject: string;
+    text: string;
+    status: 'SENT' | 'READ';
+    additionalInfo: any;
+    info: {
+        title: string;
+        description: string;
+    };
+    ruleId: ThingsboardId;
+}
