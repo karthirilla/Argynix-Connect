@@ -61,7 +61,7 @@ async function fetchThingsboard<T>(
 
 
   // If unauthorized and not a retry, try to refresh the token
-  if (response.status === 401 && !isRetry) {
+  if (response.status === 401 && !isRetry && !url.includes('/api/auth/logout')) {
     const refreshToken = localStorage.getItem('tb_refresh_token');
     if (refreshToken) {
       const newTokens = await getNewToken(instanceUrl, refreshToken);
@@ -96,7 +96,7 @@ async function fetchThingsboard<T>(
     throw new Error(`${errorBody}`);
   }
 
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
+  if (response.status === 204 || response.headers.get('content-length') === '0' || response.headers.get('Content-Length') === '0') {
     return null as T;
   }
 
@@ -122,6 +122,16 @@ export async function changePassword(token: string, instanceUrl: string, current
     });
 }
 
+export async function requestPasswordReset(instanceUrl: string, email: string): Promise<void> {
+    const url = '/api/noauth/resetPasswordByEmail';
+    // This is a no-auth endpoint, so token is null
+    await fetchThingsboard<void>(url, null, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    });
+}
+
+
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
@@ -144,6 +154,10 @@ export async function getCustomers(token: string, instanceUrl: string): Promise<
 }
 
 export async function getCustomerUsers(token: string, instanceUrl: string, customerId: string): Promise<ThingsboardUser[]> {
+    // Exclude the 'public' customer from user lookups
+    if (customerId === '13814000-1dd2-11b2-8080-808080808080') {
+        return [];
+    }
     const url = `/api/customer/${customerId}/users?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
     return result?.data || [];

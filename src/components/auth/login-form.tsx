@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../ui/dialog';
+import { requestPasswordReset } from '@/lib/api';
 
 const loginSchema = z.object({
   username: z.string().email({ message: "Please enter a valid email address." }).min(1, { message: "Username is required." }),
@@ -136,14 +137,7 @@ export default function LoginForm() {
     }
 
     try {
-        await fetch(`${instanceUrl}/api/noauth/resetPasswordByEmail`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ email: data.email }),
-        });
+        await requestPasswordReset(instanceUrl, data.email);
 
         // ThingsBoard API returns 200 OK regardless of whether email exists for security reasons
         toast({
