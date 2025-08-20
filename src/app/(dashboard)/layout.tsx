@@ -28,7 +28,16 @@ export default function DashboardLayout({
       router.replace('/login');
     }
     setIsAuthenticating(false);
+
+    const savedState = localStorage.getItem('sidebarCollapsed') === 'true';
+    setIsSidebarCollapsed(savedState);
   }, [router]);
+
+  const handleSetIsSidebarCollapsed = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+    localStorage.setItem('sidebarCollapsed', String(collapsed));
+  };
+
 
   if (isAuthenticating) {
     return (
@@ -59,7 +68,7 @@ export default function DashboardLayout({
     >
       <AppSidebar 
         isCollapsed={isSidebarCollapsed} 
-        setIsCollapsed={setIsSidebarCollapsed}
+        setIsCollapsed={handleSetIsSidebarCollapsed}
       />
       <div className="flex flex-col h-screen">
         <AppHeader />
