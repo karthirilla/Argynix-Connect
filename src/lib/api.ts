@@ -167,6 +167,24 @@ export async function getCustomers(token: string, instanceUrl: string): Promise<
     return result?.data || [];
 }
 
+export async function saveCustomer(
+    token: string,
+    instanceUrl: string,
+    customerData: Partial<ThingsboardCustomer>
+): Promise<ThingsboardCustomer> {
+    const url = '/api/customer';
+    return await fetchThingsboard<ThingsboardCustomer>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(customerData),
+    });
+}
+
+
+export async function deleteCustomer(token: string, instanceUrl: string, customerId: string): Promise<void> {
+    const url = `/api/customer/${customerId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
 export async function getCustomerUsers(token: string, instanceUrl: string, customerId: string): Promise<ThingsboardUser[]> {
     // Exclude the 'public' customer from user lookups
     if (customerId === '13814000-1dd2-11b2-8080-808080808080') {

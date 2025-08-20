@@ -1,3 +1,4 @@
+
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -109,6 +110,7 @@ export type ThingsboardCustomer = {
     address2?: string | null;
     zip?: string | null;
     additionalInfo?: any;
+    tenantId?: ThingsboardId;
 }
 
 export type ThingsboardUser = {

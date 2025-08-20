@@ -64,12 +64,13 @@ export function AppHeader() {
     if (pathname.startsWith('/data-export')) return 'Data Export';
     if (pathname.startsWith('/profile')) return 'User Profile';
     if (pathname.startsWith('/users')) return 'User Management';
+    if (pathname.startsWith('/customers')) return 'Customer Management';
     if (pathname.startsWith('/audit-logs')) return 'Audit Logs';
     if (pathname.startsWith('/admin/settings')) return 'Admin Settings';
     return 'Home';
   }
 
-  const showBackButton = /^\/(devices|assets|dashboards)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
+  const showBackButton = /^\/(devices|assets|dashboards|customers)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
   const showPrintButton = pathname.includes('/iframe');
 
   return (
