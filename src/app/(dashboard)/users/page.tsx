@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { getCustomers, getCustomerUsers, getTenantAdmins, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail } from '@/lib/api';
+import { getCustomers, getCustomerUsers, getTenantAdmins, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail, getAllUsersBySysAdmin } from '@/lib/api';
 import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -196,11 +196,11 @@ export default function UsersPage() {
                      }
                 }
             } else if (currentUserData.authority === 'SYS_ADMIN') {
-                 // Sys admin logic can be added here if needed in the future
-                 // For now, they will see the permission denied message.
+                 const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
+                 allUsers.push(...sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id));
             } else {
-                // Customer user
-                 setIsLoading(false);
+                // Customer user - no permission to see this page.
+                setIsLoading(false);
                 return;
             }
 
@@ -230,7 +230,10 @@ export default function UsersPage() {
             
             setUsers(usersWithPermissions);
         } catch (e: any) {
-            if (!e.message.includes('permission')) {
+            if (e.message.includes('permission')) {
+              // This case should be handled by the logic above, but as a fallback:
+              setError(e.message);
+            } else {
               setError(e.message || 'Failed to fetch users.');
             }
             console.error(e);
@@ -344,14 +347,14 @@ export default function UsersPage() {
         );
     }
     
-    if (currentUser?.authority !== 'TENANT_ADMIN') {
+    if (currentUser?.authority === 'CUSTOMER_USER') {
         return (
              <div className="container mx-auto px-0 md:px-4">
                 <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
                     <UserCog className="h-16 w-16 text-muted-foreground mb-4" />
                     <h3 className="text-2xl font-semibold">Permission Denied</h3>
                     <p className="text-muted-foreground text-center max-w-md mt-2">
-                        You do not have sufficient permissions to manage Users. This page is available only to Tenant Administrators.
+                        You do not have sufficient permissions to manage Users. This page is available only to Tenant or System Administrators.
                     </p>
                 </div>
             </div>
@@ -378,7 +381,7 @@ export default function UsersPage() {
                     <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
                     <p className="text-muted-foreground">Manage permissions and access for all users.</p>
                 </div>
-                 <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />
+                {currentUser?.authority === 'TENANT_ADMIN' && <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />}
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map(user => (
@@ -397,7 +400,7 @@ export default function UsersPage() {
                             <UserIcon className="h-5 w-5 text-muted-foreground"/> {user.firstName || 'No'} {user.lastName || 'Name'}
                             </CardTitle>
                             <CardDescription>
-                                {user.email} <Badge variant={user.authority === 'TENANT_ADMIN' ? 'default' : 'outline'} className="ml-2">{user.authority.replace('_', ' ')}</Badge>
+                                {user.email} <Badge variant={user.authority === 'TENANT_ADMIN' ? 'default' : (user.authority === 'SYS_ADMIN' ? 'destructive' : 'outline')} className="ml-2">{user.authority.replace('_', ' ')}</Badge>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4 flex-grow">
@@ -425,7 +428,7 @@ export default function UsersPage() {
                                     </>
                                 ) : (
                                     <div className="text-sm text-muted-foreground text-center p-4 bg-muted rounded-md">
-                                        Tenant Admins have all permissions.
+                                        Admins have all permissions.
                                     </div>
                                 )}
                             </div>

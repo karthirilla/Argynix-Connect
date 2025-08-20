@@ -163,9 +163,14 @@ export async function getTenants(token: string, instanceUrl: string): Promise<Th
     return result?.data || [];
 }
 
-
 export async function getTenantAdmins(token: string, instanceUrl: string, tenantId: string): Promise<ThingsboardUser[]> {
     const url = `/api/tenant/${tenantId}/users?pageSize=1000&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
+export async function getAllUsersBySysAdmin(token: string, instanceUrl: string): Promise<ThingsboardUser[]> {
+    const url = '/api/users?pageSize=1000&page=0';
     const result = await fetchThingsboard<{ data: ThingsboardUser[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
@@ -180,8 +185,10 @@ export async function setUserCredentialsEnabled(token: string, instanceUrl: stri
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
 }
 
-export async function getCustomers(token: string, instanceUrl: string): Promise<ThingsboardCustomer[]> {
-    const url = `/api/customers?pageSize=100&page=0`;
+export async function getCustomers(token: string, instanceUrl: string, tenantId?: string): Promise<ThingsboardCustomer[]> {
+    const url = tenantId 
+      ? `/api/tenant/${tenantId}/customers?pageSize=100&page=0`
+      : `/api/customers?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardCustomer[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
