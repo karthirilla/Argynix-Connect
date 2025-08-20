@@ -1,4 +1,3 @@
-
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -222,4 +221,14 @@ export interface CalculatedField {
     entityId: ThingsboardId;
     name: string;
     script: string;
+}
+
+
+// From Entity Query Controller
+export interface EntityData {
+  entityId: ThingsboardId;
+  latest: {
+    ENTITY_FIELD: { [key: string]: { value: any, ts: number } };
+    ATTRIBUTE: { [key: string]: { value: any, ts: number } };
+  };
 }

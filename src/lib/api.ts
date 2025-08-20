@@ -1,7 +1,6 @@
-
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, EntityData } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -151,6 +150,7 @@ export async function saveUser(
     });
 }
 
+
 export async function deleteUser(token: string, instanceUrl: string, userId: string): Promise<void> {
     const url = `/api/user/${userId}`;
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
@@ -270,19 +270,53 @@ export async function makeDashboardPublic(
     return await fetchThingsboard<ThingsboardDashboard>(url, token, instanceUrl, { method: 'POST' });
 }
 
+export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<EntityData[]> {
+    const url = '/api/entitiesQuery/find';
+    const result = await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(query)
+    });
+    return result?.data || [];
+}
+
 export async function getDevices(
   token:string,
   instanceUrl: string,
   customerId: string | null
-): Promise<ThingsboardDevice[]> {
-    let url: string;
-    if (customerId) {
-        url = `/api/customer/${customerId}/devices?pageSize=100&page=0`;
-    } else {
-        url = `/api/tenant/devices?pageSize=100&page=0`;
-    }
-    const result = await fetchThingsboard<{ data: ThingsboardDevice[] }>(url, token, instanceUrl);
-    return result?.data || [];
+): Promise<EntityData[]> {
+    const query = {
+        entityFilter: {
+            type: "relationsQuery",
+            rootEntity: {
+                entityType: customerId ? "CUSTOMER" : "TENANT",
+                id: customerId || (await getUser(token, instanceUrl)).tenantId.id
+            },
+            direction: "FROM",
+            filters: [{
+                relationType: "Contains",
+                entityTypes: ["DEVICE"]
+            }]
+        },
+        entityFields: [
+            { type: "ENTITY_FIELD", key: "name" },
+            { type: "ENTITY_FIELD", key: "type" },
+            { type: "ENTITY_FIELD", key: "label" }
+        ],
+        latestValues: [
+            { type: "ATTRIBUTE", key: "active" },
+            { type: "ATTRIBUTE", key: "lastActivityTime" }
+        ],
+        pageLink: {
+            page: 0,
+            pageSize: 100,
+            sortOrder: {
+                key: { type: "ENTITY_FIELD", key: "createdTime" },
+                direction: "DESC"
+            }
+        }
+    };
+
+    return findEntityDataByQuery(token, instanceUrl, query);
 }
 
 export async function getDeviceById(

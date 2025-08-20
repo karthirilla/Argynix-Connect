@@ -1,4 +1,3 @@
-
 // /app/devices/page.tsx
 "use client";
 
@@ -15,8 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { getDevices, getDeviceAttributes, getUser, deleteDevice } from '@/lib/api';
-import type { Device as AppDevice, ThingsboardDevice, ThingsboardUser } from '@/lib/types';
+import { getDevices, getUser, deleteDevice } from '@/lib/api';
+import type { Device as AppDevice, ThingsboardUser, EntityData } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye, HardDrive, PlusCircle, Search, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -61,43 +60,28 @@ export default function DevicesPage() {
       setInstanceUrl(storedInstanceUrl);
 
       try {
-        const [tbDevices, userData] = await Promise.all([
+        const [devicesData, userData] = await Promise.all([
           getDevices(token, storedInstanceUrl, customerId),
           getUser(token, storedInstanceUrl)
         ]);
-
+        
         setCurrentUser(userData);
         
-        const devicesWithStatus = await Promise.all(tbDevices.map(async (d) => {
-            let status = 'Inactive';
-            let lastActivity = 'N/A';
+        const formattedDevices: AppDevice[] = devicesData.map((d: EntityData) => {
+            const activeAttr = d.latest.ATTRIBUTE?.active;
+            const lastActivityAttr = d.latest.ATTRIBUTE?.lastActivityTime;
             
-            try {
-                const attributes = await getDeviceAttributes(token, storedInstanceUrl, d.id.id);
-                const activeAttr = attributes.find(attr => attr.key === 'active');
-                const lastActivityAttr = attributes.find(attr => attr.key === 'lastActivityTime');
-
-                if (activeAttr) {
-                    status = activeAttr.value ? 'Active' : 'Inactive';
-                }
-                if (lastActivityAttr) {
-                    lastActivity = new Date(lastActivityAttr.value).toLocaleString();
-                }
-            } catch (e) {
-                console.error(`Failed to get attributes for device ${d.id.id}`, e)
-            }
-
             return {
-                id: d.id.id,
-                name: d.name,
-                type: d.type,
-                label: d.label,
-                status: status as 'Active' | 'Inactive',
-                lastActivity: lastActivity,
+                id: d.entityId.id,
+                name: d.latest.ENTITY_FIELD.name.value,
+                type: d.latest.ENTITY_FIELD.type.value,
+                label: d.latest.ENTITY_FIELD.label?.value || null,
+                status: activeAttr?.value ? 'Active' : 'Inactive',
+                lastActivity: lastActivityAttr ? new Date(lastActivityAttr.value).toLocaleString() : 'N/A'
             };
-        }));
+        });
         
-        setDevices(devicesWithStatus);
+        setDevices(formattedDevices);
 
       } catch (e: any) {
         setError('Failed to fetch devices or user data.');
