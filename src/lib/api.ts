@@ -272,11 +272,11 @@ export async function makeDashboardPublic(
 
 export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<EntityData[]> {
     const url = '/api/entitiesQuery/find';
-    const result = await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
+    const result = await fetchThingsboard<EntityData[]>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(query)
     });
-    return result?.data || [];
+    return result || [];
 }
 
 export async function getDevices(
@@ -284,13 +284,14 @@ export async function getDevices(
   instanceUrl: string,
   customerId: string | null
 ): Promise<EntityData[]> {
+    const rootEntityInfo = customerId 
+        ? { entityType: "CUSTOMER", id: customerId }
+        : { entityType: "TENANT", id: (await getUser(token, instanceUrl)).tenantId.id };
+
     const query = {
         entityFilter: {
             type: "relationsQuery",
-            rootEntity: {
-                entityType: customerId ? "CUSTOMER" : "TENANT",
-                id: customerId || (await getUser(token, instanceUrl)).tenantId.id
-            },
+            rootEntity: rootEntityInfo,
             direction: "FROM",
             filters: [{
                 relationType: "Contains",

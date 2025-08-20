@@ -47,9 +47,11 @@ export default function DevicesPage() {
   const { toast } = useToast();
 
   const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
       const token = localStorage.getItem('tb_auth_token');
       const storedInstanceUrl = localStorage.getItem('tb_instance_url');
-      const customerId = localStorage.getItem('tb_customer_id');
+      
 
       if (!token || !storedInstanceUrl) {
         setError('Authentication details not found.');
@@ -61,7 +63,7 @@ export default function DevicesPage() {
 
       try {
         const [devicesData, userData] = await Promise.all([
-          getDevices(token, storedInstanceUrl, customerId),
+          getDevices(token, storedInstanceUrl, localStorage.getItem('tb_customer_id')),
           getUser(token, storedInstanceUrl)
         ]);
         
