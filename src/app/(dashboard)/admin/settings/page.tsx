@@ -85,8 +85,8 @@ export default function AdminSettingsPage() {
     }
 
     // Fetch security settings
-    try {
-        const securitySettings = await getSecuritySettings(token, instanceUrl);
+    getSecuritySettings(token, instanceUrl)
+      .then(securitySettings => {
         if (securitySettings?.passwordPolicy) {
           securityForm.reset({
               passwordPolicy_minimumLength: securitySettings.passwordPolicy.minimumLength,
@@ -97,17 +97,19 @@ export default function AdminSettingsPage() {
               passwordPolicy_allowWhitespace: securitySettings.passwordPolicy.allowWhitespace,
           });
         }
-    } catch(e: any) {
+      })
+      .catch((e: any) => {
         if (e.message && e.message.toLowerCase().includes('permission')) {
              setSecurityError('permission_denied');
         } else {
             setSecurityError(e.message || 'Failed to fetch security settings.');
         }
-    }
+      });
+
 
     // Fetch mail settings
-    try {
-        const mailSettings = await getAdminSettings(token, instanceUrl, 'mail');
+    getAdminSettings(token, instanceUrl, 'mail')
+      .then(mailSettings => {
         if (mailSettings) {
             mailForm.reset({
                 ...mailSettings,
@@ -117,13 +119,14 @@ export default function AdminSettingsPage() {
                 enableTls: mailSettings.enableTls === 'true' || mailSettings.enableTls === true,
             });
         }
-    } catch (e: any) {
+      })
+      .catch((e: any) => {
         if (e.message && e.message.toLowerCase().includes('permission')) {
             setMailError('permission_denied');
         } else {
             setMailError(e.message || 'Failed to fetch mail settings.');
         }
-    }
+      });
 
     setIsLoading(false);
   }, [mailForm, securityForm]);
