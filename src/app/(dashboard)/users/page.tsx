@@ -166,7 +166,6 @@ export default function UsersPage() {
     const fetchUsersAndPermissions = async () => {
         setIsLoading(true);
         setError(null);
-        setUsers([]);
         
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -184,33 +183,32 @@ export default function UsersPage() {
             let allUsers: ThingsboardUser[] = [];
             
             if (currentUserData.authority === 'SYS_ADMIN') {
-                const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-                allUsers = sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id);
-
+                allUsers = await getAllUsersBySysAdmin(token, instanceUrl);
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
-                const [customersData, tenantAdmins] = await Promise.all([
+                const [customersData, tenantAdminsData] = await Promise.all([
                     getCustomers(token, instanceUrl),
                     getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id),
                 ]);
                 setCustomers(customersData);
-
-                allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
+                allUsers.push(...tenantAdminsData);
                 
                 const customerUsersPromises = customersData
                     .filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080')
                     .map(customer => getCustomerUsers(token, instanceUrl, customer.id.id));
 
                 const customerUsersNested = await Promise.all(customerUsersPromises);
-                const customerUsers = customerUsersNested.flat();
-                allUsers.push(...customerUsers);
+                allUsers.push(...customerUsersNested.flat());
             } else {
-                // For CUSTOMER_USER or any other role, they don't have permission to see this page.
+                 // For CUSTOMER_USER or any other role, they don't have permission to see this page.
                 setIsLoading(false);
                 return;
             }
+            
+            // Filter out the current user from the list
+            const otherUsers = allUsers.filter(u => u.id.id !== currentUserData.id.id);
 
             const usersWithPermissions = await Promise.all(
-                allUsers.map(async (user) => {
+                otherUsers.map(async (user) => {
                     try {
                         const attributes = await getUserAttributes(token, instanceUrl, user.id.id);
                         
@@ -218,7 +216,7 @@ export default function UsersPage() {
                         let userEnabled = true;
 
                         const credentialsEnabledAttr = attributes.find(attr => attr.key === 'userCredentialsEnabled');
-                        if (credentialsEnabledAttr) {
+                        if (credentialsEnabledAttr !== undefined) {
                             userEnabled = credentialsEnabledAttr.value;
                         }
 
@@ -485,5 +483,3 @@ export default function UsersPage() {
         </div>
     );
 }
-
-    
