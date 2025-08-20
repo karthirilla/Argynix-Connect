@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { getCustomers, getTenantUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail } from '@/lib/api';
+import { getCustomers, getCustomerUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail } from '@/lib/api';
 import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -180,23 +180,26 @@ export default function UsersPage() {
             const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
             
-            let allUsers: ThingsboardUser[] = [];
-            
             // This page is only for Tenant Admins.
             if (currentUserData.authority !== 'TENANT_ADMIN') {
                 setIsLoading(false);
                 return;
             }
 
-            const [customersData, tenantUsersData] = await Promise.all([
-                getCustomers(token, instanceUrl),
-                getTenantUsers(token, instanceUrl, currentUserData.tenantId.id),
-            ]);
-
+            const customersData = await getCustomers(token, instanceUrl, currentUserData.tenantId.id);
             setCustomers(customersData);
-            allUsers.push(...tenantUsersData);
-
-            const otherUsers = allUsers.filter(u => u.id.id !== currentUserData.id.id);
+            
+            const customerUsersPromises = customersData.map(customer => {
+                // The 'Public' customer cannot have users, so skip it.
+                if (customer.id.id === '13814000-1dd2-11b2-8080-808080808080') {
+                    return Promise.resolve([]);
+                }
+                return getCustomerUsers(token, instanceUrl, customer.id.id);
+            });
+            const usersByCustomer = await Promise.all(customerUsersPromises);
+            const allCustomerUsers = usersByCustomer.flat();
+            
+            const otherUsers = allCustomerUsers.filter(u => u.id.id !== currentUserData.id.id);
 
             const usersWithPermissions = await Promise.all(
                 otherUsers.map(async (user) => {
