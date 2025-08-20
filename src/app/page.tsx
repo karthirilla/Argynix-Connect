@@ -219,7 +219,7 @@ function HomePageContent() {
     }
 
     return (
-        <div className="container mx-auto space-y-8 px-0 md:px-4">
+        <div className="space-y-8">
              <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Welcome to Argynix-Connect</h1>
                 <p className="text-muted-foreground max-w-2xl">
@@ -232,8 +232,8 @@ function HomePageContent() {
                  {renderStats()}
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2">
+            <div className="grid gap-8 lg:grid-cols-5">
+                <div className="lg:col-span-3">
                      <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Alarms by Severity</CardTitle>
@@ -275,7 +275,7 @@ function HomePageContent() {
                     </Card>
                 </div>
            
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-2">
                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Quick Access</CardTitle>
@@ -351,11 +351,11 @@ export default function RootPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <AppSidebar />
-      <div className="flex flex-1 flex-col bg-muted/40">
+      <div className="flex flex-col relative h-screen">
         <AppHeader />
-        <main className="flex-1 p-4 md:p-8 lg:p-10 flex flex-col relative overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10">
           <HomePageContent />
         </main>
         <Toaster />

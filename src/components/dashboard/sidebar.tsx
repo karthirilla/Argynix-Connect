@@ -98,14 +98,14 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
   );
 
   const navContent = (
-    <div className="flex flex-col justify-between h-full">
-        <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
+    <div className="flex-1 overflow-y-auto">
+        <nav className={cn("grid items-start gap-1 text-sm font-medium", isMobile ? "px-2 py-2" : "px-2 py-4 lg:px-4")}>
             {visibleNavItems.map(item => renderNavItem(item))}
         </nav>
         {visibleAdminNavItems.length > 0 && (
-            <div className="p-4">
+            <div className="mt-auto p-4">
                  <h3 className="px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</h3>
-                 <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
+                 <nav className={cn("grid items-start gap-1 text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
                     {visibleAdminNavItems.map(item => renderNavItem(item))}
                 </nav>
             </div>
@@ -124,26 +124,20 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
                     <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
             </SheetHeader>
-            <div className="flex-1 overflow-y-auto pt-2">
-                {finalContent}
-            </div>
+            {finalContent}
         </>
     )
   }
 
   return (
-    <div className="hidden border-r border-sidebar-border bg-sidebar md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
+    <div className="hidden border-r border-sidebar-border bg-sidebar md:flex md:flex-col">
         <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6 text-primary" />
             <span className="">Argynix-Connect</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
-          {finalContent}
-        </div>
-      </div>
+        {finalContent}
     </div>
   );
 }
