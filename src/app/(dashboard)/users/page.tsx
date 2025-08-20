@@ -185,7 +185,6 @@ export default function UsersPage() {
             
             if (currentUserData.authority === 'SYS_ADMIN') {
                 const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-                // Exclude the current sys admin from the list
                 allUsers = sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id);
 
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
