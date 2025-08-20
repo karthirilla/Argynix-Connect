@@ -165,6 +165,10 @@ export default function UsersPage() {
 
     const fetchUsersAndPermissions = async () => {
         setIsLoading(true);
+        setError(null);
+        setUsers([]);
+        setCustomers([]);
+        
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
 
@@ -179,8 +183,12 @@ export default function UsersPage() {
             setCurrentUser(currentUserData);
             
             let allUsers: ThingsboardUser[] = [];
-
-            if (currentUserData.authority === 'TENANT_ADMIN') {
+            
+            if (currentUserData.authority === 'SYS_ADMIN') {
+                const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
+                allUsers.push(...sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id));
+            
+            } else if (currentUserData.authority === 'TENANT_ADMIN') {
                 const customersData = await getCustomers(token, instanceUrl);
                 setCustomers(customersData);
 
@@ -195,9 +203,6 @@ export default function UsersPage() {
                         allUsers.push(...customerUsers);
                      }
                 }
-            } else if (currentUserData.authority === 'SYS_ADMIN') {
-                 const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-                 allUsers.push(...sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id));
             } else {
                 // Customer user - no permission to see this page.
                 setIsLoading(false);
@@ -230,12 +235,7 @@ export default function UsersPage() {
             
             setUsers(usersWithPermissions);
         } catch (e: any) {
-            if (e.message.includes('permission')) {
-              // This case should be handled by the logic above, but as a fallback:
-              setError(e.message);
-            } else {
-              setError(e.message || 'Failed to fetch users.');
-            }
+            setError(e.message || 'Failed to fetch user data.');
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -367,9 +367,9 @@ export default function UsersPage() {
                 <UserIcon className="h-16 w-16 text-muted-foreground mb-4" />
                 <h3 className="text-2xl font-semibold">No Other Users Found</h3>
                 <p className="text-muted-foreground text-center max-w-md mt-2">
-                    There are no other users for this tenant.
+                    There are no other users for this scope.
                 </p>
-                <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>
+                {currentUser?.authority === 'TENANT_ADMIN' && <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>}
             </div>
         );
     }

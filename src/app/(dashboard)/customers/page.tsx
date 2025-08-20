@@ -179,6 +179,8 @@ export default function CustomersPage() {
     const { toast } = useToast();
 
     const fetchCustomers = async () => {
+        setIsLoading(true);
+        setError(null);
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
 
@@ -188,7 +190,6 @@ export default function CustomersPage() {
             return;
         }
 
-        setIsLoading(true);
         try {
             const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
@@ -197,10 +198,6 @@ export default function CustomersPage() {
                 const customersData = await getCustomers(token, instanceUrl);
                 // Filter out the "Public" customer as it's not a real manageable entity
                 setCustomers(customersData.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080'));
-            } else if (currentUserData.authority === 'SYS_ADMIN') {
-                // A SysAdmin can see all customers, but needs to be fetched per-tenant.
-                // This is a complex view, so for now we just show an info message.
-                // The main purpose is to prevent a permission error.
             }
 
         } catch (e: any) {
@@ -336,3 +333,5 @@ export default function CustomersPage() {
         </div>
     );
 }
+
+    
