@@ -153,7 +153,7 @@ export function Notifications() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle>Notifications</CardTitle>
                 <div className="flex items-center gap-2">
-                    {notifications.length > 0 && unreadCount > 0 && (
+                    {unreadCount > 0 && (
                         <Button variant="link" size="sm" onClick={handleMarkAllRead} disabled={isProcessing === 'all'} className="p-0 h-auto">
                             {isProcessing === 'all' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                             Mark all as read
