@@ -1,21 +1,23 @@
+
 // /app/devices/[id]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useParams, useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { 
     getDeviceById, getDeviceTelemetry, getDeviceTelemetryKeys, 
-    getCalculatedFieldsByEntityId, saveCalculatedField, deleteCalculatedField, testScript 
+    getCalculatedFieldsByEntityId, saveCalculatedField, deleteCalculatedField, testScript,
+    deleteDevice, getUser
 } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, ArrowLeft, Rss, Calendar as CalendarIcon, Loader2, Cpu, PlusCircle, Pencil, Trash2, PlayCircle, Info } from 'lucide-react';
-import { ThingsboardDevice, CalculatedField } from '@/lib/types';
+import { ThingsboardDevice, CalculatedField, ThingsboardUser } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -132,10 +134,12 @@ function CalculatedFieldForm({ device, existingField, onSave, onCancel, isSaving
 
 export default function DeviceDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [device, setDevice] = useState<ThingsboardDevice | null>(null);
   const [activityStatus, setActivityStatus] = useState<ActivityStatus[]>([]);
   const [calculatedFields, setCalculatedFields] = useState<CalculatedField[]>([]);
+  const [currentUser, setCurrentUser] = useState<ThingsboardUser | null>(null);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
@@ -160,8 +164,12 @@ export default function DeviceDetailsPage() {
         return;
       }
       try {
-        const deviceData = await getDeviceById(token, instanceUrl, id);
+        const [deviceData, userData] = await Promise.all([
+          getDeviceById(token, instanceUrl, id),
+          getUser(token, instanceUrl)
+        ]);
         setDevice(deviceData);
+        setCurrentUser(userData);
       } catch(e: any) {
         setError(e.message || 'Failed to fetch device details.');
       } finally {
@@ -264,6 +272,22 @@ export default function DeviceDetailsPage() {
           setIsSaving(false);
       }
   };
+
+  const handleDeleteDevice = async () => {
+      if (!token || !instanceUrl || !device) return;
+      setIsSaving(true);
+      try {
+          await deleteDevice(token, instanceUrl, device.id.id);
+          toast({ title: 'Success', description: 'Device has been deleted.' });
+          router.push('/devices');
+      } catch(e: any) {
+          toast({ variant: 'destructive', title: 'Delete Failed', description: e.message });
+      } finally {
+          setIsSaving(false);
+      }
+  }
+
+  const isAdmin = currentUser?.authority === 'SYS_ADMIN' || currentUser?.authority === 'TENANT_ADMIN';
   
   const renderLoadingState = () => (
      <div className="container mx-auto">
@@ -284,8 +308,38 @@ export default function DeviceDetailsPage() {
 
   return (
     <div className="container mx-auto space-y-6">
+        {isSaving && <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin" /></div>}
         <Button asChild variant="outline" size="sm" className="mb-4"><Link href="/devices"><ArrowLeft className="mr-2 h-4 w-4" />Back to Devices</Link></Button>
-        <Card><CardHeader><CardTitle>{device.name}</CardTitle><CardDescription><Badge variant="secondary">{device.type}</Badge></CardDescription></CardHeader>
+        <Card>
+            <CardHeader>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <CardTitle>{device.name}</CardTitle>
+                        <CardDescription><Badge variant="secondary">{device.type}</Badge></CardDescription>
+                    </div>
+                     {isAdmin && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={isSaving}>
+                                    <Trash2 className="mr-2 h-4 w-4"/> Delete Device
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the device <span className="font-bold">{device.name}</span>.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteDevice}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                     )}
+                </div>
+            </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <DetailItem label="Device ID" value={device.id.id} /><DetailItem label="Label" value={device.label} /><DetailItem label="Created Time" value={new Date(device.createdTime).toLocaleString()} /><DetailItem label="Customer ID" value={device.customerId?.id} /><DetailItem label="Entity Type" value={device.id.entityType} /></CardContent>
         </Card>

@@ -1,3 +1,4 @@
+
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField } from './types';
@@ -291,6 +292,15 @@ export async function getDeviceById(
 ): Promise<ThingsboardDevice> {
   const url = `/api/device/${deviceId}`;
   return await fetchThingsboard<ThingsboardDevice>(url, token, instanceUrl);
+}
+
+export async function deleteDevice(
+  token: string,
+  instanceUrl: string,
+  deviceId: string
+): Promise<void> {
+  const url = `/api/device/${deviceId}`;
+  await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
 }
 
 export async function getDeviceAttributes(
