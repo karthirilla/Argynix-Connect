@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Printer, ArrowLeft } from 'lucide-react';
+import { CircleUser, Menu, Printer, ArrowLeft, Maximize, Minimize } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -27,12 +27,38 @@ export function AppHeader() {
   const { toast } = useToast();
   const [username, setUsername] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('tb_user');
     setUsername(storedUser);
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        toast({
+            variant: 'destructive',
+            title: 'Fullscreen Error',
+            description: `Error attempting to enable full-screen mode: ${err.message}`,
+        });
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem('tb_auth_token');
@@ -69,6 +95,7 @@ export function AppHeader() {
     if (pathname.startsWith('/audit-logs')) return 'Audit Logs';
     if (pathname.startsWith('/jobs')) return 'Jobs';
     if (pathname.startsWith('/admin/settings')) return 'Admin Settings';
+    if (pathname.startsWith('/admin/users')) return 'System Users';
     return 'Home';
   }
 
@@ -108,6 +135,10 @@ export function AppHeader() {
                     <span className="sr-only">Print</span>
                 </Button>
             )}
+            <Button variant="outline" size="icon" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+              <span className="sr-only">Toggle fullscreen</span>
+            </Button>
             <Notifications />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
