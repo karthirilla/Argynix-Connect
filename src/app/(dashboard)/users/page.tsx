@@ -166,6 +166,7 @@ export default function UsersPage() {
     const isTenantAdmin = useMemo(() => currentUser?.authority === 'TENANT_ADMIN', [currentUser]);
 
     const fetchUsersAndPermissions = async () => {
+        setIsLoading(true);
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
 
@@ -175,23 +176,23 @@ export default function UsersPage() {
             return;
         }
 
-        setIsLoading(true);
         try {
             const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
             
-            // If user is not a Tenant Admin, no need to fetch other users.
+            // If user is not a Tenant Admin, bail out early.
             if(currentUserData.authority !== 'TENANT_ADMIN') {
                 setIsLoading(false);
                 return;
             }
 
+            // Only fetch customer/user lists if the current user is a Tenant Admin
             const customersData = await getCustomers(token, instanceUrl);
             setCustomers(customersData);
             
             let allUsers: ThingsboardUser[] = [];
             
-            // Fetch Tenant Admins if current user is one
+            // Fetch Tenant Admins
             if(currentUserData.tenantId) {
                 const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
                 // Exclude the current user from the list of managed users
