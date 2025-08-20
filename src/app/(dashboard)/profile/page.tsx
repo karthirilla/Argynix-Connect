@@ -37,6 +37,7 @@ const profileSchema = z.object({
     lastName: z.string().optional(),
     additionalInfo: z.object({
         description: z.string().optional(),
+        mobile: z.string().optional(),
     }).optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -56,7 +57,8 @@ export default function ProfilePage() {
       firstName: '',
       lastName: '',
       additionalInfo: {
-        description: ''
+        description: '',
+        mobile: '',
       }
     }
   });
@@ -86,6 +88,7 @@ export default function ProfilePage() {
             lastName: userData.lastName || '',
             additionalInfo: {
                 description: userData.additionalInfo?.description || '',
+                mobile: userData.additionalInfo?.mobile || '',
             }
         });
       } catch (e: any) {
@@ -115,6 +118,7 @@ export default function ProfilePage() {
             additionalInfo: {
                 ...user.additionalInfo,
                 description: data.additionalInfo?.description,
+                mobile: data.additionalInfo?.mobile,
             }
         };
         await saveUser(token, instanceUrl, updatedUser, false);
@@ -203,6 +207,7 @@ export default function ProfilePage() {
                             <FormField control={profileForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                         <FormField control={profileForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input disabled {...field} /></FormControl><FormDescription>Your email address is used for logging in and cannot be changed.</FormDescription><FormMessage /></FormItem>)}/>
+                         <FormField control={profileForm.control} name="additionalInfo.mobile" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                          <FormField control={profileForm.control} name="additionalInfo.description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     
                     <Separator />
