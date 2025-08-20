@@ -194,11 +194,15 @@ export default function CustomersPage() {
             const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
             
-            if (currentUserData.authority === 'TENANT_ADMIN') {
-                const customersData = await getCustomers(token, instanceUrl);
-                // Filter out the "Public" customer as it's not a real manageable entity
-                setCustomers(customersData.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080'));
+            // This page is only for Tenant Admins.
+            if (currentUserData.authority !== 'TENANT_ADMIN') {
+                 setIsLoading(false);
+                 return;
             }
+
+            const customersData = await getCustomers(token, instanceUrl);
+            // Filter out the "Public" customer as it's not a real manageable entity
+            setCustomers(customersData.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080'));
 
         } catch (e: any) {
             setError(e.message || 'Failed to fetch customers.');

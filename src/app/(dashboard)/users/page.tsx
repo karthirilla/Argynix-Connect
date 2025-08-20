@@ -2,7 +2,7 @@
 // /app/users/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -167,7 +167,6 @@ export default function UsersPage() {
         setIsLoading(true);
         setError(null);
         setUsers([]);
-        setCustomers([]);
         
         const token = localStorage.getItem('tb_auth_token');
         const instanceUrl = localStorage.getItem('tb_instance_url');
@@ -186,25 +185,27 @@ export default function UsersPage() {
             
             if (currentUserData.authority === 'SYS_ADMIN') {
                 const sysAdminUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-                allUsers.push(...sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id));
-            
+                // Exclude the current sys admin from the list
+                allUsers = sysAdminUsers.filter(u => u.id.id !== currentUserData.id.id);
+
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
-                const customersData = await getCustomers(token, instanceUrl);
+                const [customersData, tenantAdmins] = await Promise.all([
+                    getCustomers(token, instanceUrl),
+                    getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id),
+                ]);
                 setCustomers(customersData);
 
-                if(currentUserData.tenantId) {
-                    const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
-                    allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
-                }
+                allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
                 
-                for (const customer of customersData) {
-                     if (customer.id.id !== '13814000-1dd2-11b2-8080-808080808080') {
-                        const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
-                        allUsers.push(...customerUsers);
-                     }
-                }
+                const customerUsersPromises = customersData
+                    .filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080')
+                    .map(customer => getCustomerUsers(token, instanceUrl, customer.id.id));
+
+                const customerUsersNested = await Promise.all(customerUsersPromises);
+                const customerUsers = customerUsersNested.flat();
+                allUsers.push(...customerUsers);
             } else {
-                // Customer user - no permission to see this page.
+                // Customer user has no permissions for this page.
                 setIsLoading(false);
                 return;
             }
@@ -217,10 +218,13 @@ export default function UsersPage() {
                         const permissions: UserPermissions = { ...defaultPermissions };
                         let userEnabled = true;
 
+                        const credentialsEnabledAttr = attributes.find(attr => attr.key === 'userCredentialsEnabled');
+                        if (credentialsEnabledAttr) {
+                            userEnabled = credentialsEnabledAttr.value;
+                        }
+
                         attributes.forEach(attr => {
-                            if (attr.key === 'userCredentialsEnabled') {
-                                userEnabled = attr.value;
-                            } else if (Object.keys(permissions).includes(attr.key)) {
+                            if (Object.keys(permissions).includes(attr.key)) {
                                 (permissions as any)[attr.key] = attr.value;
                             }
                         });
@@ -482,5 +486,3 @@ export default function UsersPage() {
         </div>
     );
 }
-
-    
