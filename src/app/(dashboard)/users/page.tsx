@@ -183,8 +183,11 @@ export default function UsersPage() {
             let allUsers: ThingsboardUser[] = [];
             
             if (currentUserData.authority === 'SYS_ADMIN') {
+                // SYS_ADMIN fetches all users and cannot invite new ones in this UI.
                 allUsers = await getAllUsersBySysAdmin(token, instanceUrl);
+
             } else if (currentUserData.authority === 'TENANT_ADMIN') {
+                // TENANT_ADMIN fetches users and customers within their tenant.
                 const [customersData, tenantAdminsData] = await Promise.all([
                     getCustomers(token, instanceUrl),
                     getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id),
@@ -199,7 +202,7 @@ export default function UsersPage() {
                 const customerUsersNested = await Promise.all(customerUsersPromises);
                 allUsers.push(...customerUsersNested.flat());
             } else {
-                 // For CUSTOMER_USER or any other role, they don't have permission to see this page.
+                 // CUSTOMER_USER doesn't have permission to see this page.
                 setIsLoading(false);
                 return;
             }
