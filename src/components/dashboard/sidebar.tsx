@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, BellRing } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, BellRing, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -12,6 +12,9 @@ import { useEffect, useState } from 'react';
 import { getUser } from '@/lib/api';
 import type { ThingsboardUser } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
+import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, exact: true, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
@@ -30,11 +33,22 @@ const navItems = [
 
 const adminNavItems = [
     { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
+    { href: '/admin/notifications', label: 'Notifications', icon: BellRing, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN'] },
     { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
 ];
 
 
-export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boolean, onLinkClick?: () => void }) {
+export function AppSidebar({ 
+  isMobile = false, 
+  onLinkClick,
+  isCollapsed,
+  setIsCollapsed,
+}: { 
+  isMobile?: boolean, 
+  onLinkClick?: () => void,
+  isCollapsed?: boolean,
+  setIsCollapsed?: (isCollapsed: boolean) => void,
+}) {
   const pathname = usePathname();
   const [user, setUser] = useState<ThingsboardUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,7 +87,38 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
      const isActive = item.exact 
           ? pathname === item.href 
           : (pathname.startsWith(item.href) && item.href !== '/');
-    return (
+      
+      const linkContent = (
+         <>
+          <item.icon className="h-4 w-4 shrink-0" />
+          <span className={cn(isCollapsed && 'hidden')}>{item.label}</span>
+         </>
+      );
+
+      if (isCollapsed) {
+        return (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                      'flex items-center justify-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:text-sidebar-primary',
+                      { 'bg-sidebar-accent text-sidebar-accent-foreground': isActive }
+                  )}
+                >
+                  {linkContent}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="flex items-center gap-4">
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      }
+
+      return (
          <Link
             key={item.label}
             href={item.href}
@@ -83,8 +128,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
                 { 'bg-sidebar-accent text-sidebar-accent-foreground': isActive }
             )}
         >
-            <item.icon className="h-4 w-4" />
-            {item.label}
+          {linkContent}
         </Link>
     );
   };
@@ -103,8 +147,10 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
             {visibleNavItems.map(item => renderNavItem(item))}
         </nav>
         {visibleAdminNavItems.length > 0 && (
-            <div className="mt-auto p-4">
-                 <h3 className="px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</h3>
+            <div className="mt-4 pt-4 border-t border-sidebar-border">
+                 <h3 className={cn("px-4 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider", isCollapsed && "text-center")}>
+                   {isCollapsed ? "ADM" : "Admin"}
+                 </h3>
                  <nav className={cn("grid items-start gap-1 text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
                     {visibleAdminNavItems.map(item => renderNavItem(item))}
                 </nav>
@@ -131,13 +177,27 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
 
   return (
     <div className="hidden border-r border-sidebar-border bg-sidebar md:flex md:flex-col">
-        <div className="flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
+        <div className={cn(
+          "flex h-14 items-center border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6",
+          isCollapsed && "justify-center"
+        )}>
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Logo className="h-6 w-6 text-primary" />
-            <span className="">Argynix-Connect</span>
+            <Logo className="h-6 w-6 text-primary shrink-0" />
+            <span className={cn("font-semibold", isCollapsed && "hidden")}>Argynix-Connect</span>
           </Link>
         </div>
         {finalContent}
+        <div className="mt-auto p-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="w-full justify-center" 
+              onClick={() => setIsCollapsed?.(!isCollapsed)}
+            >
+              {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+        </div>
     </div>
   );
 }

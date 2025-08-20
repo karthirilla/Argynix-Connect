@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/dashboard/sidebar';
 import { AppHeader } from '@/components/dashboard/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 
 
 export default function DashboardLayout({
@@ -17,6 +18,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('tb_auth_token');
@@ -47,11 +49,21 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <AppSidebar />
-      <div className="flex flex-col relative h-screen">
+    <div 
+      className={cn(
+        "grid min-h-screen w-full transition-[grid-template-columns] duration-300 ease-in-out",
+        isSidebarCollapsed 
+          ? "md:grid-cols-[72px_1fr]" 
+          : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
+      )}
+    >
+      <AppSidebar 
+        isCollapsed={isSidebarCollapsed} 
+        setIsCollapsed={setIsSidebarCollapsed}
+      />
+      <div className="flex flex-col h-screen">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
           {children}
         </main>
         <Toaster />
