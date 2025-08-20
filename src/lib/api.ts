@@ -272,11 +272,11 @@ export async function makeDashboardPublic(
 
 export async function findEntityDataByQuery(token: string, instanceUrl: string, query: any): Promise<EntityData[]> {
     const url = '/api/entitiesQuery/find';
-    const result = await fetchThingsboard<EntityData[]>(url, token, instanceUrl, {
+    const result = await fetchThingsboard<{ data: EntityData[] }>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(query)
     });
-    return result || [];
+    return result?.data || [];
 }
 
 export async function getDevices(

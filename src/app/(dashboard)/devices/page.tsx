@@ -69,7 +69,7 @@ export default function DevicesPage() {
         
         setCurrentUser(userData);
         
-        const formattedDevices: AppDevice[] = devicesData.map((d: EntityData) => {
+        const formattedDevices: AppDevice[] = (devicesData || []).map((d: EntityData) => {
             const activeAttr = d.latest.ATTRIBUTE?.active;
             const lastActivityAttr = d.latest.ATTRIBUTE?.lastActivityTime;
             
