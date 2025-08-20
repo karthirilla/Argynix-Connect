@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, BellRing, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -97,7 +97,7 @@ export function AppSidebar({
 
       if (isCollapsed) {
         return (
-          <TooltipProvider delayDuration={0}>
+          <TooltipProvider key={item.href} delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
@@ -120,7 +120,7 @@ export function AppSidebar({
 
       return (
          <Link
-            key={item.label}
+            key={item.href}
             href={item.href}
             onClick={onLinkClick}
             className={cn(
