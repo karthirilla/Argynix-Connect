@@ -191,10 +191,13 @@ export function AppSidebar({
             <Button 
               variant="ghost" 
               size={isCollapsed ? "icon" : "default"} 
-              className="w-full justify-center" 
+              className={cn("w-full", !isCollapsed && "justify-start px-3")}
               onClick={() => setIsCollapsed?.(!isCollapsed)}
             >
-              {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
+              <div className={cn("flex gap-3 items-center", isCollapsed && "justify-center")}>
+                {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
+                <span className={cn(isCollapsed && "hidden")}>Collapse</span>
+              </div>
               <span className="sr-only">Toggle Sidebar</span>
             </Button>
         </div>
