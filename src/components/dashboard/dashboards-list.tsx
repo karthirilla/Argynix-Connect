@@ -39,8 +39,7 @@ export default function DashboardsList({ dashboards, user, onDashboardUpdate }: 
   const isAdmin = user?.authority === 'TENANT_ADMIN' || user?.authority === 'SYS_ADMIN';
 
   const filteredDashboards = dashboards.filter(dashboard => 
-    dashboard.name.toLowerCase().includes(filter.toLowerCase()) ||
-    dashboard.type.toLowerCase().includes(filter.toLowerCase())
+    dashboard.name.toLowerCase().includes(filter.toLowerCase())
   );
 
   const handleSmartExportClick = (dashboard: Dashboard) => {
@@ -108,7 +107,7 @@ export default function DashboardsList({ dashboards, user, onDashboardUpdate }: 
              <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Filter by name or type..."
+                    placeholder="Filter by name..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     className="pl-10"
@@ -133,7 +132,6 @@ export default function DashboardsList({ dashboards, user, onDashboardUpdate }: 
                             <CardTitle className="text-lg">
                                 {dashboard.name}
                             </CardTitle>
-                            <CardDescription className="capitalize">{dashboard.type}</CardDescription>
                         </div>
                     </div>
                      {dashboard.isPublic && <Globe className="h-4 w-4 text-primary" title="This dashboard is public" />}

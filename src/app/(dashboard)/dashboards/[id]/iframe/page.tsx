@@ -2,14 +2,17 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 export default function DashboardIframePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  const isPublic = searchParams.get('public') === 'true';
+
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,11 +26,15 @@ export default function DashboardIframePage() {
 
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (instanceUrl) {
-      setIframeSrc(`${instanceUrl}/dashboard/${id}`);
+      const dashboardUrl = isPublic 
+        ? `${instanceUrl}/dashboard/${id}`
+        : `${instanceUrl}/dashboard/${id}`;
+        
+      setIframeSrc(dashboardUrl);
     } else {
       setError('ThingsBoard instance URL not found in local storage.');
     }
-  }, [id]);
+  }, [id, isPublic]);
 
   const handleIframeLoad = () => {
     // A slight delay ensures that the content inside the iframe has had time to render,

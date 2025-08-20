@@ -3,9 +3,7 @@
 export type Dashboard = {
     id: string;
     name: string;
-    type: string;
     isPublic: boolean;
-    deviceCount: number;
 };
   
 export type Device = {

@@ -7,6 +7,8 @@ import { getDashboards, getUser } from '@/lib/api';
 import type { Dashboard as AppDashboard } from '@/lib/types';
 import type { ThingsboardDashboard, ThingsboardUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function DashboardsPage() {
   const [dashboards, setDashboards] = useState<AppDashboard[]>([]);
@@ -16,6 +18,7 @@ export default function DashboardsPage() {
 
   const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
       
@@ -37,9 +40,6 @@ export default function DashboardsPage() {
           id: d.id.id,
           name: d.title,
           isPublic: d.public,
-          // These fields are not in the dashboard API response, so we use placeholders
-          type: 'generic', 
-          deviceCount: 0,
         }));
         setDashboards(formattedDashboards);
       } catch (e: any) {
@@ -78,7 +78,13 @@ export default function DashboardsPage() {
   }
 
   if (error) {
-    return <div className="text-center text-red-500">{error}</div>;
+    return (
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+        </Alert>
+    );
   }
 
   return (
