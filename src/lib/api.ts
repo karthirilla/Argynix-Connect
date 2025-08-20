@@ -1,7 +1,6 @@
-
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant, ThingsboardWidgetsBundle, ThingsboardWidgetType } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant, ThingsboardWidgetsBundle, ThingsboardWidgetType, ThingsboardNotificationRule, ThingsboardNotificationTemplate } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -618,6 +617,28 @@ export async function getBundleWidgetTypes(token: string, instanceUrl: string, b
     return await fetchThingsboard<ThingsboardWidgetType[]>(url, token, instanceUrl);
 }
 
-    
+// Notification Rules
+export async function getNotificationRules(token: string, instanceUrl: string): Promise<ThingsboardNotificationRule[]> {
+    const url = '/api/notification/rules?pageSize=100&page=0';
+    const result = await fetchThingsboard<{ data: ThingsboardNotificationRule[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
 
-    
+export async function saveNotificationRule(token: string, instanceUrl: string, rule: Partial<ThingsboardNotificationRule>): Promise<ThingsboardNotificationRule> {
+    const url = '/api/notification/rule';
+    return await fetchThingsboard<ThingsboardNotificationRule>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(rule)
+    });
+}
+
+export async function deleteNotificationRule(token: string, instanceUrl: string, ruleId: string): Promise<void> {
+    const url = `/api/notification/rule/${ruleId}`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'DELETE' });
+}
+
+export async function getNotificationTemplates(token: string, instanceUrl: string): Promise<ThingsboardNotificationTemplate[]> {
+    const url = '/api/notification/templates?pageSize=100&page=0';
+    const result = await fetchThingsboard<{ data: ThingsboardNotificationTemplate[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}

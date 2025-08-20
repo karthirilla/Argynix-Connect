@@ -1,11 +1,10 @@
-
 // src/components/dashboard/sidebar.tsx
 
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid, BellRing } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -27,8 +26,12 @@ const navItems = [
   { href: '/users', label: 'User Management', icon: Users, requiredAuth: ['TENANT_ADMIN'] },
   { href: '/jobs', label: 'Jobs', icon: ListChecks, requiredAuth: ['TENANT_ADMIN', 'SYS_ADMIN'] },
   { href: '/audit-logs', label: 'Audit Logs', icon: History, requiredAuth: ['TENANT_ADMIN'] },
-  { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
-  { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
+];
+
+const adminNavItems = [
+    { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
+    { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
+    { href: '/admin/notifications', label: 'Notification Settings', icon: BellRing, requiredAuth: ['TENANT_ADMIN', 'SYS_ADMIN'] }
 ];
 
 
@@ -59,12 +62,13 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
     fetchUser();
   }, [])
   
-  const getVisibleNavItems = () => {
+  const getVisibleNavItems = (items: typeof navItems) => {
     if (!user) return [];
-    return navItems.filter(item => item.requiredAuth.includes(user.authority));
+    return items.filter(item => item.requiredAuth.includes(user.authority));
   };
   
-  const visibleNavItems = getVisibleNavItems();
+  const visibleNavItems = getVisibleNavItems(navItems);
+  const visibleAdminNavItems = getVisibleNavItems(adminNavItems);
 
   const renderNavItem = (item: typeof navItems[0]) => {
      const isActive = item.exact 
@@ -88,19 +92,26 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
   
   const renderNavSkeleton = () => (
     <div className={cn("grid items-start gap-1 text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
-      {[...Array(7)].map((_, i) => (
+      {[...Array(10)].map((_, i) => (
         <Skeleton key={i} className="h-9 w-full" />
       ))}
     </div>
   );
 
   const navContent = (
-    <nav className={cn(
-        "grid items-start text-sm font-medium",
-        isMobile ? "px-2" : "px-2 lg:px-4"
-    )}>
-      {visibleNavItems.map(item => renderNavItem(item))}
-    </nav>
+    <>
+        <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
+            {visibleNavItems.map(item => renderNavItem(item))}
+        </nav>
+        {visibleAdminNavItems.length > 0 && (
+            <div className="mt-auto p-4">
+                 <h3 className="px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</h3>
+                 <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
+                    {visibleAdminNavItems.map(item => renderNavItem(item))}
+                </nav>
+            </div>
+        )}
+    </>
   );
 
   const finalContent = isLoading ? renderNavSkeleton() : navContent;
@@ -114,7 +125,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
                     <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
             </SheetHeader>
-            <div className="flex-1 overflow-y-auto pt-2">
+            <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
                 {finalContent}
             </div>
         </>
@@ -130,7 +141,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
             <span className="">Argynix-Connect</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-y-auto pt-2">
+        <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
           {finalContent}
         </div>
       </div>

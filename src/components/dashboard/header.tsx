@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
-import { CircleUser, Menu, Printer, ArrowLeft, Maximize, Minimize } from 'lucide-react';
+import { CircleUser, Menu, Printer, ArrowLeft, Maximize, Minimize, BellRing } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -98,6 +98,7 @@ export function AppHeader() {
     if (pathname.startsWith('/jobs')) return 'Jobs';
     if (pathname.startsWith('/admin/settings')) return 'Admin Settings';
     if (pathname.startsWith('/admin/users')) return 'System Users';
+    if (pathname.startsWith('/admin/notifications')) return 'Notification Settings';
     return 'Home';
   }
 

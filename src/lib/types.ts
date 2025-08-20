@@ -1,4 +1,3 @@
-
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -126,17 +125,7 @@ export type ThingsboardUser = {
     authority: 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER';
     customerId: { id: string, entityType: string };
     tenantId: { id: string, entityType: string };
-    additionalInfo: {
-        description?: string;
-        address?: {
-            street?: string;
-            city?: string;
-            state?: string;
-            zip?: string;
-            country?: string;
-        };
-        // The mobile number is often stored in the top-level phone field
-    } | null;
+    additionalInfo: any;
 };
 
 export type ThingsboardAlarm = {
@@ -317,4 +306,32 @@ export interface ThingsboardWidgetType {
     image: string | null;
     description: string | null;
     tenantId: ThingsboardId;
+}
+
+export interface ThingsboardNotificationTemplate {
+    id: ThingsboardId;
+    createdTime: number;
+    name: string;
+    notificationType: 'GENERAL' | 'ALARM' | 'DEVICE_ACTIVITY' | 'ENTITY_ACTION';
+    configuration: any;
+}
+
+export interface ThingsboardNotificationRule {
+    id: ThingsboardId;
+    name: string;
+    templateId: ThingsboardId;
+    enabled: boolean;
+    triggerType: 'ALARM' | 'DEVICE_ACTIVITY' | 'ENTITY_ACTION';
+    triggerConfig: {
+        triggerType: 'ALARM';
+        alarmTypes: string[] | null;
+        alarmSeverities: ('CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING' | 'INDETERMINATE')[];
+        notifyOn: {
+            alarmStatus: ('ACTIVE_UNACK' | 'ACTIVE_ACK' | 'CLEARED_UNACK' | 'CLEARED_ACK')[];
+        }
+    };
+    recipientsConfig: {
+        targets: string[]; // List of target IDs (e.g., tenantId)
+        triggeringUser: boolean;
+    };
 }
