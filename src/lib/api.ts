@@ -398,19 +398,19 @@ export async function getAdminSettings(token: string, instanceUrl: string, key: 
     return await fetchThingsboard<ThingsboardAdminSettings>(url, token, instanceUrl);
 }
 
-export async function saveAdminSettings(token: string, instanceUrl: string, key: string, settings: any): Promise<ThingsboardAdminSettings> {
-    const url = `/api/admin/settings/${key}`;
+export async function saveAdminSettings(token: string, instanceUrl: string, settings: { key: string, jsonValue: any }): Promise<ThingsboardAdminSettings> {
+    const url = `/api/admin/settings`;
     return await fetchThingsboard<ThingsboardAdminSettings>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(settings)
     });
 }
 
-export async function sendTestMail(token: string, instanceUrl: string, email: string): Promise<void> {
+export async function sendTestMail(token: string, instanceUrl: string, email: string, settings: { key: string, jsonValue: any }): Promise<void> {
     const url = `/api/admin/settings/testMail`;
     await fetchThingsboard<void>(url, token, instanceUrl, {
         method: 'POST',
-        body: JSON.stringify({email})
+        body: JSON.stringify(settings)
     });
 }
 
