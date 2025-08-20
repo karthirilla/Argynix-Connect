@@ -276,3 +276,21 @@ export interface ThingsboardUsageInfo {
     transportDataPoints: number;
     reExecutions: number;
 }
+
+export interface ThingsboardTenant {
+    id: ThingsboardId;
+    createdTime: number;
+    title: string;
+    name: string;
+    region: string;
+    tenantProfileId: ThingsboardId;
+    country: string;
+    state: string;
+    city: string;
+    address: string;
+    address2: string;
+    zip: string;
+    phone: string;
+    email: string;
+    additionalInfo: any;
+}

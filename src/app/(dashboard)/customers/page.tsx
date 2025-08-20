@@ -11,7 +11,7 @@ import { getCustomers, saveCustomer, deleteCustomer, getUser } from '@/lib/api';
 import type { ThingsboardCustomer, ThingsboardUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Building, Trash2, PlusCircle, Edit } from 'lucide-react';
+import { Loader2, Building, Trash2, PlusCircle, Edit, UserCog } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -190,14 +190,15 @@ export default function CustomersPage() {
 
         setIsLoading(true);
         try {
-            const [customersData, currentUserData] = await Promise.all([
-                getCustomers(token, instanceUrl),
-                getUser(token, instanceUrl)
-            ]);
-            
-            // Filter out the "Public" customer as it's not a real manageable entity
-            setCustomers(customersData.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080'));
+            const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
+            
+            if (currentUserData.authority === 'TENANT_ADMIN') {
+                const customersData = await getCustomers(token, instanceUrl);
+                // Filter out the "Public" customer as it's not a real manageable entity
+                setCustomers(customersData.filter(c => c.id.id !== '13814000-1dd2-11b2-8080-808080808080'));
+            }
+
         } catch (e: any) {
             setError(e.message || 'Failed to fetch customers.');
             console.error(e);
@@ -257,15 +258,17 @@ export default function CustomersPage() {
         );
     }
 
-    const isTenantAdmin = currentUser?.authority === 'TENANT_ADMIN';
-    
-    if (!isTenantAdmin) {
+    if (currentUser?.authority !== 'TENANT_ADMIN') {
         return (
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Permission Denied</AlertTitle>
-                <AlertDescription>You do not have permission to manage customers.</AlertDescription>
-            </Alert>
+             <div className="container mx-auto px-0 md:px-4">
+                <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
+                    <UserCog className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-2xl font-semibold">Permission Denied</h3>
+                    <p className="text-muted-foreground text-center max-w-md mt-2">
+                        You do not have sufficient permissions to manage Customers. This page is available only to Tenant Administrators.
+                    </p>
+                </div>
+            </div>
         );
     }
 

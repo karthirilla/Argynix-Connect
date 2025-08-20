@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, User as UserIcon, Trash2, PlusCircle, MailQuestion } from 'lucide-react';
+import { Loader2, User as UserIcon, Trash2, PlusCircle, MailQuestion, UserCog } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -163,8 +163,6 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
-    const isTenantAdmin = useMemo(() => currentUser?.authority === 'TENANT_ADMIN', [currentUser]);
-
     const fetchUsersAndPermissions = async () => {
         setIsLoading(true);
         const token = localStorage.getItem('tb_auth_token');
@@ -180,31 +178,30 @@ export default function UsersPage() {
             const currentUserData = await getUser(token, instanceUrl);
             setCurrentUser(currentUserData);
             
-            // If user is not a Tenant Admin, bail out early.
-            if(currentUserData.authority !== 'TENANT_ADMIN') {
-                setIsLoading(false);
-                return;
-            }
-
-            // Only fetch customer/user lists if the current user is a Tenant Admin
-            const customersData = await getCustomers(token, instanceUrl);
-            setCustomers(customersData);
-            
             let allUsers: ThingsboardUser[] = [];
-            
-            // Fetch Tenant Admins
-            if(currentUserData.tenantId) {
-                const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
-                // Exclude the current user from the list of managed users
-                allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
-            }
-            
-            // Fetch Customer Users
-            for (const customer of customersData) {
-                 if (customer.id.id !== '13814000-1dd2-11b2-8080-808080808080') {
-                    const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
-                    allUsers.push(...customerUsers);
-                 }
+
+            if (currentUserData.authority === 'TENANT_ADMIN') {
+                const customersData = await getCustomers(token, instanceUrl);
+                setCustomers(customersData);
+
+                if(currentUserData.tenantId) {
+                    const tenantAdmins = await getTenantAdmins(token, instanceUrl, currentUserData.tenantId.id);
+                    allUsers.push(...tenantAdmins.filter(u => u.id.id !== currentUserData.id.id));
+                }
+                
+                for (const customer of customersData) {
+                     if (customer.id.id !== '13814000-1dd2-11b2-8080-808080808080') {
+                        const customerUsers = await getCustomerUsers(token, instanceUrl, customer.id.id);
+                        allUsers.push(...customerUsers);
+                     }
+                }
+            } else if (currentUserData.authority === 'SYS_ADMIN') {
+                 // Sys admin logic can be added here if needed in the future
+                 // For now, they will see the permission denied message.
+            } else {
+                // Customer user
+                 setIsLoading(false);
+                return;
             }
 
             const usersWithPermissions = await Promise.all(
@@ -233,7 +230,6 @@ export default function UsersPage() {
             
             setUsers(usersWithPermissions);
         } catch (e: any) {
-            // Don't set error for permission issues as they are handled by the role check
             if (!e.message.includes('permission')) {
               setError(e.message || 'Failed to fetch users.');
             }
@@ -260,7 +256,7 @@ export default function UsersPage() {
         try {
             await saveUserAttributes(token, instanceUrl, userId, { [permission]: value });
             toast({ title: 'Success', description: `User permission updated successfully.` });
-            await fetchUsersAndPermissions(); // Re-fetch to ensure UI is in sync
+            await fetchUsersAndPermissions();
         } catch (e) {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save permission.' });
             console.error(e);
@@ -295,7 +291,7 @@ export default function UsersPage() {
         try {
             await deleteUser(token, instanceUrl, userId);
             toast({ title: 'Success', description: 'User has been deleted.' });
-            await fetchUsersAndPermissions(); // Refresh list
+            await fetchUsersAndPermissions();
         } catch (e: any)
         {
             toast({ variant: 'destructive', title: 'Delete Failed', description: e.message || 'Could not delete user.' });
@@ -348,13 +344,17 @@ export default function UsersPage() {
         );
     }
     
-    if (!isTenantAdmin) {
+    if (currentUser?.authority !== 'TENANT_ADMIN') {
         return (
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Permission Denied</AlertTitle>
-                <AlertDescription>You do not have permission to manage users.</AlertDescription>
-            </Alert>
+             <div className="container mx-auto px-0 md:px-4">
+                <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
+                    <UserCog className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-2xl font-semibold">Permission Denied</h3>
+                    <p className="text-muted-foreground text-center max-w-md mt-2">
+                        You do not have sufficient permissions to manage Users. This page is available only to Tenant Administrators.
+                    </p>
+                </div>
+            </div>
         );
     }
     
@@ -366,7 +366,7 @@ export default function UsersPage() {
                 <p className="text-muted-foreground text-center max-w-md mt-2">
                     There are no other users for this tenant.
                 </p>
-                {isTenantAdmin && <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>}
+                <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>
             </div>
         );
     }
@@ -378,7 +378,7 @@ export default function UsersPage() {
                     <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
                     <p className="text-muted-foreground">Manage permissions and access for all users.</p>
                 </div>
-                 {isTenantAdmin && <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />}
+                 <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map(user => (

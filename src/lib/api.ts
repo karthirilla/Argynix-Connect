@@ -1,6 +1,6 @@
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -156,6 +156,13 @@ export async function sendActivationMail(token: string, instanceUrl: string, ema
         method: 'POST',
     });
 }
+
+export async function getTenants(token: string, instanceUrl: string): Promise<ThingsboardTenant[]> {
+    const url = `/api/tenants?pageSize=1000&page=0`;
+    const result = await fetchThingsboard<{ data: ThingsboardTenant[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
 
 export async function getTenantAdmins(token: string, instanceUrl: string, tenantId: string): Promise<ThingsboardUser[]> {
     const url = `/api/tenant/${tenantId}/users?pageSize=1000&page=0`;
@@ -546,42 +553,6 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
         body: JSON.stringify(settings)
     });
 }
-
-export async function testScript(script: string, telemetryJson: string): Promise<any> {
-    const url = `/api/ruleChain/testScript`;
-    const token = localStorage.getItem('tb_auth_token');
-    const instanceUrl = localStorage.getItem('tb_instance_url');
-    if (!token || !instanceUrl) throw new Error("Authentication details not found");
-
-    try {
-        const telemetry = JSON.parse(telemetryJson);
-        const payload = {
-            script: `return (function(msg, metadata, msgType) { ${script} })(msg, metadata, msgType);`,
-            scriptType: 'update',
-            argNames: ['msg', 'metadata', 'msgType'],
-            msg: telemetry,
-            metadata: {},
-            msgType: 'POST_TELEMETRY_REQUEST',
-        };
-
-        return await fetchThingsboard<any>(url, token, instanceUrl, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
-    } catch(e) {
-        // If parsing telemetry fails, we can still test the script syntax
-        const payload = {
-            script: `return (function(msg, metadata, msgType) { ${script} })(msg, metadata, msgType);`,
-            scriptType: 'update',
-            argNames: ['msg', 'metadata', 'msgType'],
-        };
-        return await fetchThingsboard<any>(url, token, instanceUrl, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
-    }
-}
-
 
 // Jobs
 export async function getJobs(token: string, instanceUrl: string): Promise<ThingsboardJob[]> {
