@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getUser, changePassword, saveUser } from '@/lib/api';
+import { getUser, changePassword, saveUser, getUserById } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -35,9 +35,9 @@ const profileSchema = z.object({
     email: z.string().email(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
+    phone: z.string().optional(),
     additionalInfo: z.object({
         description: z.string().optional(),
-        mobile: z.string().optional(),
     }).optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -56,9 +56,9 @@ export default function ProfilePage() {
       email: '',
       firstName: '',
       lastName: '',
+      phone: '',
       additionalInfo: {
         description: '',
-        mobile: '',
       }
     }
   });
@@ -80,12 +80,12 @@ export default function ProfilePage() {
       }
 
       try {
-        const userData = await getUser(token, instanceUrl);
-        setUser(userData);
+        const basicUserData = await getUser(token, instanceUrl);
+        const fullUserData = await getUserById(token, instanceUrl, basicUserData.id.id);
+        setUser(fullUserData);
         
-        let additionalInfo = userData.additionalInfo;
-        // Sometimes additionalInfo is a stringified JSON, so we need to parse it.
-        if (typeof additionalInfo === 'string') {
+        let additionalInfo = fullUserData.additionalInfo;
+        if (typeof additionalInfo === 'string' && additionalInfo) {
           try {
             additionalInfo = JSON.parse(additionalInfo);
           } catch(e) {
@@ -95,12 +95,12 @@ export default function ProfilePage() {
         }
 
         profileForm.reset({
-            email: userData.email,
-            firstName: userData.firstName || '',
-            lastName: userData.lastName || '',
+            email: fullUserData.email,
+            firstName: fullUserData.firstName || '',
+            lastName: fullUserData.lastName || '',
+            phone: fullUserData.phone || '',
             additionalInfo: {
                 description: additionalInfo?.description || '',
-                mobile: additionalInfo?.mobile || '',
             }
         });
       } catch (e: any) {
@@ -127,10 +127,10 @@ export default function ProfilePage() {
             email: data.email,
             firstName: data.firstName,
             lastName: data.lastName,
+            phone: data.phone,
             additionalInfo: {
                 ...(user.additionalInfo || {}),
                 description: data.additionalInfo?.description,
-                mobile: data.additionalInfo?.mobile,
             }
         };
         await saveUser(token, instanceUrl, updatedUser, false);
@@ -218,9 +218,11 @@ export default function ProfilePage() {
                             <FormField control={profileForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                             <FormField control={profileForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
-                        <FormField control={profileForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input disabled {...field} /></FormControl><FormDescription>Your email address is used for logging in and cannot be changed.</FormDescription><FormMessage /></FormItem>)}/>
-                         <FormField control={profileForm.control} name="additionalInfo.mobile" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                         <FormField control={profileForm.control} name="additionalInfo.description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <FormField control={profileForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input disabled {...field} /></FormControl><FormDescription>Your email is used for logging in.</FormDescription><FormMessage /></FormItem>)}/>
+                            <FormField control={profileForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                        <FormField control={profileForm.control} name="additionalInfo.description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     
                     <Separator />
                      <div className="space-y-2">

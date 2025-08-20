@@ -140,6 +140,12 @@ export async function getUser(token: string, instanceUrl: string): Promise<Thing
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
 }
 
+export async function getUserById(token: string, instanceUrl: string, userId: string): Promise<ThingsboardUser> {
+    const url = `/api/user/${userId}`;
+    return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
+}
+
+
 export async function saveUser(
     token: string,
     instanceUrl: string,

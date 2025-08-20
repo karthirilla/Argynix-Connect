@@ -122,6 +122,7 @@ export type ThingsboardUser = {
     firstName: string | null;
     lastName: string | null;
     email: string;
+    phone?: string | null;
     authority: 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER';
     customerId: { id: string, entityType: string };
     tenantId: { id: string, entityType: string };
@@ -134,7 +135,7 @@ export type ThingsboardUser = {
             zip?: string;
             country?: string;
         };
-        mobile?: string;
+        // The mobile number is often stored in the top-level phone field
     } | null;
 };
 
