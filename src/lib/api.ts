@@ -1,7 +1,7 @@
 
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification, EntityData } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -546,16 +546,24 @@ export async function deleteCalculatedField(token: string, instanceUrl: string, 
 }
 
 export async function testScript(script: string, telemetryJson: string): Promise<any> {
-    const url = `/api/calculated-field/test`;
+    const url = `/api/ruleChain/testScript`;
     const token = localStorage.getItem('tb_auth_token');
     const instanceUrl = localStorage.getItem('tb_instance_url');
     if (!token || !instanceUrl) throw new Error("Authentication details not found");
 
     const telemetry = JSON.parse(telemetryJson);
+    const payload = {
+        script: `return (function(msg, metadata, msgType) { ${script} })(msg, metadata, msgType);`,
+        scriptType: 'update',
+        argNames: ['msg', 'metadata', 'msgType'],
+        msg: telemetry,
+        metadata: {},
+        msgType: 'POST_TELEMETRY_REQUEST',
+    };
 
     return await fetchThingsboard<any>(url, token, instanceUrl, {
         method: 'POST',
-        body: JSON.stringify({ script, telemetry: {msg: telemetry} }),
+        body: JSON.stringify(payload),
     });
 }
 
