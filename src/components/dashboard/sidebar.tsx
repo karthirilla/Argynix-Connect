@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks } from 'lucide-react';
+import { BarChart, HardDrive, Download, Package, Siren, Home, CalendarClock, Users, History, Settings, Building, ListChecks, Grid } from 'lucide-react';
 import { Logo } from '../icons/logo';
 import { cn } from '@/lib/utils';
 import { SheetHeader, SheetTitle } from '../ui/sheet';
@@ -21,6 +21,7 @@ const navItems = [
   { href: '/assets', label: 'Assets', icon: Package, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
   { href: '/alarms', label: 'Alarms', icon: Siren, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
   { href: '/scheduler', label: 'Scheduler', icon: CalendarClock, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
+  { href: '/widgets', label: 'Widgets', icon: Grid, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
   { href: '/data-export', label: 'Data Export', icon: Download, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER'] },
   { href: '/customers', label: 'Customers', icon: Building, requiredAuth: ['TENANT_ADMIN'] },
   { href: '/users', label: 'User Management', icon: Users, requiredAuth: ['TENANT_ADMIN'] },

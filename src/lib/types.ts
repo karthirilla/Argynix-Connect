@@ -1,3 +1,4 @@
+
 // /src/lib/types.ts
 
 export type Dashboard = {
@@ -293,4 +294,26 @@ export interface ThingsboardTenant {
     phone: string;
     email: string;
     additionalInfo: any;
+}
+
+export interface ThingsboardWidgetsBundle {
+    id: ThingsboardId;
+    createdTime: number;
+    title: string;
+    alias: string;
+    image: string | null;
+    description: string | null;
+    tenantId: ThingsboardId;
+}
+
+export interface ThingsboardWidgetType {
+    id: ThingsboardId;
+    createdTime: number;
+    name: string;
+    deprecated: boolean;
+    descriptor: any;
+    fqn: string;
+    image: string | null;
+    description: string | null;
+    tenantId: ThingsboardId;
 }

@@ -1,7 +1,7 @@
 
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, ThingsboardJob, ThingsboardNotification, ThingsboardUsageInfo, ThingsboardTenant, ThingsboardWidgetsBundle, ThingsboardWidgetType } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -598,6 +598,18 @@ export async function deleteNotification(token: string, instanceUrl: string, not
 export async function getTenantUsageInfo(token: string, instanceUrl: string): Promise<ThingsboardUsageInfo> {
     const url = `/api/usage`;
     return await fetchThingsboard<ThingsboardUsageInfo>(url, token, instanceUrl);
+}
+
+// Widgets
+export async function getWidgetsBundles(token: string, instanceUrl: string): Promise<ThingsboardWidgetsBundle[]> {
+    const url = '/api/widgetsBundles';
+    const result = await fetchThingsboard<{ data?: ThingsboardWidgetsBundle[] }>(url, token, instanceUrl);
+    return result?.data || [];
+}
+
+export async function getBundleWidgetTypes(token: string, instanceUrl: string, bundleId: string): Promise<ThingsboardWidgetType[]> {
+    const url = `/api/widgetTypes?widgetsBundleId=${bundleId}`;
+    return await fetchThingsboard<ThingsboardWidgetType[]>(url, token, instanceUrl);
 }
 
     
