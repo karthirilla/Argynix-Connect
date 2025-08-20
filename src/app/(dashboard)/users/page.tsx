@@ -233,7 +233,10 @@ export default function UsersPage() {
             
             setUsers(usersWithPermissions);
         } catch (e: any) {
-            setError(e.message || 'Failed to fetch users.');
+            // Don't set error for permission issues as they are handled by the role check
+            if (!e.message.includes('permission')) {
+              setError(e.message || 'Failed to fetch users.');
+            }
             console.error(e);
         } finally {
             setIsLoading(false);
@@ -476,3 +479,5 @@ export default function UsersPage() {
         </div>
     );
 }
+
+    
