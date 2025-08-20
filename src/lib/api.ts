@@ -1,3 +1,4 @@
+
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField } from './types';
@@ -135,6 +136,19 @@ export async function requestPasswordReset(instanceUrl: string, email: string): 
 export async function getUser(token: string, instanceUrl: string): Promise<ThingsboardUser> {
   const url = '/api/auth/user';
   return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl);
+}
+
+export async function saveUser(
+    token: string,
+    instanceUrl: string,
+    userData: Omit<Partial<ThingsboardUser>, 'id' | 'createdTime'>,
+    sendActivationMail: boolean = true
+): Promise<ThingsboardUser> {
+    const url = `/api/user?sendActivationMail=${sendActivationMail}`;
+    return await fetchThingsboard<ThingsboardUser>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(userData),
+    });
 }
 
 export async function deleteUser(token: string, instanceUrl: string, userId: string): Promise<void> {
@@ -507,3 +521,5 @@ export async function testScript(script: string, telemetryJson: string): Promise
         body: JSON.stringify({ script, telemetry }),
     });
 }
+
+    
