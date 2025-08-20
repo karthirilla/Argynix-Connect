@@ -1,7 +1,7 @@
 
 // /src/lib/api.ts
 
-import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification } from './types';
+import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField, ThingsboardJob, ThingsboardNotification, EntityData } from './types';
 
 // Helper function to get a new token using the refresh token
 async function getNewToken(instanceUrl: string, refreshToken: string): Promise<{ token: string, refreshToken: string } | null> {
@@ -445,10 +445,23 @@ export async function sendOneWayRpc(
     token: string,
     instanceUrl: string,
     deviceId: string,
-    payload: { method: string, params: any, timeout: number }
+    payload: { method: string, params: any, timeout?: number, persistent?: boolean }
 ): Promise<void> {
     const url = `/api/rpc/oneway/${deviceId}`;
     await fetchThingsboard<void>(url, token, instanceUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+}
+
+export async function sendTwoWayRpc(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    payload: { method: string, params: any, timeout?: number, persistent?: boolean }
+): Promise<any> {
+    const url = `/api/rpc/twoway/${deviceId}`;
+    return await fetchThingsboard<any>(url, token, instanceUrl, {
         method: 'POST',
         body: JSON.stringify(payload)
     });
