@@ -85,6 +85,8 @@ async function fetchThingsboard<T>(
       const errorJson = await response.json();
       errorBody = errorJson.message || JSON.stringify(errorJson);
     } catch(e) {
+      // If the response is not JSON, use the raw text.
+      // This can happen with "No static resource" errors which return HTML.
       errorBody = await response.text();
     }
     
@@ -174,10 +176,8 @@ export async function setUserCredentialsEnabled(token: string, instanceUrl: stri
     await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
 }
 
-export async function getCustomers(token: string, instanceUrl: string, tenantId?: string): Promise<ThingsboardCustomer[]> {
-    const url = tenantId 
-      ? `/api/tenant/${tenantId}/customers?pageSize=100&page=0`
-      : `/api/customers?pageSize=100&page=0`;
+export async function getCustomers(token: string, instanceUrl: string): Promise<ThingsboardCustomer[]> {
+    const url = `/api/customers?pageSize=100&page=0`;
     const result = await fetchThingsboard<{ data: ThingsboardCustomer[] }>(url, token, instanceUrl);
     return result?.data || [];
 }
