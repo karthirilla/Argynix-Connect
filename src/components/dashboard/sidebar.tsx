@@ -1,4 +1,3 @@
-
 // src/components/dashboard/sidebar.tsx
 
 "use client";
@@ -188,15 +187,13 @@ export function AppSidebar({
         </div>
         {finalContent}
         <div className="mt-auto p-4 border-t border-sidebar-border">
-            <Button 
-              variant="ghost" 
-              size={isCollapsed ? "icon" : "default"} 
-              className={cn("w-full", !isCollapsed && "justify-start px-3")}
+            <Button
+              variant="ghost"
+              className={cn("h-9 w-full", isCollapsed ? "justify-center px-0" : "justify-start px-3")}
               onClick={() => setIsCollapsed?.(!isCollapsed)}
             >
-              <div className={cn("flex gap-3 items-center", isCollapsed && "justify-center")}>
+              <div className={cn("flex items-center gap-3")}>
                 {isCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
-                <span className={cn(isCollapsed && "hidden")}>Collapse</span>
               </div>
               <span className="sr-only">Toggle Sidebar</span>
             </Button>
