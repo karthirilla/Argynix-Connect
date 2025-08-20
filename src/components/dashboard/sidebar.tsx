@@ -1,3 +1,4 @@
+
 // src/components/dashboard/sidebar.tsx
 
 "use client";
@@ -33,7 +34,6 @@ const navItems = [
 
 const adminNavItems = [
     { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
-    { href: '/admin/notifications', label: 'Notifications', icon: BellRing, requiredAuth: ['SYS_ADMIN', 'TENANT_ADMIN'] },
     { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
 ];
 
