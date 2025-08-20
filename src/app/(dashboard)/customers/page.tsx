@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { getCustomers, saveCustomer, deleteCustomer, getUser } from '@/lib/api';
 import type { ThingsboardCustomer, ThingsboardUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
