@@ -19,6 +19,7 @@ import { AppSidebar } from './sidebar';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { logout } from '@/lib/api';
+import { Notifications } from './notifications';
 
 export function AppHeader() {
   const router = useRouter();
@@ -66,11 +67,12 @@ export function AppHeader() {
     if (pathname.startsWith('/users')) return 'User Management';
     if (pathname.startsWith('/customers')) return 'Customer Management';
     if (pathname.startsWith('/audit-logs')) return 'Audit Logs';
+    if (pathname.startsWith('/jobs')) return 'Jobs';
     if (pathname.startsWith('/admin/settings')) return 'Admin Settings';
     return 'Home';
   }
 
-  const showBackButton = /^\/(devices|assets|dashboards|customers)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
+  const showBackButton = /^\/(devices|assets|dashboards|alarms)\/[^/]+/.test(pathname) && !pathname.includes('/iframe');
   const showPrintButton = pathname.includes('/iframe');
 
   return (
@@ -106,6 +108,7 @@ export function AppHeader() {
                     <span className="sr-only">Print</span>
                 </Button>
             )}
+            <Notifications />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
