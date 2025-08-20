@@ -232,9 +232,9 @@ function HomePageContent() {
                  {renderStats()}
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-5">
-                <div className="lg:col-span-3">
-                     <Card>
+            <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Alarms by Severity</CardTitle>
                             <CardDescription>Distribution of active alarms.</CardDescription>
@@ -275,11 +275,11 @@ function HomePageContent() {
                     </Card>
                 </div>
            
-                <div className="space-y-8 lg:col-span-2">
-                    <Card>
+                <div className="lg:col-span-1">
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Quick Access</CardTitle>
-                            <CardDescription>Navigate to key areas of the application.</CardDescription>
+                            <CardDescription>Navigate to key areas.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
                            {features.map((feature) => (
@@ -292,28 +292,27 @@ function HomePageContent() {
                             ))}
                         </CardContent>
                     </Card>
-
-                    {usageInfo && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Tenant Usage</CardTitle>
-                                <CardDescription>Your current resource usage against limits.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <UsageBar label="Devices" value={usageInfo.devices} max={usageInfo.maxDevices} />
-                                <UsageBar label="Assets" value={usageInfo.assets} max={usageInfo.maxAssets} />
-                                <UsageBar label="Customers" value={usageInfo.customers} max={usageInfo.maxCustomers} />
-                                <UsageBar label="Users" value={usageInfo.users} max={usageInfo.maxUsers} />
-                                <UsageBar label="Dashboards" value={usageInfo.dashboards} max={usageInfo.maxDashboards} />
-                                <UsageBar label="Rule Chains" value={usageInfo.ruleChains} max={usageInfo.maxRuleChains} />
-                            </CardContent>
-                            <CardFooter>
-                                <p className="text-xs text-muted-foreground">This information is for the current tenant.</p>
-                            </CardFooter>
-                        </Card>
-                    )}
                 </div>
             </div>
+            
+            {usageInfo && (
+                <div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Tenant Usage</CardTitle>
+                            <CardDescription>Your current resource usage against tenant profile limits.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
+                            <UsageBar label="Devices" value={usageInfo.devices} max={usageInfo.maxDevices} />
+                            <UsageBar label="Assets" value={usageInfo.assets} max={usageInfo.maxAssets} />
+                            <UsageBar label="Customers" value={usageInfo.customers} max={usageInfo.maxCustomers} />
+                            <UsageBar label="Users" value={usageInfo.users} max={usageInfo.maxUsers} />
+                            <UsageBar label="Dashboards" value={usageInfo.dashboards} max={usageInfo.maxDashboards} />
+                            <UsageBar label="Rule Chains" value={usageInfo.ruleChains} max={usageInfo.maxRuleChains} />
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }
