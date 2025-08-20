@@ -28,11 +28,16 @@ export type Alarm = {
     id: string;
     name: string;
     severity: 'CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING' | 'INDETERMINATE';
-    status: string;
+    status: 'ACTIVE_UNACK' | 'ACTIVE_ACK' | 'CLEARED_UNACK' | 'CLEARED_ACK';
     originatorName: string;
     originatorType: string;
     createdTime: number;
-}
+    ackTs?: number;
+    clearTs?: number;
+    assignee?: any;
+    details?: any;
+    propagate: boolean;
+};
 
 export interface UserPermissions {
     canExport: boolean;
@@ -139,6 +144,9 @@ export type ThingsboardAlarm = {
     createdTime: number;
     ackTs?: number;
     clearTs?: number;
+    assignee?: any;
+    details?: any;
+    propagate: boolean;
 };
 
 export interface Schedule {

@@ -86,7 +86,13 @@ async function fetchThingsboard<T>(
     } catch(e) {
       errorBody = await response.text();
     }
-    console.error("ThingsBoard API Error:", errorBody);
+    
+    if (typeof errorBody === 'string' && errorBody.includes("permission")) {
+      // Don't log permission errors to the console as they are handled in the UI
+    } else {
+      console.error("ThingsBoard API Error:", errorBody);
+    }
+    
     throw new Error(`API call to ${url} failed with status ${response.status}: ${errorBody}`);
   }
 
@@ -327,9 +333,36 @@ export async function getAlarms(
   token: string,
   instanceUrl: string
 ): Promise<ThingsboardAlarm[]> {
-  const url = '/api/alarms?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC';
+  const url = '/api/alarms?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC&fetchOriginator=true';
   const result = await fetchThingsboard<{ data: ThingsboardAlarm[] }>(url, token, instanceUrl);
   return result?.data || [];
+}
+
+export async function getAlarmById(
+  token: string,
+  instanceUrl: string,
+  alarmId: string
+): Promise<ThingsboardAlarm> {
+  const url = `/api/alarm/info/${alarmId}`;
+  return await fetchThingsboard<ThingsboardAlarm>(url, token, instanceUrl);
+}
+
+export async function ackAlarm(
+    token: string,
+    instanceUrl: string,
+    alarmId: string
+): Promise<void> {
+    const url = `/api/alarm/${alarmId}/ack`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
+}
+
+export async function clearAlarm(
+    token: string,
+    instanceUrl: string,
+    alarmId: string
+): Promise<void> {
+    const url = `/api/alarm/${alarmId}/clear`;
+    await fetchThingsboard<void>(url, token, instanceUrl, { method: 'POST' });
 }
 
 export async function getAuditLogs(

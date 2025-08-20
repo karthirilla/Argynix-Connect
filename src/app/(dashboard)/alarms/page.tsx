@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -11,14 +12,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getAlarms } from '@/lib/api';
-import type { Alarm as AppAlarm, ThingsboardAlarm } from '@/lib/types';
+import { getAlarms, ackAlarm, clearAlarm } from '@/lib/api';
+import type { ThingsboardAlarm } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Search } from 'lucide-react';
+import { AlertCircle, Search, Eye, Check, X, Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const severityColors = {
   CRITICAL: 'bg-red-500/20 text-red-700 border-red-500/20 hover:bg-red-500/30',
@@ -36,13 +40,15 @@ const statusColors = {
 };
 
 export default function AlarmsPage() {
-  const [alarms, setAlarms] = useState<AppAlarm[]>([]);
+  const [alarms, setAlarms] = useState<ThingsboardAlarm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
-
-  useEffect(() => {
-    const fetchData = async () => {
+  const { toast } = useToast();
+  const router = useRouter();
+  
+  const fetchData = async () => {
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
 
@@ -54,29 +60,40 @@ export default function AlarmsPage() {
 
       try {
         const tbAlarms: ThingsboardAlarm[] = await getAlarms(token, instanceUrl);
-        
-        const formattedAlarms: AppAlarm[] = tbAlarms.map(a => ({
-          id: a.id.id,
-          name: a.name,
-          severity: a.severity,
-          status: a.status,
-          originatorName: a.originatorName,
-          originatorType: a.originator.entityType,
-          createdTime: a.createdTime,
-        }));
-        
-        setAlarms(formattedAlarms);
-
-      } catch (e) {
-        setError('Failed to fetch alarms.');
+        setAlarms(tbAlarms);
+      } catch (e: any) {
+        setError(e.message || 'Failed to fetch alarms.');
         console.error(e);
       } finally {
         setIsLoading(false);
       }
     };
 
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const handleAction = async (action: 'ack' | 'clear', alarmId: string, alarmName: string) => {
+      const token = localStorage.getItem('tb_auth_token');
+      const instanceUrl = localStorage.getItem('tb_instance_url');
+      if (!token || !instanceUrl) return;
+
+      setIsProcessing(prev => ({...prev, [alarmId]: true}));
+      try {
+          if (action === 'ack') {
+              await ackAlarm(token, instanceUrl, alarmId);
+              toast({ title: 'Success', description: `Alarm "${alarmName}" has been acknowledged.` });
+          } else {
+              await clearAlarm(token, instanceUrl, alarmId);
+              toast({ title: 'Success', description: `Alarm "${alarmName}" has been cleared.` });
+          }
+          await fetchData(); // Refresh data
+      } catch(e: any) {
+          toast({ variant: 'destructive', title: 'Error', description: e.message || `Failed to ${action} alarm.` });
+      } finally {
+          setIsProcessing(prev => ({...prev, [alarmId]: false}));
+      }
+  }
 
   const filteredAlarms = alarms.filter(alarm =>
     alarm.name.toLowerCase().includes(filter.toLowerCase()) ||
@@ -85,50 +102,59 @@ export default function AlarmsPage() {
     alarm.status.toLowerCase().replace('_', ' ').includes(filter.toLowerCase())
   );
 
+  const renderLoadingSkeleton = () => (
+    <div className="space-y-4">
+      <div className="hidden md:block rounded-lg border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Created Time</TableHead>
+                <TableHead>Originator</TableHead>
+                <TableHead>Alarm Type</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(8)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-[100px] rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-[120px] rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-9 w-[200px] float-right" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+      <div className="md:hidden grid gap-4">
+          {[...Array(8)].map((_, i) => (
+              <Card key={i}>
+                  <CardHeader>
+                     <Skeleton className="h-5 w-3/4" />
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                       <Skeleton className="h-4 w-full" />
+                       <Skeleton className="h-4 w-full" />
+                       <Skeleton className="h-4 w-full" />
+                       <Skeleton className="h-4 w-full" />
+                       <div className="flex gap-2 pt-2"><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /></div>
+                  </CardContent>
+              </Card>
+          ))}
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-0 md:px-4">
-        <div className="hidden md:block rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Created Time</TableHead>
-                  <TableHead>Originator</TableHead>
-                  <TableHead>Alarm Type</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...Array(8)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-[100px] rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-[120px] rounded-full" /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-        <div className="md:hidden grid gap-4">
-            {[...Array(8)].map((_, i) => (
-                <Card key={i}>
-                    <CardHeader>
-                       <Skeleton className="h-5 w-3/4" />
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                         <Skeleton className="h-4 w-full" />
-                         <Skeleton className="h-4 w-full" />
-                         <Skeleton className="h-4 w-full" />
-                         <Skeleton className="h-4 w-full" />
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+        {renderLoadingSkeleton()}
       </div>
     );
   }
@@ -174,7 +200,8 @@ export default function AlarmsPage() {
         {/* Mobile View */}
         <div className="md:hidden grid gap-4">
             {filteredAlarms.map((alarm) => (
-                <Card key={alarm.id}>
+                <Card key={alarm.id.id}>
+                     {isProcessing[alarm.id.id] && <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                     <CardHeader>
                         <CardTitle className="text-base">{alarm.name}</CardTitle>
                     </CardHeader>
@@ -188,6 +215,11 @@ export default function AlarmsPage() {
                         <div><strong>Status:</strong>  <Badge className={cn('capitalize text-xs', statusColors[alarm.status as keyof typeof statusColors])}>
                                 {alarm.status.toLowerCase().replace('_', ' ')}
                             </Badge>
+                        </div>
+                         <div className="flex gap-2 pt-2">
+                             <Button asChild variant="outline" size="sm" className="flex-1"><Link href={`/alarms/${alarm.id.id}`}><Eye className="mr-2 h-4 w-4" />Details</Link></Button>
+                             <Button size="sm" className="flex-1" onClick={() => handleAction('ack', alarm.id.id, alarm.name)} disabled={!alarm.status.endsWith('_UNACK')}><Check className="mr-2 h-4 w-4" />Ack</Button>
+                             <Button size="sm" className="flex-1" onClick={() => handleAction('clear', alarm.id.id, alarm.name)} disabled={!alarm.status.startsWith('ACTIVE')}><X className="mr-2 h-4 w-4" />Clear</Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -205,11 +237,13 @@ export default function AlarmsPage() {
                     <TableHead>Alarm Type</TableHead>
                     <TableHead>Severity</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {filteredAlarms.map((alarm) => (
-                    <TableRow key={alarm.id}>
+                    <TableRow key={alarm.id.id}>
+                        {isProcessing[alarm.id.id] && <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                         <TableCell>{new Date(alarm.createdTime).toLocaleString()}</TableCell>
                         <TableCell className="font-medium">{alarm.originatorName}</TableCell>
                         <TableCell>{alarm.name}</TableCell>
@@ -222,6 +256,13 @@ export default function AlarmsPage() {
                         <Badge className={cn('capitalize', statusColors[alarm.status as keyof typeof statusColors])}>
                             {alarm.status.toLowerCase().replace('_', ' ')}
                         </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <div className="flex gap-2 justify-end">
+                                <Button asChild variant="outline" size="sm"><Link href={`/alarms/${alarm.id.id}`}><Eye className="mr-2 h-4 w-4" />Details</Link></Button>
+                                <Button size="sm" onClick={() => handleAction('ack', alarm.id.id, alarm.name)} disabled={!alarm.status.endsWith('_UNACK')}><Check className="mr-2 h-4 w-4" />Acknowledge</Button>
+                                <Button size="sm" onClick={() => handleAction('clear', alarm.id.id, alarm.name)} disabled={!alarm.status.startsWith('ACTIVE')}><X className="mr-2 h-4 w-4" />Clear</Button>
+                           </div>
                         </TableCell>
                     </TableRow>
                     ))}
