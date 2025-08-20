@@ -37,14 +37,6 @@ const profileSchema = z.object({
     lastName: z.string().optional(),
     additionalInfo: z.object({
         description: z.string().optional(),
-        mobile: z.string().optional(),
-        address: z.object({
-            street: z.string().optional(),
-            city: z.string().optional(),
-            state: z.string().optional(),
-            zip: z.string().optional(),
-            country: z.string().optional(),
-        }).optional(),
     }).optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -59,6 +51,14 @@ export default function ProfilePage() {
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      additionalInfo: {
+        description: ''
+      }
+    }
   });
 
   const passwordForm = useForm<PasswordFormValues>({
@@ -67,6 +67,7 @@ export default function ProfilePage() {
   });
 
   const fetchUserData = async () => {
+      setIsLoading(true);
       const token = localStorage.getItem('tb_auth_token');
       const instanceUrl = localStorage.getItem('tb_instance_url');
       
@@ -85,14 +86,6 @@ export default function ProfilePage() {
             lastName: userData.lastName || '',
             additionalInfo: {
                 description: userData.additionalInfo?.description || '',
-                mobile: userData.additionalInfo?.mobile || '',
-                address: {
-                    street: userData.additionalInfo?.address?.street || '',
-                    city: userData.additionalInfo?.address?.city || '',
-                    state: userData.additionalInfo?.address?.state || '',
-                    zip: userData.additionalInfo?.address?.zip || '',
-                    country: userData.additionalInfo?.address?.country || '',
-                }
             }
         });
       } catch (e: any) {
@@ -116,11 +109,18 @@ export default function ProfilePage() {
     try {
         const updatedUser: Partial<ThingsboardUser> = {
             ...user,
-            ...data,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            additionalInfo: {
+                ...user.additionalInfo,
+                description: data.additionalInfo?.description,
+            }
         };
         await saveUser(token, instanceUrl, updatedUser, false);
         toast({ title: 'Success', description: 'Your profile has been updated.' });
         await fetchUserData(); // Re-fetch to get latest data
+        profileForm.reset(data, { keepIsDirty: false }); // Reset form state
     } catch (e: any) {
         toast({ variant: 'destructive', title: 'Error', description: e.message || 'Failed to update profile.' });
     } finally {
@@ -203,19 +203,6 @@ export default function ProfilePage() {
                             <FormField control={profileForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                         <FormField control={profileForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input disabled {...field} /></FormControl><FormDescription>Your email address is used for logging in and cannot be changed.</FormDescription><FormMessage /></FormItem>)}/>
-                         <FormField control={profileForm.control} name="additionalInfo.mobile" render={({ field }) => (<FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="+1 234 567 890" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <div className="space-y-4 rounded-lg border p-4">
-                            <h3 className="font-medium">Address</h3>
-                             <FormField control={profileForm.control} name="additionalInfo.address.street" render={({ field }) => (<FormItem><FormLabel>Street</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                             <div className="grid md:grid-cols-2 gap-6">
-                                <FormField control={profileForm.control} name="additionalInfo.address.city" render={({ field }) => (<FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={profileForm.control} name="additionalInfo.address.state" render={({ field }) => (<FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                             </div>
-                             <div className="grid md:grid-cols-2 gap-6">
-                                <FormField control={profileForm.control} name="additionalInfo.address.zip" render={({ field }) => (<FormItem><FormLabel>Zip/Postal Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                                <FormField control={profileForm.control} name="additionalInfo.address.country" render={({ field }) => (<FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                             </div>
-                        </div>
                          <FormField control={profileForm.control} name="additionalInfo.description" render={({ field }) => (<FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                     
                     <Separator />
