@@ -98,19 +98,19 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
   );
 
   const navContent = (
-    <>
+    <div className="flex flex-col justify-between h-full">
         <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
             {visibleNavItems.map(item => renderNavItem(item))}
         </nav>
         {visibleAdminNavItems.length > 0 && (
-            <div className="mt-auto p-4">
+            <div className="p-4">
                  <h3 className="px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</h3>
                  <nav className={cn("grid items-start text-sm font-medium", isMobile ? "px-2" : "px-2 lg:px-4")}>
                     {visibleAdminNavItems.map(item => renderNavItem(item))}
                 </nav>
             </div>
         )}
-    </>
+    </div>
   );
 
   const finalContent = isLoading ? renderNavSkeleton() : navContent;
@@ -124,7 +124,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
                     <SheetTitle className="text-base">Argynix-Connect</SheetTitle>
                 </Link>
             </SheetHeader>
-            <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
+            <div className="flex-1 overflow-y-auto pt-2">
                 {finalContent}
             </div>
         </>
@@ -140,7 +140,7 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
             <span className="">Argynix-Connect</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
+        <div className="flex-1 overflow-y-auto py-2">
           {finalContent}
         </div>
       </div>
