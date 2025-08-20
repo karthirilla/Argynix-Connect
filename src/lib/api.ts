@@ -1,4 +1,3 @@
-
 // /src/lib/api.ts
 
 import type { ThingsboardDashboard, ThingsboardDevice, ThingsboardAsset, ThingsboardUser, ThingsboardAlarm, ThingsboardCustomer, ThingsboardAuditLog, ThingsboardAdminSettings, ThingsboardSecuritySettings, CalculatedField } from './types';
@@ -539,5 +538,3 @@ export async function testScript(script: string, telemetryJson: string): Promise
         body: JSON.stringify({ script, telemetry }),
     });
 }
-
-    

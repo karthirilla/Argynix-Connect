@@ -61,7 +61,7 @@ export default function DashboardsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto">
+      <div className="container mx-auto px-0 md:px-4">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex flex-col space-y-3">
@@ -82,7 +82,7 @@ export default function DashboardsPage() {
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-0 md:px-4">
       <DashboardsList 
         dashboards={dashboards} 
         user={user} 
