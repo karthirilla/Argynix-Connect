@@ -27,6 +27,7 @@ const navItems = [
   { href: '/jobs', label: 'Jobs', icon: ListChecks, requiredAuth: ['TENANT_ADMIN', 'SYS_ADMIN'] },
   { href: '/audit-logs', label: 'Audit Logs', icon: History, requiredAuth: ['TENANT_ADMIN'] },
   { href: '/admin/settings', label: 'Admin Settings', icon: Settings, requiredAuth: ['SYS_ADMIN'] },
+  { href: '/admin/users', label: 'System Users', icon: Users, requiredAuth: ['SYS_ADMIN'] },
 ];
 
 
@@ -59,10 +60,6 @@ export function AppSidebar({ isMobile = false, onLinkClick }: { isMobile?: boole
   
   const getVisibleNavItems = () => {
     if (!user) return [];
-    if (user.authority === 'SYS_ADMIN') {
-        // Sys admin sees all links except those specific to a tenant context
-        return navItems.filter(item => !['/customers', '/users'].includes(item.href));
-    }
     return navItems.filter(item => item.requiredAuth.includes(user.authority));
   };
   

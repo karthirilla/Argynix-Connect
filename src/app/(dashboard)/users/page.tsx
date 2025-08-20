@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { getCustomers, getTenantUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail, getAllUsersBySysAdmin } from '@/lib/api';
+import { getCustomers, getTenantUsers, getUserAttributes, saveUserAttributes, setUserCredentialsEnabled, deleteUser, saveUser, getUser, sendActivationMail } from '@/lib/api';
 import type { ThingsboardUser, AppUser, UserPermissions, ThingsboardCustomer } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -182,23 +182,20 @@ export default function UsersPage() {
             
             let allUsers: ThingsboardUser[] = [];
             
-            if (currentUserData.authority === 'SYS_ADMIN') {
-                allUsers = await getAllUsersBySysAdmin(token, instanceUrl);
-
-            } else if (currentUserData.authority === 'TENANT_ADMIN') {
-                const [customersData, tenantUsersData] = await Promise.all([
-                    getCustomers(token, instanceUrl),
-                    getTenantUsers(token, instanceUrl, currentUserData.tenantId.id),
-                ]);
-                setCustomers(customersData);
-                allUsers.push(...tenantUsersData);
-
-            } else {
-                // This is for CUSTOMER_USER, they can't view this page.
+            // This page is only for Tenant Admins.
+            if (currentUserData.authority !== 'TENANT_ADMIN') {
                 setIsLoading(false);
                 return;
             }
-            
+
+            const [customersData, tenantUsersData] = await Promise.all([
+                getCustomers(token, instanceUrl),
+                getTenantUsers(token, instanceUrl, currentUserData.tenantId.id),
+            ]);
+
+            setCustomers(customersData);
+            allUsers.push(...tenantUsersData);
+
             const otherUsers = allUsers.filter(u => u.id.id !== currentUserData.id.id);
 
             const usersWithPermissions = await Promise.all(
@@ -341,14 +338,14 @@ export default function UsersPage() {
         );
     }
     
-    if (!currentUser || (currentUser.authority !== 'TENANT_ADMIN' && currentUser.authority !== 'SYS_ADMIN')) {
+    if (!currentUser || currentUser.authority !== 'TENANT_ADMIN') {
         return (
              <div className="container mx-auto px-0 md:px-4">
                 <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
                     <UserCog className="h-16 w-16 text-muted-foreground mb-4" />
                     <h3 className="text-2xl font-semibold">Permission Denied</h3>
                     <p className="text-muted-foreground text-center max-w-md mt-2">
-                        You do not have sufficient permissions to manage Users. This page is available only to Tenant or System Administrators.
+                        You do not have sufficient permissions to manage Users. This page is available only to Tenant Administrators.
                     </p>
                 </div>
             </div>
@@ -361,9 +358,9 @@ export default function UsersPage() {
                 <UserIcon className="h-16 w-16 text-muted-foreground mb-4" />
                 <h3 className="text-2xl font-semibold">No Other Users Found</h3>
                 <p className="text-muted-foreground text-center max-w-md mt-2">
-                    There are no other users for this scope.
+                    There are no other users for this tenant.
                 </p>
-                {currentUser?.authority === 'TENANT_ADMIN' && <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>}
+                <div className="mt-6"><UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} /></div>
             </div>
         );
     }
@@ -373,9 +370,9 @@ export default function UsersPage() {
             <div className="flex justify-between items-center">
                  <div>
                     <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-                    <p className="text-muted-foreground">Manage permissions and access for all users.</p>
+                    <p className="text-muted-foreground">Manage permissions and access for all users in your tenant.</p>
                 </div>
-                {currentUser?.authority === 'TENANT_ADMIN' && <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />}
+                <UserCreator customers={customers} onUserCreated={fetchUsersAndPermissions} currentUser={currentUser} />
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map(user => (
@@ -394,7 +391,7 @@ export default function UsersPage() {
                             <UserIcon className="h-5 w-5 text-muted-foreground"/> {user.firstName || 'No'} {user.lastName || 'Name'}
                             </CardTitle>
                             <CardDescription>
-                                {user.email} <Badge variant={user.authority === 'TENANT_ADMIN' ? 'default' : (user.authority === 'SYS_ADMIN' ? 'destructive' : 'outline')} className="ml-2">{user.authority.replace('_', ' ')}</Badge>
+                                {user.email} <Badge variant={user.authority === 'TENANT_ADMIN' ? 'default' : 'outline'} className="ml-2">{user.authority.replace('_', ' ')}</Badge>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-4 flex-grow">
@@ -476,5 +473,3 @@ export default function UsersPage() {
         </div>
     );
 }
-
-    
