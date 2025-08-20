@@ -204,7 +204,7 @@ export default function UsersPage() {
                 const customerUsers = customerUsersNested.flat();
                 allUsers.push(...customerUsers);
             } else {
-                // Customer user has no permissions for this page.
+                // For CUSTOMER_USER or any other role, they don't have permission to see this page.
                 setIsLoading(false);
                 return;
             }
@@ -485,3 +485,5 @@ export default function UsersPage() {
         </div>
     );
 }
+
+    
