@@ -49,7 +49,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <div className="flex flex-1 flex-col bg-background">
+      <div className="flex flex-1 flex-col bg-muted/40">
         <AppHeader />
         <main className="flex-1 p-4 md:p-8 lg:p-10 flex flex-col relative overflow-y-auto">
           {children}

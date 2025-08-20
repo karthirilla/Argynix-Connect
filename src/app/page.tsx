@@ -68,14 +68,6 @@ const SEVERITY_COLORS: { [key: string]: string } = {
     INDETERMINATE: 'hsl(var(--muted-foreground))',
 }
 
-const PIE_CHART_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
-
 function UsageBar({ label, value, max }: { label: string, value: number, max: number }) {
     if (max === 0) return null;
     const percentage = (value / max) * 100;
@@ -240,7 +232,7 @@ function HomePageContent() {
             </div>
 
             <div className="grid gap-8 lg:grid-cols-5">
-                <div className="lg:col-span-3 grid gap-8">
+                <div className="lg:col-span-3">
                      <Card>
                         <CardHeader>
                             <CardTitle>Alarms by Severity</CardTitle>
@@ -276,62 +268,6 @@ function HomePageContent() {
                                     <CheckCircle className="h-10 w-10 mb-2" />
                                     <p className="font-medium">No Active Alarms</p>
                                     <p className="text-sm">Your system is currently clear of all alarms.</p>
-                                </div>
-                             )}
-                        </CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Devices by Type</CardTitle>
-                            <CardDescription>Distribution of registered device types.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             {isLoading ? <div className="h-[300px] w-full flex items-center justify-center"><Skeleton className="h-full w-full" /></div> :
-                             (deviceStats && deviceStats.types.length > 0) ? (
-                                <div className="h-[300px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                         <PieChart>
-                                            <Pie
-                                                data={deviceStats.types}
-                                                cx="50%"
-                                                cy="50%"
-                                                labelLine={false}
-                                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                                                    const RADIAN = Math.PI / 180;
-                                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                                    return (
-                                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
-                                                        {`${(percent * 100).toFixed(0)}%`}
-                                                        </text>
-                                                    );
-                                                }}
-                                                outerRadius={120}
-                                                fill="#8884d8"
-                                                dataKey="value"
-                                                nameKey="name"
-                                            >
-                                                {deviceStats.types.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                 contentStyle={{
-                                                    background: 'hsl(var(--background))',
-                                                    border: '1px solid hsl(var(--border))',
-                                                    borderRadius: 'var(--radius)',
-                                                }}
-                                            />
-                                            <Legend iconSize={10} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                             ): (
-                                <div className="h-[300px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/50 rounded-lg">
-                                    <HardDrive className="h-10 w-10 mb-2" />
-                                    <p className="font-medium">No Devices Found</p>
-                                    <p className="text-sm">There are no devices registered in the system.</p>
                                 </div>
                              )}
                         </CardContent>
@@ -417,7 +353,7 @@ export default function RootPage() {
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <div className="flex flex-1 flex-col bg-background">
+      <div className="flex flex-1 flex-col bg-muted/40">
         <AppHeader />
         <main className="flex-1 p-4 md:p-8 lg:p-10 flex flex-col relative overflow-y-auto">
           <HomePageContent />
