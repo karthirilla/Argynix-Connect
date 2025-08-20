@@ -326,8 +326,8 @@ export interface ThingsboardNotificationRule {
         triggerType: 'ALARM';
         alarmTypes: string[] | null;
         alarmSeverities: ('CRITICAL' | 'MAJOR' | 'MINOR' | 'WARNING' | 'INDETERMINATE')[];
-        notifyOn: {
-            alarmStatus: ('ACTIVE_UNACK' | 'ACTIVE_ACK' | 'CLEARED_UNACK' | 'CLEARED_ACK')[];
+        notifyOn?: {
+            alarmStatus?: ('ACTIVE_UNACK' | 'ACTIVE_ACK' | 'CLEARED_UNACK' | 'CLEARED_ACK')[];
         }
     };
     recipientsConfig: {
