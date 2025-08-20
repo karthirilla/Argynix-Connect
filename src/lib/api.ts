@@ -357,6 +357,17 @@ export async function getDeviceTelemetry(
     return await fetchThingsboard<any>(url, token, instanceUrl);
 }
 
+export async function getLatestDeviceTelemetry(
+    token: string,
+    instanceUrl: string,
+    deviceId: string,
+    keys: string[]
+): Promise<any> {
+    const encodedKeys = encodeURIComponent(keys.join(','));
+    const url = `/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodedKeys}`;
+    return await fetchThingsboard<any>(url, token, instanceUrl);
+}
+
 export async function getAssets(
     token: string,
     instanceUrl: string,
@@ -525,7 +536,7 @@ export async function saveSecuritySettings(token: string, instanceUrl: string, s
     });
 }
 
-// Calculated Fields
+// Calculated Fields (Test Script)
 export async function testScript(script: string, telemetryJson: string): Promise<any> {
     const url = `/api/ruleChain/testScript`;
     const token = localStorage.getItem('tb_auth_token');
